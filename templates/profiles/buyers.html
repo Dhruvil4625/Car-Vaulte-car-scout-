@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Buyers | Car Scout{% endblock %}
+{% block content %}
+<section class="container">
+  <h2 class="cv-section-title">Buyers</h2>
+  <div class="mb-3">
+    <a href="{% url 'signup' %}?role=Buyer" class="btn btn-primary">Create Buyer</a>
+  </div>
+  <div class="list-group">
+    {% for b in buyers %}
+      <a class="list-group-item d-flex justify-content-between text-decoration-none" href="{% url 'buyers_detail' b.user.user_id %}">
+        <div>
+          <strong>{{ b.user.name|default:b.user.email }}</strong>
+          <div class="text-muted">{{ b.user.email }} • {{ b.user.phone|default:"—" }}</div>
+        </div>
+        <small>Favorites: {{ b.favorite_count }}</small>
+      </a>
+    {% empty %}
+      <div class="cv-card p-4 text-center">No buyers found.</div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
