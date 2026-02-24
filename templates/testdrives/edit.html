@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Edit Test Drive | Car Scout{% endblock %}
+{% block content %}
+<section class="container">
+  <h2 class="cv-section-title">Edit Test Drive</h2>
+  <div class="cv-card p-3 mb-3">
+    <div class="mb-2">
+      <strong>{{ drive.listing.car.make }} {{ drive.listing.car.model }}</strong>
+      <div class="text-muted">{{ drive.listing.car.year }} • Buyer: {{ drive.buyer.name|default:drive.buyer.email }}</div>
+    </div>
+    <form method="post" class="mt-2">
+      {% csrf_token %}
+      <div class="mb-2">
+        <label class="form-label">Status</label>
+        <select name="status" class="form-select">
+          {% for key,label in drive.Status.choices %}
+          <option value="{{ key }}" {% if drive.status == key %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="mb-2">
+        <label class="form-label">Proposed Date</label>
+        <input type="datetime-local" name="proposed_date" value="{{ drive.proposed_date|date:'Y-m-d\\TH:i' }}" class="form-control">
+      </div>
+      <div class="mb-2">
+        <label class="form-label">Actual Date</label>
+        <input type="datetime-local" name="actual_date" value="{% if drive.actual_date %}{{ drive.actual_date|date:'Y-m-d\\TH:i' }}{% endif %}" class="form-control">
+      </div>
+      <div class="mb-2">
+        <label class="form-label">Notes</label>
+        <textarea name="notes" class="form-control" rows="3">{{ drive.notes }}</textarea>
+      </div>
+      <div class="d-flex gap-2 mt-3">
+        <button class="btn btn-primary">Save</button>
+        <a href="{% url 'testdrives' %}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}
+
