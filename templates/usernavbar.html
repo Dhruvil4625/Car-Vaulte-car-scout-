@@ -1,0 +1,48 @@
+{% load static %}
+<div class="top-bar">
+  <div class="container">
+    <div class="top-bar-left">
+      {% if request.user.is_authenticated %}
+        <a href="{% url 'account_settings' %}" title="Account Settings">&#128100; {{ request.user.name|default:request.user.email }}</a>
+        <a href="{% url 'logout' %}">&#128682; Logout</a>
+      {% else %}
+        <a href="{% url 'login' %}">&#128100; Login</a>
+        <a href="{% url 'signup' %}">&#128273; Register</a>
+      {% endif %}
+      <a href="#">&#127760; Languages</a>
+      <a href="{% url 'cars' %}">&#128269; Search</a>
+    </div>
+    <div class="top-bar-right">
+      <a href="tel:+919909945734" class="phone-link">&#128222; 9909945734</a>
+      <span>&#128205; Dhruvil Ramolia</span>
+    </div>
+  </div>
+</div>
+
+<header class="main-header">
+  <div class="container">
+    <div class="logo">
+      <a href="{% url 'home' %}">
+        <h1>Car Scout</h1>
+        <p>Marketplace</p>
+      </a>
+    </div>
+    
+    <button class="mobile-menu-toggle" aria-label="Toggle navigation">
+      &#9776;
+    </button>
+
+    <nav class="main-nav">
+      <ul class="nav-links">
+        <li><a href="{% url 'home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">Home</a></li>
+        <li><a href="{% url 'cars' %}" class="{% if request.resolver_match.url_name == 'cars' %}active{% endif %}">Inventory</a></li>
+        <li><a href="{% url 'listings' %}" class="{% if request.resolver_match.url_name == 'listings' %}active{% endif %}">Listings</a></li>
+        <li><a href="{% url 'testdrives' %}" class="{% if request.resolver_match.url_name == 'testdrives' %}active{% endif %}">Test Drives</a></li>
+        <li><a href="{% url 'buyers' %}" class="{% if request.resolver_match.url_name == 'buyers' %}active{% endif %}">Buyers</a></li>
+        <li><a href="{% url 'sellers' %}" class="{% if request.resolver_match.url_name == 'sellers' %}active{% endif %}">Sellers</a></li>
+        <li><a href="{% url 'sell' %}" class="{% if request.resolver_match.url_name == 'sell' %}active{% endif %}">Sell</a></li>
+        <li><a href="{% url 'contact' %}" class="{% if request.resolver_match.url_name == 'contact' %}active{% endif %}">Contact</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
