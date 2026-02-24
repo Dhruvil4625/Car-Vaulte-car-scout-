@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Buyer Details | Car Scout{% endblock %}
+{% block content %}
+<section class="container">
+  <h2 class="cv-section-title">Buyer</h2>
+  <div class="cv-card p-3">
+    <div><strong>{{ buyer.user.name|default:buyer.user.email }}</strong></div>
+    <div class="text-muted">{{ buyer.user.email }} • {{ buyer.user.phone|default:"—" }}</div>
+    <div>Favorites: {{ buyer.favorite_count }}</div>
+  </div>
+  <div class="mt-3">
+    <form method="post" action="{% url 'buyer_request_buy' buyer.user.user_id %}" class="cv-card p-3">
+      {% csrf_token %}
+      <label class="form-label">Send buy request / offer car</label>
+      {% if listings %}
+      <div class="mb-2">
+        <label class="form-label">Your car / listing (optional)</label>
+        <select name="listing_id" class="form-select">
+          <option value="">Select one of your listings (optional)</option>
+          {% for l in listings %}
+          <option value="{{ l.listing_id }}">{{ l.car.make }} {{ l.car.model }} ({{ l.car.year }}) • {{ l.price }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
+      <textarea name="content" class="form-control" rows="3" placeholder="Describe the car or requirement"></textarea>
+      <div class="d-flex gap-2 mt-2">
+        <button class="btn btn-primary">Send Request</button>
+        <a href="{% url 'buyers' %}" class="btn btn-secondary">Back</a>
+      </div>
+      {% if error %}<div class="text-danger mt-2">{{ error }}</div>{% endif %}
+    </form>
+  </div>
+</section>
+{% endblock %}
