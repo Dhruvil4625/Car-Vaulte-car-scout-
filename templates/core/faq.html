@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}FAQ | Car Vault{% endblock %}
+
+{% block content %}
+<style>
+  /* --- FAQ Hero Section --- */
+  .faq-hero {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(11, 17, 32, 0.95) 100%), 
+                url('https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    padding: 80px 0 60px;
+    text-align: center;
+    color: #fff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .faq-hero h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+  }
+
+  .faq-hero h1 span {
+    color: #f43f5e; /* Vibrant Red Accent */
+  }
+
+  .faq-hero p {
+    color: #94a3b8;
+    font-size: 1.1rem;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* --- Dark Mode Accordion Styling --- */
+  .faq-section {
+    padding: 60px 0 80px;
+  }
+
+  .accordion-custom .accordion-item {
+    background-color: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    margin-bottom: 15px;
+    overflow: hidden;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, border-color 0.3s ease;
+  }
+
+  .accordion-custom .accordion-item:hover {
+    border-color: rgba(244, 63, 94, 0.3);
+    transform: translateY(-2px);
+  }
+
+  /* Remove top/bottom borders that bootstrap adds by default */
+  .accordion-custom .accordion-item:first-of-type,
+  .accordion-custom .accordion-item:last-of-type {
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+  }
+
+  .accordion-custom .accordion-button {
+    background-color: transparent;
+    color: #fff;
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 20px 25px;
+    box-shadow: none;
+    letter-spacing: 0.5px;
+  }
+
+  /* Active State Styling */
+  .accordion-custom .accordion-button:not(.collapsed) {
+    background-color: rgba(244, 63, 94, 0.05);
+    color: #f43f5e;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  /* Changing the default Bootstrap chevron icon to white/red */
+  .accordion-custom .accordion-button::after {
+    filter: invert(1) grayscale(100%) brightness(200%); /* Makes it white */
+    transition: all 0.3s ease;
+  }
+
+  .accordion-custom .accordion-button:not(.collapsed)::after {
+    filter: invert(35%) sepia(85%) saturate(2500%) hue-rotate(325deg) brightness(100%) contrast(105%); /* Approximates the #f43f5e red */
+  }
+
+  .accordion-custom .accordion-body {
+    padding: 25px;
+    color: #94a3b8;
+    font-size: 1rem;
+    line-height: 1.7;
+    background-color: #0b1120; /* Slightly darker inside for depth */
+  }
+
+  /* --- Support CTA Card --- */
+  .support-cta {
+    background: linear-gradient(135deg, rgba(244, 63, 94, 0.1) 0%, rgba(15, 23, 42, 0.5) 100%);
+    border: 1px solid rgba(244, 63, 94, 0.2);
+    border-radius: 16px;
+    padding: 40px;
+    text-align: center;
+    margin-top: 50px;
+  }
+
+  .support-cta h3 {
+    color: #fff;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .support-cta p {
+    color: #cbd5e1;
+    margin-bottom: 25px;
+  }
+
+  .btn-outline-red {
+    border: 2px solid #f43f5e;
+    color: #f43f5e;
+    background: transparent;
+    font-weight: 600;
+    padding: 10px 30px;
+    border-radius: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+  }
+
+  .btn-outline-red:hover {
+    background: #f43f5e;
+    color: #fff;
+    box-shadow: 0 10px 20px rgba(244, 63, 94, 0.2);
+  }
+</style>
+
+<section class="faq-hero">
+  <div class="container">
+    <h1>Frequently Asked <span>Questions</span></h1>
+    <p>Everything you need to know about buying, selling, and test-driving vehicles on the Car Vault platform.</p>
+  </div>
+</section>
+
+<section class="faq-section">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        
+        <div class="accordion accordion-custom" id="faqAccordion">
+          
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="headingOne">
+              <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                <i class="fa-solid fa-car-side me-3 text-muted"></i> How do I list my car for sale?
+              </button>
+            </h2>
+            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#faqAccordion">
+              <div class="accordion-body">
+                Listing your car is quick and easy. Simply navigate to the <strong>Sell Car</strong> section from the main menu, create a new listing, and provide details such as your vehicle's make, model, year, and condition. Don't forget to upload high-quality photos to attract more buyers!
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="headingTwo">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                <i class="fa-solid fa-wallet me-3 text-muted"></i> How do the budget filters work?
+              </button>
+            </h2>
+            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#faqAccordion">
+              <div class="accordion-body">
+                Our search engine uses standardized Indian price bands to make finding your perfect car easier. You can filter inventory using ranges such as <em>Under ₹ 5 Lakh</em>, <em>₹ 5–10 Lakh</em>, up to <em>Above ₹ 1 Cr</em>. Just select your preferred bracket in the search widget.
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="headingThree">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                <i class="fa-solid fa-key me-3 text-muted"></i> How do test drives work?
+              </button>
+            </h2>
+            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#faqAccordion">
+              <div class="accordion-body">
+                When you find a car you like, click the "Schedule Test Drive" button on the listing page. Buyers can request their preferred dates, and our staff or the private seller will coordinate and confirm the schedule directly through the platform's administration tool.
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="support-cta">
+          <h3>Still have questions?</h3>
+          <p>If you couldn't find the answer you were looking for, our automotive team is here to help.</p>
+          <a href="{% url 'contact' %}" class="btn btn-outline-red">Contact Support</a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
