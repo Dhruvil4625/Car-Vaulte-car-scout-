@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}Test Drives | Car Scout{% endblock %}
+{% block content %}
+<section class="container">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h2 class="cv-section-title mb-0">My Test Drives</h2>
+    {% if request.user.is_staff %}
+    <a href="{% url 'testdrive_new' %}" class="btn btn-primary">Add Test Drive</a>
+    {% endif %}
+  </div>
+  <div class="list-group">
+    {% for td in drives %}
+      <div class="list-group-item">
+        <div class="d-flex w-100 justify-content-between">
+          <h6 class="mb-1">{{ td.listing.car.make }} {{ td.listing.car.model }}</h6>
+          <small>Status: {{ td.status }}</small>
+        </div>
+        <p class="mb-1">Proposed: {{ td.proposed_date }}{% if td.actual_date %} • Actual: {{ td.actual_date }}{% endif %}</p>
+        {% if request.user.is_staff %}
+        <div class="mt-1">
+          <a href="{% url 'testdrive_edit' td.test_drive_id %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+        </div>
+        {% endif %}
+      </div>
+    {% empty %}
+      <div class="cv-card p-4 text-center">No test drives scheduled.</div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
