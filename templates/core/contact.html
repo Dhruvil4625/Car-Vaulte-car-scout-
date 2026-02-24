@@ -59,20 +59,22 @@
     box-shadow: 0 20px 40px rgba(244, 63, 94, 0.1);
   }
 
+  /* Updated Wrapper for Custom Images */
   .contact-icon-wrapper {
-    width: 60px;
-    height: 60px;
-    background: rgba(244, 63, 94, 0.1);
-    border-radius: 50%;
+    width: 75px;
+    height: 75px;
+    background: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0 auto 20px;
   }
 
-  .contact-icon-wrapper i {
-    font-size: 1.5rem;
-    color: #f43f5e;
+  .contact-icon-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Prevents the image from stretching */
+    border-radius: 50%; /* Makes square images circular to fit the design */
   }
 
   .contact-card h3 {
@@ -181,7 +183,7 @@
     
     <div class="contact-card">
       <div class="contact-icon-wrapper">
-        <i class="fa-solid fa-phone"></i>
+        <img src="https://www.clipartmax.com/png/middle/207-2074118_call-us-call-icon-png.png" alt="Call Us">
       </div>
       <h3>Call Us</h3>
       <p>Mon-Sat, 9AM to 7PM</p>
@@ -190,7 +192,7 @@
 
     <div class="contact-card">
       <div class="contact-icon-wrapper">
-        <i class="fa-solid fa-envelope"></i>
+        <img src="https://thumbs.dreamstime.com/b/contact-us-email-icon-isolated-glassy-blue-round-button-abstract-illustration-contact-us-email-icon-glassy-blue-round-button-100262306.jpg" alt="Email Us">
       </div>
       <h3>Email Us</h3>
       <p>We'll respond within 24 hours.</p>
@@ -199,7 +201,7 @@
 
     <div class="contact-card">
       <div class="contact-icon-wrapper">
-        <i class="fa-solid fa-location-dot"></i>
+        <img src="https://img.icons8.com/color/1200/visit.jpg" alt="Visit Us">
       </div>
       <h3>Visit Us</h3>
       <p>Corporate Headquarters</p>
