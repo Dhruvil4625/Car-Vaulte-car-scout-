@@ -1,11 +1,154 @@
 {% extends 'base.html' %}
-{% block title %}Privacy Policy | Car Scout{% endblock %}
+{% load static %}
+{% block title %}Privacy Policy | Car Vault{% endblock %}
+
 {% block content %}
-<section class="container">
-  <h2 class="cv-section-title">Privacy Policy</h2>
-  <div class="cv-card p-3">
-    <p>We respect your privacy. We only use your data to operate and improve the service, including showing relevant listings and enabling messaging and test drives.</p>
-    <p>We do not sell your personal information. You may request data deletion via Contact.</p>
+<style>
+  /* --- Legal Hero Section --- */
+  .legal-hero {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(11, 17, 32, 0.98) 100%), 
+                url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    padding: 80px 0 60px;
+    text-align: center;
+    color: #fff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .legal-hero h1 {
+    font-size: 2.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+
+  .legal-hero h1 span {
+    color: #f43f5e; /* Vibrant Red Accent */
+  }
+
+  .legal-hero p {
+    color: #94a3b8;
+    font-size: 1.1rem;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* --- Legal Content Card --- */
+  .legal-section {
+    padding: 60px 0 80px;
+  }
+
+  .legal-content-card {
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 50px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    color: #94a3b8;
+    font-size: 1.05rem;
+    line-height: 1.8;
+  }
+
+  .legal-header {
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 30px;
+    margin-bottom: 40px;
+  }
+
+  .badge-update {
+    background-color: rgba(244, 63, 94, 0.1);
+    color: #f43f5e;
+    border: 1px solid rgba(244, 63, 94, 0.2);
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: inline-block;
+    margin-bottom: 15px;
+  }
+
+  .legal-content-card h3 {
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 1.3rem;
+    margin-top: 35px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .legal-content-card h3 i {
+    color: #f43f5e;
+    font-size: 1.2rem;
+    background: rgba(244, 63, 94, 0.1);
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+  }
+
+  .legal-content-card p:last-child {
+    margin-bottom: 0;
+  }
+
+  .legal-link {
+    color: #f43f5e;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+  }
+
+  .legal-link:hover {
+    color: #ffffff;
+    text-decoration: underline;
+  }
+
+  @media (max-width: 768px) {
+    .legal-content-card {
+      padding: 30px 20px;
+    }
+  }
+</style>
+
+<section class="legal-hero">
+  <div class="container">
+    <h1>Privacy <span>Policy</span></h1>
+    <p>Your data security and privacy are our top priorities.</p>
   </div>
 </section>
+
+<section class="legal-section">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        
+        <div class="legal-content-card">
+          
+          <div class="legal-header">
+            <span class="badge-update">Last Updated: February 2026</span>
+            <p class="mb-0 text-light">Welcome to Car Vault. We respect your privacy and are committed to protecting your personal data while you find your next vehicle.</p>
+          </div>
+
+          <h3><i class="fa-solid fa-shield-halved"></i> Data Collection & Usage</h3>
+          <p>We respect your privacy. We only use your data to operate, maintain, and improve the Car Vault service. This includes showing you relevant vehicle listings based on your preferences, enabling secure messaging between buyers and sellers, and coordinating test drives seamlessly.</p>
+
+          <h3><i class="fa-solid fa-user-lock"></i> Information Sharing</h3>
+          <p>We firmly believe that your data is yours. We do not sell, rent, or trade your personal information to third parties or marketing agencies under any circumstances.</p>
+
+          <h3><i class="fa-solid fa-database"></i> Data Deletion & Control</h3>
+          <p>You have full control over your digital footprint on our platform. You may request a complete export or deletion of your personal data at any time by reaching out to our support team via the <a href="{% url 'contact' %}" class="legal-link">Contact</a> page.</p>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
 {% endblock %}
