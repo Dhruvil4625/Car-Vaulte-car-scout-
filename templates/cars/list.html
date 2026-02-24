@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load currency %}{% load images %}
+{% block title %}Used Cars | Car Scout{% endblock %}
+{% block content %}
+<section class="container">
+  <div class="page-banner">
+    <strong>Used Cars</strong>
+    <span class="banner-meta">Browse, filter, and find enthusiasts’ picks</span>
+  </div>
+  <div class="cv-card p-3 mb-3">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-sm-6 col-md-3">
+        <label class="form-label">Fuel</label>
+        <select class="form-select" name="fuel">
+          <option value="">All</option>
+          <option value="Petrol" {% if fuel == 'Petrol' %}selected{% endif %}>Petrol</option>
+          <option value="Diesel" {% if fuel == 'Diesel' %}selected{% endif %}>Diesel</option>
+          <option value="Electric" {% if fuel == 'Electric' %}selected{% endif %}>Electric</option>
+          <option value="Hybrid" {% if fuel == 'Hybrid' %}selected{% endif %}>Hybrid</option>
+          <option value="CNG" {% if fuel == 'CNG' %}selected{% endif %}>CNG</option>
+        </select>
+      </div>
+      <div class="col-sm-6 col-md-3">
+        <label class="form-label">Search</label>
+        <input class="form-control" type="text" name="brand" value="{{ brand }}" placeholder="Brand">
+      </div>
+      <div class="col-sm-6 col-md-3">
+        <label class="form-label">Model</label>
+        <input class="form-control" type="text" name="model" value="{{ model }}" placeholder="Model">
+      </div>
+      <div class="col-sm-6 col-md-3">
+        <button class="btn btn-dark w-100">Apply</button>
+      </div>
+    </form>
+  </div>
+  <div class="row g-3">
+    {% for car in cars %}
+      <div class="col-md-4">
+        <div class="cs-card h-100">
+          <img loading="lazy" src="{% car_image car.make car.model '600x400' %}" alt="{{ car.make }} {{ car.model }}" class="cs-card-img">
+          <div class="cs-card-body">
+            <h5 class="cs-card-title">{{ car.make }} {{ car.model }}</h5>
+            <p class="text-muted mb-2">{{ car.year }} • {{ car.fuel_type|default:'—' }} • {{ car.transmission|default:'—' }}</p>
+            <div class="d-flex justify-content-between">
+              <span>Mileage: {{ car.mileage|default:'—' }} km</span>
+              <span>Body: {{ car.body_type|default:'—' }}</span>
+            </div>
+            {% if request.user.is_staff %}
+            <div class="mt-2 d-flex gap-2">
+              {% if car.vin %}
+                <a href="{% url 'car_edit' car.vin %}" class="btn btn-warning">Edit</a>
+                <a href="{% url 'car_delete' car.vin %}" class="btn btn-danger">Delete</a>
+              {% else %}
+                <span class="btn btn-warning disabled">Edit</span>
+                <span class="btn btn-danger disabled">Delete</span>
+              {% endif %}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12"><div class="cv-card p-4 text-center">No cars found for selected filters.</div></div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
