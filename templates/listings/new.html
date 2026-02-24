@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}New Listing | Car Scout{% endblock %}
+{% block content %}
+<section class="container">
+  <h2 class="cv-section-title">Create Listing</h2>
+  <form method="post" enctype="multipart/form-data" class="cv-card p-3">
+    {% csrf_token %}
+    <h5>Car</h5>
+    {{ car_form.as_p }}
+    <h5>Listing</h5>
+    {{ listing_form.as_p }}
+    <h5>Photos</h5>
+    <div class="mb-3">
+      <label class="form-label">Upload Photos</label>
+      <input type="file" name="images" multiple accept="image/*" class="form-control">
+      <small class="text-muted">You can select multiple images.</small>
+    </div>
+    <div class="d-flex gap-2 mt-2">
+      <button class="btn btn-primary">Publish</button>
+      <a href="{% url 'sell' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+</section>
+{% endblock %}
