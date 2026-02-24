@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load currency %}{% load images %}{% load static %}
+{% block title %}Listings | Car Scout{% endblock %}
+{% block content %}
+<section class="container">
+  <div class="page-banner">
+    <strong>Latest Listings</strong>
+    <span class="banner-meta">Hand-picked deals for drivers</span>
+  </div>
+  <h2 class="cv-section-title">All Listings</h2>
+  <div class="cv-card p-3 mb-3">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-sm-6 col-md-3">
+        <label class="form-label">Budget</label>
+        <select class="form-select" name="budget">
+          <option value="">Any</option>
+          <option value="0-500000" {% if budget == '0-500000' %}selected{% endif %}>Under ₹ 5 Lakh</option>
+          <option value="500000-1000000" {% if budget == '500000-1000000' %}selected{% endif %}>₹ 5–10 Lakh</option>
+          <option value="1000000-1500000" {% if budget == '1000000-1500000' %}selected{% endif %}>₹ 10–15 Lakh</option>
+          <option value="1500000-2000000" {% if budget == '1500000-2000000' %}selected{% endif %}>₹ 15–20 Lakh</option>
+          <option value="2000000-3500000" {% if budget == '2000000-3500000' %}selected{% endif %}>₹ 20–35 Lakh</option>
+          <option value="3500000-5000000" {% if budget == '3500000-5000000' %}selected{% endif %}>₹ 35–50 Lakh</option>
+          <option value="5000000-10000000" {% if budget == '5000000-10000000' %}selected{% endif %}>₹ 50 Lakh–1 Cr</option>
+          <option value="10000000-999000000" {% if budget == '10000000-999000000' %}selected{% endif %}>Above ₹ 1 Cr</option>
+        </select>
+      </div>
+      <div class="col-sm-6 col-md-3">
+        <label class="form-label">Brand</label>
+        <input class="form-control" type="text" name="brand" value="{{ brand }}" placeholder="e.g., Toyota, BMW">
+      </div>
+      <div class="col-sm-6 col-md-3">
+        <label class="form-label">Model</label>
+        <input class="form-control" type="text" name="model" value="{{ model }}" placeholder="e.g., Camry">
+      </div>
+      <div class="col-sm-6 col-md-3">
+        <label class="form-label">Fuel</label>
+        <select class="form-select" name="fuel">
+          <option value="">All</option>
+          <option value="Petrol" {% if fuel == 'Petrol' %}selected{% endif %}>Petrol</option>
+          <option value="Diesel" {% if fuel == 'Diesel' %}selected{% endif %}>Diesel</option>
+          <option value="Electric" {% if fuel == 'Electric' %}selected{% endif %}>Electric</option>
+          <option value="Hybrid" {% if fuel == 'Hybrid' %}selected{% endif %}>Hybrid</option>
+          <option value="CNG" {% if fuel == 'CNG' %}selected{% endif %}>CNG</option>
+        </select>
+      </div>
+      <div class="col-sm-6 col-md-3">
+        <button class="btn btn-dark w-100">Apply</button>
+      </div>
+    </form>
+  </div>
+  <div class="row g-3">
+    {% for lst in listings %}
+    <div class="col-md-4">
+      <div class="cs-card h-100">
+        {% if lst.images.all %}
+          <img loading="lazy" src="{{ lst.images.all.0.image.url }}" alt="{{ lst.images.all.0.alt|default:lst.car.make }}" class="cs-card-img" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+        {% else %}
+          <img loading="lazy" src="{% car_image lst.car.make lst.car.model '600x400' %}" alt="{{ lst.car.make }} {{ lst.car.model }}" class="cs-card-img" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+        {% endif %}
+        <div class="cs-card-body">
+          <h5 class="cs-card-title">{{ lst.car.make }} {{ lst.car.model }} ({{ lst.car.year }})</h5>
+          <p class="cs-card-price">{{ lst.price|inr }}</p>
+          <p class="text-muted">Seller: {{ lst.seller.email }}</p>
+          {% if lst.images.all %}
+          <div class="cs-thumbs mt-2">
+            {% for img in lst.images.all|slice:":4" %}
+              <img loading="lazy" src="{{ img.image.url }}" alt="{{ img.alt }}" class="cs-thumb" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+            {% endfor %}
+          </div>
+          {% else %}
+          {% car_gallery lst.car.make lst.car.model '300x200' 4 as thumbs %}
+          <div class="cs-thumbs mt-2">
+            {% for t in thumbs %}
+              <img loading="lazy" src="{{ t }}" alt="{{ lst.car.make }} {{ lst.car.model }} image {{ forloop.counter }}" class="cs-thumb" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+            {% endfor %}
+          </div>
+          {% endif %}
+          <div class="d-flex justify-content-between">
+            <span>Mileage: {{ lst.mileage }} km</span>
+            <span>Status: {{ lst.status }}</span>
+          </div>
+          <div class="mt-2 d-flex gap-2">
+            <a href="{% url 'listing_edit' lst.listing_id %}" class="btn btn-warning">Edit</a>
+            <a href="{% url 'listing_delete' lst.listing_id %}" class="btn btn-danger">Delete</a>
+            <a href="https://www.carwale.com/{{ lst.car.make|lower }}-cars/{{ lst.car.model|lower }}/" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary">More info</a>
+            {% if request.user.is_staff %}
+            <a href="{% url 'testdrive_new' %}?listing_id={{ lst.listing_id }}" class="btn btn-outline-dark">Test Drive</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-12"><div class="cv-card p-4 text-center">No listings yet.</div></div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
