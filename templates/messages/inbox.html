@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}Messages | Car Scout{% endblock %}
+{% block content %}
+<section class="container">
+  <h2 class="cv-section-title">Inbox</h2>
+  <div class="list-group">
+    {% for m in messages %}
+      <a class="list-group-item list-group-item-action">
+        <div class="d-flex w-100 justify-content-between">
+          <h6 class="mb-1">
+            {{ m.sender.email }}
+            {% if m.sender.role == 'Buyer' %}
+              <span class="badge bg-primary ms-2">Buyer</span>
+            {% elif m.sender.role == 'Seller' %}
+              <span class="badge bg-dark ms-2">Seller</span>
+            {% endif %}
+          </h6>
+          <small>{{ m.sent_at }}</small>
+        </div>
+        <p class="mb-1">{{ m.content }}</p>
+        {% if m.listing %}
+        <small>Regarding: {{ m.listing.car.make }} {{ m.listing.car.model }} ({{ m.listing.car.year }}) • {{ m.listing.price }}</small>
+        {% endif %}
+      </a>
+    {% empty %}
+      <div class="cv-card p-4 text-center">No messages.</div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
