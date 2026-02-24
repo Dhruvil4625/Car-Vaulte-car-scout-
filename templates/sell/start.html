@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Sell Your Car | Car Scout{% endblock %}
+{% block content %}
+<section class="container">
+  <div class="cs-sell-card">
+    <h3>List Your Car</h3>
+    <p>Create a listing with photos, price, and details.</p>
+    <a href="{% url 'listing_new' %}" class="btn btn-primary">Start Listing</a>
+  </div>
+</section>
+{% endblock %}
