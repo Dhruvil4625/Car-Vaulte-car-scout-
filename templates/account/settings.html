@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Account Settings | Car Scout{% endblock %}
+{% block content %}
+<section class="container mt-3">
+  <h2 class="cv-section-title">Account Settings</h2>
+  <div class="row g-3">
+    <div class="col-12 col-md-6">
+      <div class="cv-card p-3 reveal">
+        <h5 class="mb-3">Profile</h5>
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Name</label>
+            <input class="form-control" type="text" name="name" value="{{ user.name }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Phone</label>
+            <input class="form-control" type="text" name="phone" value="{{ user.phone }}">
+          </div>
+          <button class="btn btn-primary">Save Changes</button>
+        </form>
+      </div>
+    </div>
+    <div class="col-12 col-md-6">
+      <div class="cv-card p-3 reveal">
+        <h5 class="mb-3">Role</h5>
+        <p class="mb-2">Current role: <strong>{{ user.role }}</strong></p>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="switch">
+          <button class="btn btn-outline-dark">Switch to {% if user.role == 'Buyer' %}Seller{% else %}Buyer{% endif %}</button>
+        </form>
+        <p class="mt-2 text-muted">Switching creates the required profile automatically.</p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
