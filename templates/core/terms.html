@@ -1,10 +1,142 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Terms & Conditions | Car Scout{% endblock %}
+
 {% block content %}
-<section class="container">
-  <h2 class="cv-section-title">Terms & Conditions</h2>
-  <div class="cv-card p-3">
-    <p>By using Car Scout, you agree to list accurate information, follow applicable laws, and accept that transactions are between buyers and sellers. We provide the platform and tools to help you connect and complete sales.</p>
+<style>
+  /* --- Legal Hero Section --- */
+  .legal-hero {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(11, 17, 32, 0.98) 100%), 
+                url('https://images.unsplash.com/photo-1589829085413-56de8ae18c73?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    padding: 80px 0 60px;
+    text-align: center;
+    color: #fff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .legal-hero h1 {
+    font-size: 2.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+
+  .legal-hero h1 span {
+    color: #f43f5e; /* Vibrant Red Accent */
+  }
+
+  .legal-hero p {
+    color: #94a3b8;
+    font-size: 1.1rem;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* --- Legal Content Card --- */
+  .legal-section {
+    padding: 60px 0 80px;
+  }
+
+  .legal-content-card {
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 50px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    color: #94a3b8;
+    font-size: 1.05rem;
+    line-height: 1.8;
+  }
+
+  .legal-header {
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 30px;
+    margin-bottom: 40px;
+  }
+
+  .badge-update {
+    background-color: rgba(244, 63, 94, 0.1);
+    color: #f43f5e;
+    border: 1px solid rgba(244, 63, 94, 0.2);
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: inline-block;
+    margin-bottom: 15px;
+  }
+
+  .legal-content-card h3 {
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 1.3rem;
+    margin-top: 35px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .legal-content-card h3 i {
+    color: #f43f5e;
+    font-size: 1.2rem;
+    background: rgba(244, 63, 94, 0.1);
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+  }
+
+  .legal-content-card p:last-child {
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 768px) {
+    .legal-content-card {
+      padding: 30px 20px;
+    }
+  }
+</style>
+
+<section class="legal-hero">
+  <div class="container">
+    <h1>Terms & <span>Conditions</span></h1>
+    <p>The rules of the road for using the Car Scout platform.</p>
   </div>
 </section>
+
+<section class="legal-section">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        
+        <div class="legal-content-card">
+          
+          <div class="legal-header">
+            <span class="badge-update">Last Updated: February 2026</span>
+            <p class="mb-0 text-light">Welcome to Car Scout. By accessing or using our platform, you agree to be bound by the following terms and conditions.</p>
+          </div>
+
+          <h3><i class="fa-solid fa-clipboard-check"></i> Accuracy of Information</h3>
+          <p>By using Car Scout, you agree to list highly accurate and truthful information regarding any vehicle you post for sale. Misrepresentation of a vehicle's condition, mileage, or history is strictly prohibited and may result in account termination.</p>
+
+          <h3><i class="fa-solid fa-scale-balanced"></i> Compliance with Laws</h3>
+          <p>Users must adhere to all applicable local, state, and national laws regarding the sale and transfer of motor vehicles. You are solely responsible for ensuring you have the legal right to sell any listed vehicle.</p>
+
+          <h3><i class="fa-solid fa-handshake-angle"></i> Platform Transactions</h3>
+          <p>Car Scout provides the platform, digital showroom, and tools to help connect buyers and sellers. However, please accept and acknowledge that all final transactions, financial agreements, and physical vehicle transfers are strictly between the buyer and the seller. Car Scout is not a party to the actual sale contract.</p>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
 {% endblock %}
