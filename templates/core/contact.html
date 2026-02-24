@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Contact | Car Vault{% endblock %}
+
+{% block content %}
+<style>
+  /* --- Contact Hero Section --- */
+  .contact-hero {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(11, 17, 32, 0.95) 100%), 
+                url('https://images.unsplash.com/photo-1485291571150-772bcfc10da5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    padding: 80px 0 60px;
+    text-align: center;
+    color: #fff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .contact-hero h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+  }
+
+  .contact-hero h1 span {
+    color: #f43f5e; /* Vibrant Red Accent */
+  }
+
+  .contact-hero p {
+    color: #94a3b8;
+    font-size: 1.1rem;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* --- Contact Info Cards --- */
+  .contact-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin-top: -40px; /* Pulls cards slightly over the hero section */
+    position: relative;
+    z-index: 10;
+  }
+
+  .contact-card {
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 30px 20px;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+  }
+
+  .contact-card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(244, 63, 94, 0.5);
+    box-shadow: 0 20px 40px rgba(244, 63, 94, 0.1);
+  }
+
+  .contact-icon-wrapper {
+    width: 60px;
+    height: 60px;
+    background: rgba(244, 63, 94, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+  }
+
+  .contact-icon-wrapper i {
+    font-size: 1.5rem;
+    color: #f43f5e;
+  }
+
+  .contact-card h3 {
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+  }
+
+  .contact-card p, .contact-card a {
+    color: #94a3b8;
+    font-size: 1rem;
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .contact-card a:hover {
+    color: #fff;
+  }
+
+  /* --- Contact Form Section --- */
+  .contact-form-section {
+    padding: 60px 0 80px;
+  }
+
+  .form-wrapper {
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  }
+
+  .form-title {
+    color: #fff;
+    font-weight: 700;
+    margin-bottom: 5px;
+    font-size: 1.8rem;
+  }
+
+  .form-subtitle {
+    color: #64748b;
+    margin-bottom: 30px;
+    font-size: 0.95rem;
+  }
+
+  /* Input Styling */
+  .contact-form label {
+    color: #cbd5e1;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  .contact-form .form-control {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border-radius: 8px;
+    padding: 12px 16px;
+    transition: all 0.3s ease;
+  }
+
+  .contact-form .form-control:focus {
+    background: rgba(0, 0, 0, 0.6);
+    border-color: #f43f5e;
+    box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.15);
+  }
+
+  .contact-form textarea.form-control {
+    min-height: 150px;
+    resize: vertical;
+  }
+
+  .btn-submit {
+    background-color: #f43f5e;
+    color: #fff;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 14px 30px;
+    border: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+  }
+
+  .btn-submit:hover {
+    background-color: #e11d48;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(225, 29, 72, 0.2);
+  }
+</style>
+
+<section class="contact-hero">
+  <div class="container">
+    <h1>Get in <span>Touch</span></h1>
+    <p>Have questions about a vehicle, financing, or test drives? Our team is ready to help you hit the road.</p>
+  </div>
+</section>
+
+<div class="container">
+  <div class="contact-info-grid">
+    
+    <div class="contact-card">
+      <div class="contact-icon-wrapper">
+        <img src="{% static 'img/phone-icon.png' %}" alt="Phone Icon" class="contact-icon">
+        <i class="fa-solid fa-phone"></i>
+      </div>
+      <h3>Call Us</h3>
+      <p>Mon-Sat, 9AM to 7PM</p>
+      <a href="tel:+919909945734" class="fw-bold fs-5">+91 99099 45734</a>
+    </div>
+
+    <div class="contact-card">
+      <div class="contact-icon-wrapper">
+        <i class="fa-solid fa-envelope"></i>
+      </div>
+      <h3>Email Us</h3>
+      <p>We'll respond within 24 hours.</p>
+      <a href="mailto:ramoliadk@gmail.com" class="fw-bold">ramoliadk@gmail.com</a>
+    </div>
+
+    <div class="contact-card">
+      <div class="contact-icon-wrapper">
+        <i class="fa-solid fa-location-dot"></i>
+      </div>
+      <h3>Visit Us</h3>
+      <p>Corporate Headquarters</p>
+      <p class="fw-bold mb-0 text-light">Vadodara, Gujarat</p>
+    </div>
+
+  </div>
+</div>
+
+<section class="contact-form-section">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        
+        <div class="form-wrapper">
+          <h2 class="form-title">Send a Message</h2>
+          <p class="form-subtitle">Fill out the form below and one of our automotive experts will get back to you shortly.</p>
+          
+          <form class="contact-form row g-3" action="#" method="POST">
+            {% csrf_token %}
+            
+            <div class="col-md-6">
+              <label class="form-label">Full Name</label>
+              <input type="text" class="form-control" placeholder="John Doe" required>
+            </div>
+            
+            <div class="col-md-6">
+              <label class="form-label">Email Address</label>
+              <input type="email" class="form-control" placeholder="john@example.com" required>
+            </div>
+            
+            <div class="col-md-12">
+              <label class="form-label">Subject</label>
+              <input type="text" class="form-control" placeholder="e.g., Inquiry about BMW M4" required>
+            </div>
+            
+            <div class="col-md-12">
+              <label class="form-label">Your Message</label>
+              <textarea class="form-control" placeholder="How can we help you today?" required></textarea>
+            </div>
+            
+            <div class="col-12 text-end mt-4">
+              <button type="submit" class="btn btn-submit w-100 w-md-auto">
+                <i class="fa-solid fa-paper-plane me-2"></i> Send Message
+              </button>
+            </div>
+            
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
