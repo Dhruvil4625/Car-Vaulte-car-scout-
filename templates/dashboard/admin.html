@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Command Center | Car Scout{% endblock %}
+
+{% block content %}
+<style>
+  /* --- Admin Dashboard Specific Styles --- */
+  .admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  .admin-title-group {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  /* Polished Wrapper for Custom Admin Icon */
+  .admin-icon-wrapper {
+    width: 65px;
+    height: 65px;
+    background: #ffffff; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    border: 2px solid rgba(225, 29, 72, 0.2);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+    padding: 10px;
+    flex-shrink: 0;
+  }
+
+  .admin-icon-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; 
+  }
+
+  .admin-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .admin-title span {
+    color: var(--primary);
+  }
+
+  .admin-date {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* --- Segment Cards (Buyers/Sellers) --- */
+  .segment-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 25px;
+    border: 1px solid var(--border-color);
+    text-align: center;
+    transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .segment-card:hover {
+    box-shadow: var(--shadow-md);
+  }
+
+  .segment-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin: 10px 0;
+  }
+
+  .segment-card .btn-outline-custom {
+    margin-top: auto;
+    border: 2px solid var(--border-color);
+    color: var(--text-main);
+    font-weight: 700;
+    padding: 8px 20px;
+    border-radius: 8px;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+  }
+
+  .segment-card .btn-outline-custom:hover {
+    background: var(--text-main);
+    border-color: var(--text-main);
+    color: #ffffff;
+  }
+
+  /* --- Quick Actions Panel --- */
+  .quick-action-card {
+    background: var(--text-main);
+    color: #ffffff;
+    border-radius: 16px;
+    padding: 25px;
+    height: 100%;
+    box-shadow: var(--shadow-md);
+  }
+
+  .quick-action-card h4 {
+    color: #ffffff;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 10px;
+  }
+
+  .action-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .action-btn {
+    background: rgba(255, 255, 255, 0.05);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 12px 15px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+
+  .action-btn i {
+    color: var(--primary);
+  }
+
+  .action-btn:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #ffffff;
+    transform: translateX(5px);
+  }
+
+  .action-btn:hover i {
+    color: #ffffff;
+  }
+
+  /* Enhancing your provided snippet slightly for typography */
+  .cv-card .fw-bold {
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-top: 10px;
+  }
+  
+  .cv-card .fs-4 {
+    font-size: 2rem !important;
+    font-weight: 800;
+    color: var(--text-main);
+  }
+</style>
+
+<section class="container mb-5">
+  
+  <div class="admin-header reveal">
+    <div class="admin-title-group">
+      <div class="admin-icon-wrapper">
+        <img src="https://cdn-icons-png.flaticon.com/512/6328/6328038.png" alt="Admin Dashboard Summary">
+      </div>
+      <div>
+        <h2 class="admin-title">Command <span>Center</span></h2>
+        <p class="mb-0 text-muted">Admin Dashboard Summary</p>
+      </div>
+    </div>
+    <div class="admin-date">
+      <i class="fa-regular fa-clock" style="color: var(--primary);"></i>
+      {% now "l, F j, Y" %}
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4 reveal" style="transition-delay: 0.1s;">
+    <div class="col-md-3"><div class="cv-card p-3 text-center"><div class="fs-1">👥</div><div class="fw-bold">Users</div><div class="fs-4">{{ users_count }}</div></div></div>
+    <div class="col-md-3"><div class="cv-card p-3 text-center"><div class="fs-1">🛒</div><div class="fw-bold">Listings</div><div class="fs-4">{{ listings_count }}</div></div></div>
+    <div class="col-md-3"><div class="cv-card p-3 text-center"><div class="fs-1">💬</div><div class="fw-bold">Messages</div><div class="fs-4">{{ messages_count }}</div></div></div>
+    <div class="col-md-3"><div class="cv-card p-3 text-center"><div class="fs-1">🏁</div><div class="fw-bold">Test Drives</div><div class="fs-4">{{ drives_count }}</div></div></div>
+  </div>
+
+  <div class="row g-4">
+    
+    <div class="col-lg-8">
+      <div class="row g-4 h-100">
+        <div class="col-md-4">
+          <div class="segment-card reveal" style="transition-delay: 0.2s;">
+            <div class="fw-bold text-muted text-uppercase" style="letter-spacing: 1px;"><i class="fa-solid fa-user-tag me-2"></i> Buyers</div>
+            <div class="segment-value">{{ buyers_count|default:"0" }}</div>
+            <a href="{% url 'buyers' %}" class="btn btn-outline-custom mt-3 w-100">Manage Buyers</a>
+          </div>
+        </div>
+        
+        <div class="col-md-4">
+          <div class="segment-card reveal" style="transition-delay: 0.3s;">
+            <div class="fw-bold text-muted text-uppercase" style="letter-spacing: 1px;"><i class="fa-solid fa-user-tie me-2"></i> Sellers</div>
+            <div class="segment-value">{{ sellers_count|default:"0" }}</div>
+            <a href="{% url 'sellers' %}" class="btn btn-outline-custom mt-3 w-100">Manage Sellers</a>
+          </div>
+        </div>
+        
+        <div class="col-md-4">
+          <div class="segment-card reveal" style="transition-delay: 0.4s;">
+            <div class="fw-bold text-success text-uppercase" style="letter-spacing: 1px;"><i class="fa-solid fa-check-double me-2"></i> Sales</div>
+            <div class="segment-value text-success">{{ sales_count|default:"0" }}</div>
+            <a href="{% url 'listings' %}" class="btn btn-outline-custom mt-3 w-100">View Inventory</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="quick-action-card reveal" style="transition-delay: 0.5s;">
+        <h4><i class="fa-solid fa-bolt me-2" style="color: var(--primary);"></i> Quick Actions</h4>
+        <div class="action-list">
+          <a href="{% url 'sell' %}" class="action-btn">
+            <i class="fa-solid fa-plus-circle"></i> Add New Listing
+          </a>
+          <a href="{% url 'testdrive_new' %}" class="action-btn">
+            <i class="fa-solid fa-calendar-plus"></i> Schedule Test Drive
+          </a>
+          <a href="{% url 'cities' %}" class="action-btn">
+            <i class="fa-solid fa-map-location-dot"></i> Manage Cities
+          </a>
+          <a href="/admin/" class="action-btn" target="_blank">
+            <i class="fa-solid fa-database"></i> Open Django Admin
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</section>
+{% endblock %}
