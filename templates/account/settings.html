@@ -34,5 +34,103 @@
       </div>
     </div>
   </div>
+  <div class="row g-3 mt-3">
+    <div class="col-12 col-lg-6">
+      <div class="cv-card p-3 reveal">
+        <h5 class="mb-3">Inbox</h5>
+        <div class="list-group">
+          {% for m in msgs_in %}
+            <a class="list-group-item">
+              <div class="d-flex w-100 justify-content-between">
+                <strong>{{ m.sender.email }}</strong>
+                <small>{{ m.sent_at }}</small>
+              </div>
+              <div class="text-muted mb-1">{% if m.listing %}{{ m.listing.car.make }} {{ m.listing.car.model }} ({{ m.listing.car.year }}) • {{ m.listing.price }}{% endif %}</div>
+              <div>{{ m.content }}</div>
+            </a>
+          {% empty %}
+            <div class="text-muted">No messages.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-6">
+      <div class="cv-card p-3 reveal">
+        <h5 class="mb-3">Sent</h5>
+        <div class="list-group">
+          {% for m in msgs_out %}
+            <a class="list-group-item">
+              <div class="d-flex w-100 justify-content-between">
+                <strong>{{ m.receiver.email }}</strong>
+                <small>{{ m.sent_at }}</small>
+              </div>
+              <div class="text-muted mb-1">{% if m.listing %}{{ m.listing.car.make }} {{ m.listing.car.model }} ({{ m.listing.car.year }}) • {{ m.listing.price }}{% endif %}</div>
+              <div>{{ m.content }}</div>
+            </a>
+          {% empty %}
+            <div class="text-muted">No messages.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% if user.role == 'Seller' %}
+  <div class="row g-3 mt-3">
+    <div class="col-12 col-lg-6">
+      <div class="cv-card p-3 reveal">
+        <h5 class="mb-3">Your Listings</h5>
+        <div class="list-group">
+          {% for l in listings %}
+            <a class="list-group-item d-flex justify-content-between" href="{% url 'listing_detail' l.listing_id %}">
+              <div><strong>{{ l.car.make }} {{ l.car.model }}</strong><div class="text-muted">{{ l.car.year }} • {{ l.status }}</div></div>
+              <div class="fw-bold">{{ l.price }}</div>
+            </a>
+          {% empty %}
+            <div class="text-muted">No listings.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-6">
+      <div class="cv-card p-3 reveal">
+        <h5 class="mb-3">Sales</h5>
+        <div class="list-group">
+          {% for t in sales %}
+            <a class="list-group-item">
+              <div class="d-flex w-100 justify-content-between">
+                <div><strong>{{ t.listing.car.make }} {{ t.listing.car.model }}</strong><div class="text-muted">{{ t.listing.car.year }}</div></div>
+                <div class="fw-bold">{{ t.final_price }}</div>
+              </div>
+              <div class="text-muted">Buyer: {{ t.buyer.email }} • {{ t.status }}</div>
+            </a>
+          {% empty %}
+            <div class="text-muted">No sales.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="row g-3 mt-3">
+    <div class="col-12">
+      <div class="cv-card p-3 reveal">
+        <h5 class="mb-3">Purchases</h5>
+        <div class="list-group">
+          {% for t in purchases %}
+            <a class="list-group-item">
+              <div class="d-flex w-100 justify-content-between">
+                <div><strong>{{ t.listing.car.make }} {{ t.listing.car.model }}</strong><div class="text-muted">{{ t.listing.car.year }}</div></div>
+                <div class="fw-bold">{{ t.final_price }}</div>
+              </div>
+              <div class="text-muted">Seller: {{ t.seller.email }} • {{ t.status }}</div>
+            </a>
+          {% empty %}
+            <div class="text-muted">No purchases.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 </section>
 {% endblock %}
