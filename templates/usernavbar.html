@@ -40,6 +40,7 @@
         <li><a href="{% url 'testdrives' %}" class="{% if request.resolver_match.url_name == 'testdrives' %}active{% endif %}">Test Drives</a></li>
         <li><a href="{% url 'buyers' %}" class="{% if request.resolver_match.url_name == 'buyers' %}active{% endif %}">Buyers</a></li>
         <li><a href="{% url 'sellers' %}" class="{% if request.resolver_match.url_name == 'sellers' %}active{% endif %}">Sellers</a></li>
+        <li><a href="{% url 'cities' %}" class="{% if request.resolver_match.url_name == 'cities' %}active{% endif %}">Cities</a></li>
         <li><a href="{% url 'sell' %}" class="{% if request.resolver_match.url_name == 'sell' %}active{% endif %}">Sell</a></li>
         <li><a href="{% url 'contact' %}" class="{% if request.resolver_match.url_name == 'contact' %}active{% endif %}">Contact</a></li>
       </ul>
