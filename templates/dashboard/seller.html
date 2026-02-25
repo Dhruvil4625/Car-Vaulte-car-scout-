@@ -1,0 +1,337 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Seller Hub | Car Scout{% endblock %}
+
+{% block content %}
+<style>
+  /* --- Dashboard Header --- */
+  .dash-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  .dash-title-group {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .dash-icon-wrapper {
+    width: 65px;
+    height: 65px;
+    background: #ffffff; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    border: 2px solid rgba(225, 29, 72, 0.2);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+    padding: 10px;
+    flex-shrink: 0;
+  }
+
+  .dash-icon-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; 
+  }
+
+  .dash-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .dash-title span {
+    color: var(--primary);
+  }
+
+  .dash-subtitle {
+    color: var(--text-muted);
+    margin: 0;
+    font-weight: 500;
+  }
+
+  /* --- Quick Action Bar --- */
+  .seller-actions {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+  }
+
+  .btn-dash-primary {
+    background-color: var(--primary);
+    color: #ffffff;
+    padding: 12px 25px;
+    border-radius: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(225, 29, 72, 0.2);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+  }
+
+  .btn-dash-primary:hover {
+    background-color: var(--primary-hover);
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(225, 29, 72, 0.3);
+  }
+
+  .btn-dash-secondary {
+    background-color: #ffffff;
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    padding: 12px 25px;
+    border-radius: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+  }
+
+  .btn-dash-secondary:hover {
+    background-color: var(--bg-subtle);
+    border-color: var(--text-light);
+    color: var(--text-main);
+  }
+
+  /* --- Dashboard Cards & Lists --- */
+  .dash-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 25px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    height: 100%;
+  }
+
+  .dash-card-header {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--text-main);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 15px;
+  }
+
+  .dash-card-header i {
+    color: var(--primary);
+  }
+
+  /* Custom List Rows */
+  .dash-list-item {
+    display: flex;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--bg-subtle);
+    gap: 15px;
+  }
+
+  .dash-list-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .dash-list-icon {
+    width: 45px;
+    height: 45px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  /* Dynamic Icon Backgrounds */
+  .icon-listing { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+  .icon-sale { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+  .icon-msg { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+
+  .dash-list-content {
+    flex-grow: 1;
+  }
+
+  .dash-list-content h6 {
+    margin: 0 0 3px 0;
+    font-weight: 700;
+    color: var(--text-main);
+    font-size: 1rem;
+  }
+
+  .dash-list-content p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .dash-list-meta {
+    font-weight: 800;
+    font-size: 1.1rem;
+    text-align: right;
+  }
+
+  /* --- Empty States --- */
+  .dash-empty {
+    background: var(--bg-subtle);
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-muted);
+  }
+  
+  .dash-empty i {
+    font-size: 2.5rem;
+    color: #cbd5e1;
+    margin-bottom: 10px;
+  }
+</style>
+
+<section class="container mb-5">
+  
+  <div class="dash-header reveal">
+    <div class="dash-title-group">
+      <div class="dash-icon-wrapper">
+        <img src="https://cdn.iconscout.com/icon/free/png-256/free-seller-dashboard-icon-svg-download-png-518185.png" alt="Seller Dashboard Summary">
+      </div>
+      <div>
+        <h2 class="dash-title">Seller <span>Hub</span></h2>
+        <p class="dash-subtitle">Welcome back, {{ request.user.name|default:request.user.email }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="seller-actions reveal" style="transition-delay: 0.1s;">
+    <a href="{% url 'listing_new' %}" class="btn-dash-primary">
+      <i class="fa-solid fa-plus-circle"></i> Create Listing
+    </a>
+    <a href="{% url 'account_settings' %}" class="btn-dash-secondary">
+      <i class="fa-solid fa-user-gear"></i> Profile Settings
+    </a>
+    <a href="{% url 'testdrives' %}" class="btn-dash-secondary d-none d-md-inline-flex">
+      <i class="fa-solid fa-steering-wheel"></i> Test Drives
+    </a>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-lg-6">
+      <div class="dash-card reveal" style="transition-delay: 0.2s;">
+        <div class="dash-card-header">
+          <i class="fa-solid fa-tags"></i> Active Inventory
+        </div>
+        
+        <div class="dash-list">
+          {% for l in listings %}
+            <div class="dash-list-item">
+              <div class="dash-list-icon icon-listing">
+                <i class="fa-solid fa-car-side"></i>
+              </div>
+              <div class="dash-list-content">
+                <h6>{{ l.car.make }} {{ l.car.model }} <span class="text-muted fw-normal ms-1">({{ l.car.year }})</span></h6>
+                <p>Status: Active</p>
+              </div>
+              <div class="dash-list-meta" style="color: var(--primary);">
+                {{ l.price }}
+              </div>
+            </div>
+          {% empty %}
+            <div class="dash-empty">
+              <i class="fa-solid fa-warehouse"></i>
+              <h6 class="fw-bold mt-2">Your lot is empty.</h6>
+              <p class="mb-0 text-muted" style="font-size: 0.85rem;">Ready to make a sale? Create your first listing above!</p>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="dash-card reveal" style="transition-delay: 0.3s;">
+        <div class="dash-card-header">
+          <i class="fa-solid fa-handshake"></i> Recent Sales
+        </div>
+        
+        <div class="dash-list">
+          {% for s in sales %}
+            <div class="dash-list-item">
+              <div class="dash-list-icon icon-sale">
+                <i class="fa-solid fa-sack-dollar"></i>
+              </div>
+              <div class="dash-list-content">
+                <h6>{{ s.listing.car.make }} {{ s.listing.car.model }}</h6>
+                <p>Transaction Complete</p>
+              </div>
+              <div class="dash-list-meta text-success">
+                {{ s.final_price }}
+              </div>
+            </div>
+          {% empty %}
+            <div class="dash-empty">
+              <i class="fa-solid fa-money-bill-trend-up"></i>
+              <h6 class="fw-bold mt-2">No sales recorded yet.</h6>
+              <p class="mb-0 text-muted" style="font-size: 0.85rem;">Once a buyer finalizes a purchase, it will appear here.</p>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-12">
+      <div class="dash-card reveal" style="transition-delay: 0.4s;">
+        <div class="dash-card-header">
+          <i class="fa-solid fa-inbox"></i> Secure Inbox
+        </div>
+        
+        <div class="dash-list">
+          {% for m in inbox %}
+            <div class="dash-list-item">
+              <div class="dash-list-icon icon-msg">
+                <i class="fa-solid fa-envelope-open-text"></i>
+              </div>
+              <div class="dash-list-content">
+                <h6>From: {{ m.sender.email }}</h6>
+                <p>{{ m.content }}</p>
+              </div>
+              <div class="dash-list-meta">
+                <button class="btn btn-sm btn-outline-primary" style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700;">Reply</button>
+              </div>
+            </div>
+          {% empty %}
+            <div class="dash-empty">
+              <i class="fa-regular fa-comments"></i>
+              <h6 class="fw-bold mt-2">Your inbox is empty.</h6>
+              <p class="mb-0 text-muted" style="font-size: 0.85rem;">Inquiries from potential buyers will be routed here.</p>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+</section>
+{% endblock %}
