@@ -82,9 +82,15 @@
           <div class="mt-2 d-flex gap-2">
             <a href="{% url 'listing_edit' lst.listing_id %}" class="btn btn-warning">Edit</a>
             <a href="{% url 'listing_delete' lst.listing_id %}" class="btn btn-danger">Delete</a>
-            <a href="https://www.carwale.com/{{ lst.car.make|lower }}-cars/{{ lst.car.model|lower }}/" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary">More info</a>
+            <a href="{% url 'listing_detail' lst.listing_id %}" class="btn btn-outline-primary">More details</a>
             {% if request.user.is_staff %}
             <a href="{% url 'testdrive_new' %}?listing_id={{ lst.listing_id }}" class="btn btn-outline-dark">Test Drive</a>
+            {% endif %}
+            {% if request.user.is_authenticated and request.user.role == 'Buyer' %}
+            <form method="post" action="{% url 'listing_purchase' lst.listing_id %}">
+              {% csrf_token %}
+              <button class="btn btn-primary">Buy</button>
+            </form>
             {% endif %}
           </div>
         </div>
