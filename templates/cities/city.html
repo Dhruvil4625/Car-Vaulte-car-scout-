@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% load currency %}{% load static %}{% load images %}
+
+{% block title %}{{ city }} Showrooms | Car Scout{% endblock %}
+
+{% block content %}
+<section class="container">
+  <div class="page-banner">
+    <strong>{{ city }}</strong>
+    <span class="banner-meta">Showrooms and available cars</span>
+  </div>
+  
+  <div class="cv-card p-3 mb-3">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-sm-6 col-md-3">
+        <label class="form-label">Brand / Model</label>
+        <input class="form-control" type="text" name="brand" value="{{ brand }}" placeholder="e.g., Toyota or Camry">
+      </div>
+      <div class="col-sm-6 col-md-3">
+        <label class="form-label">Fuel</label>
+        <select class="form-select" name="fuel">
+          <option value="">All</option>
+          <option value="Petrol" {% if fuel == 'Petrol' %}selected{% endif %}>Petrol</option>
+          <option value="Diesel" {% if fuel == 'Diesel' %}selected{% endif %}>Diesel</option>
+          <option value="Electric" {% if fuel == 'Electric' %}selected{% endif %}>Electric</option>
+          <option value="Hybrid" {% if fuel == 'Hybrid' %}selected{% endif %}>Hybrid</option>
+          <option value="CNG" {% if fuel == 'CNG' %}selected{% endif %}>CNG</option>
+        </select>
+      </div>
+      <div class="col-sm-6 col-md-3">
+        <label class="form-label">Body Type</label>
+        <input class="form-control" type="text" name="body" value="{{ body }}" placeholder="e.g., SUV, Sedan">
+      </div>
+      <div class="col-sm-6 col-md-3">
+        <label class="form-label">Transmission</label>
+        <input class="form-control" type="text" name="trans" value="{{ trans }}" placeholder="e.g., Automatic">
+      </div>
+      <div class="col-sm-6 col-md-3">
+        <label class="form-label">Budget</label>
+        <select class="form-select" name="budget">
+          <option value="">Any</option>
+          <option value="0-500000" {% if budget == '0-500000' %}selected{% endif %}>Under ₹ 5 Lakh</option>
+          <option value="500000-1000000" {% if budget == '500000-1000000' %}selected{% endif %}>₹ 5–10 Lakh</option>
+          <option value="1000000-1500000" {% if budget == '1000000-1500000' %}selected{% endif %}>₹ 10–15 Lakh</option>
+          <option value="1500000-2000000" {% if budget == '1500000-2000000' %}selected{% endif %}>₹ 15–20 Lakh</option>
+          <option value="2000000-3500000" {% if budget == '2000000-3500000' %}selected{% endif %}>₹ 20–35 Lakh</option>
+          <option value="3500000-5000000" {% if budget == '3500000-5000000' %}selected{% endif %}>₹ 35–50 Lakh</option>
+          <option value="5000000-10000000" {% if budget == '5000000-10000000' %}selected{% endif %}>₹ 50 Lakh–1 Cr</option>
+          <option value="10000000-999000000" {% if budget == '10000000-999000000' %}selected{% endif %}>Above ₹ 1 Cr</option>
+        </select>
+      </div>
+      <div class="col-sm-6 col-md-3">
+        <label class="form-label">Sort</label>
+        <select class="form-select" name="sort">
+          <option value="">Newest</option>
+          <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+          <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+        </select>
+      </div>
+      <div class="col-sm-6 col-md-3">
+        <button class="btn btn-dark w-100">Apply</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="row g-3">
+    {% for s in showrooms %}
+      <div class="col-12">
+        <div class="cv-card p-3">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="fw-bold">{{ s.name }}</div>
+              <div class="text-muted">{{ s.address|default:"—" }}{% if s.city %} • {{ s.city }}{% endif %}{% if s.state %} • {{ s.state }}{% endif %}</div>
+              
+              <div class="mt-2">
+                {% with q=s.name %}
+                <a class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/search/?api=1&query={{ q|urlencode }}+{{ s.city|urlencode }}+{{ s.address|urlencode }}">
+                   Open in Google Maps
+                </a>
+                {% endwith %}
+              </div>
+            </div>
+          </div>
+          
+          {% with q=s.name %}
+          <div class="mt-3">
+            {% if gmaps_key %}
+            <iframe title="Map" style="border:0;width:100%;height:220px" loading="lazy" referrerpolicy="no-referrer-when-downgrade" 
+                    src="https://www.google.com/maps/embed/v1/place?key={{ gmaps_key }}&q={{ q|urlencode }}+{{ s.city|urlencode }}+{{ s.address|urlencode }}">
+            </iframe>
+            {% else %}
+            <iframe title="Map" style="border:0;width:100%;height:220px" loading="lazy" referrerpolicy="no-referrer-when-downgrade" 
+                    src="https://maps.google.com/maps?q={{ q|urlencode }}+{{ s.city|urlencode }}+{{ s.address|urlencode }}&output=embed">
+            </iframe>
+            {% endif %}
+          </div>
+          {% endwith %}
+          
+          <div class="mt-2 d-flex gap-2">
+            {% if request.user.is_authenticated %}
+              {% if request.user.role == 'Seller' or request.user.is_staff %}
+                <a href="{% url 'listing_new' %}?showroom_id={{ s.showroom_id }}" class="btn btn-outline-dark btn-sm">Add Listing</a>
+                <a href="{% url 'arrival_new' %}" class="btn btn-outline-primary btn-sm">Publish Upcoming</a>
+              {% endif %}
+            {% endif %}
+          </div>
+          
+          <div class="mt-3">
+            <h6 class="mb-2">Cars in this showroom</h6>
+            <div class="row g-2">
+              {% for lst in listings %}
+              {% if lst.showroom and lst.showroom.name == s.name %}
+                <div class="col-md-4">
+                  <div class="cs-card h-100">
+                    {% if lst.images.all %}
+                      <img loading="lazy" src="{{ lst.images.all.0.image.url }}" alt="{{ lst.images.all.0.alt|default:lst.car.make }}" class="cs-card-img" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+                    {% else %}
+                      <img loading="lazy" src="{% car_image lst.car.make lst.car.model '600x400' %}" alt="{{ lst.car.make }} {{ lst.car.model }}" class="cs-card-img" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+                    {% endif %}
+                    <div class="cs-card-body">
+                      <h5 class="cs-card-title">{{ lst.car.make }} {{ lst.car.model }} ({{ lst.car.year }})</h5>
+                      <p class="cs-card-price">{{ lst.price|inr }}</p>
+                      <div class="d-flex justify-content-between">
+                        <span>Mileage: {{ lst.mileage }} km</span>
+                        <span>Status:
+                          {% if lst.status == 'Active' %}Available
+                          {% elif lst.status == 'Pending' %}Upcoming
+                          {% elif lst.status == 'Withdrawn' %}Not available for now
+                          {% else %}Sold{% endif %}
+                        </span>
+                      </div>
+                      <div class="mt-2 d-flex gap-2">
+                        <a href="{% url 'listing_detail' lst.listing_id %}" class="btn btn-outline-primary">Details</a>
+                        {% if request.user.is_authenticated and request.user.role == 'Buyer' and lst.status == 'Active' %}
+                        <form method="post" action="{% url 'listing_purchase' lst.listing_id %}">
+                          {% csrf_token %}
+                          <button class="btn btn-primary">Buy</button>
+                        </form>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {% endif %}
+              {% empty %}
+                <div class="col-12"><div class="text-muted">No cars listed yet.</div></div>
+              {% endfor %}
+            </div>
+          </div>
+          {% if arrivals %}
+          <div class="mt-3">
+            <h6 class="mb-2">Upcoming Arrivals</h6>
+            <ul class="list-group">
+              {% for a in arrivals %}
+                {% if a.showroom.name == s.name %}
+                <li class="list-group-item d-flex justify-content-between">
+                  <div><strong>{{ a.make }} {{ a.model }}</strong> <span class="text-muted">{{ a.year|default:'—' }}</span></div>
+                  <div>{{ a.expected_date }} • {{ a.status }}</div>
+                </li>
+                {% endif %}
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12"><div class="cv-card p-4 text-center">No showrooms found in this city.</div></div>
+    {% endfor %}
+  </div>
+  <div class="mt-3">
+    <a href="{% url 'cities' %}" class="btn btn-outline-dark">Back to Cities</a>
+  </div>
+</section>
+{% endblock %}
