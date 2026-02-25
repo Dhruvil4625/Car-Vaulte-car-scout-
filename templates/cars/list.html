@@ -1,18 +1,223 @@
 {% extends 'base.html' %}
-{% load currency %}{% load images %}
+{% load currency %}{% load static %}{% load images %}
 {% block title %}Used Cars | Car Scout{% endblock %}
+
 {% block content %}
-<section class="container">
-  <div class="page-banner">
-    <strong>Used Cars</strong>
-    <span class="banner-meta">Browse, filter, and find enthusiasts’ picks</span>
+<style>
+  /* --- Inventory Hero Section --- */
+  .list-hero {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%), 
+                url('https://images.unsplash.com/photo-1552519507-da3b142c6e3d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    padding: 60px 0 80px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .list-hero h1 {
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .list-hero h1 span {
+    color: #ef4444; /* Vibrant Red Accent */
+  }
+
+  .list-hero p {
+    color: #94a3b8;
+    font-size: 1.1rem;
+    margin: 0;
+  }
+
+  /* --- Floating Search Widget --- */
+  .search-widget-container {
+    max-width: 1100px;
+    margin: -50px auto 40px; /* Pulls it up over the hero */
+    position: relative;
+    z-index: 10;
+    padding: 0 20px;
+  }
+
+  .search-widget {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    padding: 25px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .search-widget label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .search-widget .form-control,
+  .search-widget .form-select {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    border-radius: 8px;
+    padding: 12px 15px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    box-shadow: none;
+  }
+
+  .search-widget .form-control:focus,
+  .search-widget .form-select:focus {
+    background-color: #fff;
+    border-color: #ef4444;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+  }
+
+  .btn-search-custom {
+    background-color: #0f172a;
+    color: #fff;
+    font-weight: 700;
+    padding: 12px 30px;
+    border-radius: 8px;
+    border: none;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    width: 100%;
+    height: 100%;
+  }
+
+  .btn-search-custom:hover {
+    background-color: #1e293b;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  /* --- Modern Listing Cards --- */
+  .modern-card {
+    background: #ffffff;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .modern-card:hover {
+    box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+    transform: translateY(-5px);
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+
+  .card-img-wrapper {
+    position: relative;
+    height: 220px;
+    overflow: hidden;
+    background: #f1f5f9;
+  }
+
+  .card-img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+
+  .modern-card:hover .card-img-wrapper img {
+    transform: scale(1.05);
+  }
+
+  .modern-card-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+
+  .car-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 12px;
+    line-height: 1.3;
+  }
+
+  .car-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 15px;
+    font-size: 0.8rem;
+    color: #64748b;
+  }
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+  }
+
+  .meta-item i {
+    color: #ef4444;
+  }
+
+  .car-details-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: #475569;
+    border-top: 1px dashed #e2e8f0;
+    padding-top: 15px;
+    margin-top: auto;
+  }
+
+  /* Admin Actions */
+  .admin-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 15px;
+  }
+
+  .empty-state {
+    background: #ffffff;
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 50px 20px;
+    text-align: center;
+    color: #64748b;
+  }
+</style>
+
+<section class="list-hero">
+  <div class="container">
+    <h1>Used <span>Cars</span></h1>
+    <p>Browse, filter, and find enthusiasts’ picks from across the country.</p>
   </div>
-  <div class="cv-card p-3 mb-3">
-    <form method="get" class="row g-2 align-items-end">
+</section>
+
+<div class="search-widget-container">
+  <div class="search-widget">
+    <form method="get" class="row g-3 align-items-end">
+      
       <div class="col-sm-6 col-md-3">
-        <label class="form-label">Fuel</label>
+        <label>Fuel Type</label>
         <select class="form-select" name="fuel">
-          <option value="">All</option>
+          <option value="">All Types</option>
           <option value="Petrol" {% if fuel == 'Petrol' %}selected{% endif %}>Petrol</option>
           <option value="Diesel" {% if fuel == 'Diesel' %}selected{% endif %}>Diesel</option>
           <option value="Electric" {% if fuel == 'Electric' %}selected{% endif %}>Electric</option>
@@ -20,48 +225,78 @@
           <option value="CNG" {% if fuel == 'CNG' %}selected{% endif %}>CNG</option>
         </select>
       </div>
+      
       <div class="col-sm-6 col-md-3">
-        <label class="form-label">Search</label>
-        <input class="form-control" type="text" name="brand" value="{{ brand }}" placeholder="Brand">
+        <label>Brand / Make</label>
+        <input class="form-control" type="text" name="brand" value="{{ brand }}" placeholder="e.g., Honda">
       </div>
+      
       <div class="col-sm-6 col-md-3">
-        <label class="form-label">Model</label>
-        <input class="form-control" type="text" name="model" value="{{ model }}" placeholder="Model">
+        <label>Model</label>
+        <input class="form-control" type="text" name="model" value="{{ model }}" placeholder="e.g., Civic">
       </div>
+      
       <div class="col-sm-6 col-md-3">
-        <button class="btn btn-dark w-100">Apply</button>
+        <button class="btn-search-custom" type="submit">
+          <i class="fa-solid fa-filter me-2"></i> Apply Filters
+        </button>
       </div>
+
     </form>
   </div>
-  <div class="row g-3">
+</div>
+
+<section class="container mb-5 pb-4">
+  <div class="row g-4">
+    
     {% for car in cars %}
-      <div class="col-md-4">
-        <div class="cs-card h-100">
-          <img loading="lazy" src="{% car_image car.make car.model '600x400' %}" alt="{{ car.make }} {{ car.model }}" class="cs-card-img">
-          <div class="cs-card-body">
-            <h5 class="cs-card-title">{{ car.make }} {{ car.model }}</h5>
-            <p class="text-muted mb-2">{{ car.year }} • {{ car.fuel_type|default:'—' }} • {{ car.transmission|default:'—' }}</p>
-            <div class="d-flex justify-content-between">
-              <span>Mileage: {{ car.mileage|default:'—' }} km</span>
-              <span>Body: {{ car.body_type|default:'—' }}</span>
+      <div class="col-12 col-md-6 col-lg-4">
+        <article class="modern-card">
+          
+          <div class="card-img-wrapper">
+            <img loading="lazy" src="{% car_image car.make car.model '600x400' %}" alt="{{ car.make }} {{ car.model }}" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+          </div>
+          
+          <div class="modern-card-body">
+            <h3 class="car-title">{{ car.make }} {{ car.model }}</h3>
+            
+            <div class="car-meta">
+              <span class="meta-item"><i class="fa-regular fa-calendar"></i> {{ car.year }}</span>
+              <span class="meta-item"><i class="fa-solid fa-gas-pump"></i> {{ car.fuel_type|default:'—' }}</span>
+              <span class="meta-item"><i class="fa-solid fa-gears"></i> {{ car.transmission|default:'—' }}</span>
             </div>
+            
+            <div class="car-details-row">
+              <span><i class="fa-solid fa-gauge-high me-1 text-muted"></i> {{ car.mileage|default:'—' }} km</span>
+              <span><i class="fa-solid fa-car-side me-1 text-muted"></i> {{ car.body_type|default:'—' }}</span>
+            </div>
+
             {% if request.user.is_staff %}
-            <div class="mt-2 d-flex gap-2">
+            <div class="admin-actions">
               {% if car.vin %}
-                <a href="{% url 'car_edit' car.vin %}" class="btn btn-warning">Edit</a>
-                <a href="{% url 'car_delete' car.vin %}" class="btn btn-danger">Delete</a>
+                <a href="{% url 'car_edit' car.vin %}" class="btn btn-warning btn-sm flex-fill fw-bold"><i class="fa-solid fa-pen me-1"></i> Edit</a>
+                <a href="{% url 'car_delete' car.vin %}" class="btn btn-danger btn-sm flex-fill fw-bold"><i class="fa-solid fa-trash me-1"></i> Delete</a>
               {% else %}
-                <span class="btn btn-warning disabled">Edit</span>
-                <span class="btn btn-danger disabled">Delete</span>
+                <span class="btn btn-warning btn-sm flex-fill disabled fw-bold"><i class="fa-solid fa-pen me-1"></i> Edit</span>
+                <span class="btn btn-danger btn-sm flex-fill disabled fw-bold"><i class="fa-solid fa-trash me-1"></i> Delete</span>
               {% endif %}
             </div>
             {% endif %}
+
           </div>
-        </div>
+        </article>
       </div>
     {% empty %}
-      <div class="col-12"><div class="cv-card p-4 text-center">No cars found for selected filters.</div></div>
+      <div class="col-12">
+        <div class="empty-state">
+          <i class="fa-solid fa-car-burst mb-3" style="font-size: 3rem; color: #cbd5e1;"></i>
+          <h4 class="text-secondary fw-bold">No vehicles found</h4>
+          <p class="mb-0">Try adjusting your filters or search terms to find what you're looking for.</p>
+        </div>
+      </div>
     {% endfor %}
+
   </div>
 </section>
+
 {% endblock %}
