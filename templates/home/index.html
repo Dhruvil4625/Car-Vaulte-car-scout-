@@ -1,444 +1,96 @@
 {% extends 'base.html' %}
 {% load currency %}{% load static %}{% load images %}
 {% block title %}Home | Car Scout{% endblock %}
-
 {% block content %}
-<style>
-  /* Global Page Styling */
-  body {
-    background-color: #020617; /* Deep dark background */
-    color: #e2e8f0;
-    font-family: 'Montserrat', sans-serif;
-  }
-
-  /* --- Cinematic Hero Section --- */
-  .auto-hero {
-    position: relative;
-    min-height: 85vh;
-    display: flex;
-    align-items: center;
-    background: linear-gradient(to right, rgba(2, 6, 23, 0.95) 0%, rgba(15, 23, 42, 0.6) 100%), 
-                url('https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
-    padding: 60px 0;
-  }
-
-  .auto-hero-content h2 {
-    font-size: 3.5rem;
-    font-weight: 900;
-    text-transform: uppercase;
-    line-height: 1.1;
-    color: #fff;
-    margin-bottom: 10px;
-  }
-  
-  .auto-hero-content h2 span {
-    font-weight: 300;
-    color: #94a3b8;
-  }
-
-  .auto-hero-content p {
-    font-size: 1.2rem;
-    color: #cbd5e1;
-    margin-bottom: 40px;
-    border-left: 4px solid #e11d48;
-    padding-left: 15px;
-  }
-
-  .auto-highlight {
-    color: #e11d48;
-    font-style: italic;
-    font-weight: bold;
-  }
-
-  /* --- Glassmorphism Search Panel --- */
-  .cs-glass-panel {
-    background: rgba(20, 25, 35, 0.65);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    padding: 30px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-  }
-
-  .cs-hero-title {
-    font-weight: 700;
-    color: #fff;
-    margin-bottom: 5px;
-    font-size: 1.8rem;
-  }
-
-  /* Tabs Styling */
-  .cs-tabs {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding-bottom: 15px;
-  }
-
-  .cs-tab {
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #94a3b8;
-    padding: 8px 24px;
-    border-radius: 30px;
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    transition: all 0.3s;
-  }
-
-  .cs-tab:hover {
-    border-color: #fff;
-    color: #fff;
-  }
-
-  .cs-tab-active {
-    background: #e11d48;
-    border-color: #e11d48;
-    color: #fff;
-  }
-
-  /* Dark Mode Form Inputs */
-  .cs-glass-panel .form-label {
-    color: #cbd5e1;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .cs-glass-panel .form-control, 
-  .cs-glass-panel .form-select {
-    background: rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    color: #fff;
-    border-radius: 8px;
-    padding: 10px 15px;
-  }
-
-  .cs-glass-panel .form-control:focus, 
-  .cs-glass-panel .form-select:focus {
-    background: rgba(0, 0, 0, 0.7);
-    border-color: #e11d48;
-    box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.25);
-  }
-  
-  .cs-glass-panel .form-select option {
-    background: #0f172a;
-    color: #fff;
-  }
-
-  /* --- Featured Corner Car --- */
-  .corner-car-link {
-    display: block;
-    background: rgba(0, 0, 0, 0.4);
-    border-radius: 12px;
-    overflow: hidden;
-    text-decoration: none;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: transform 0.3s, box-shadow 0.3s;
-    height: 100%;
-  }
-
-  .corner-car-link:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 30px rgba(225, 29, 72, 0.2);
-    border-color: rgba(225, 29, 72, 0.5);
-  }
-
-  .corner-car-img {
-    width: 100%;
-    height: 180px;
-    object-fit: cover;
-    border-bottom: 3px solid #e11d48;
-  }
-
-  .corner-car-info {
-    padding: 15px;
-  }
-
-  .corner-car-title {
-    color: #fff;
-    font-weight: 700;
-    font-size: 1.2rem;
-  }
-
-  .corner-car-meta {
-    color: #94a3b8;
-    font-size: 0.85rem;
-    margin-bottom: 10px;
-  }
-
-  .corner-car-price {
-    font-size: 1.3rem;
-    font-weight: bold;
-    color: #e11d48;
-  }
-
-  /* --- Features Grid --- */
-  .auto-features {
-    padding: 60px 0;
-    background: #0b1120;
-  }
-
-  .auto-features-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 30px;
-  }
-
-  .auto-feature-card {
-    background: #0f172a;
-    border-radius: 12px;
-    overflow: hidden;
-    border-bottom: 4px solid #e11d48;
-    transition: transform 0.3s;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-  }
-
-  .auto-feature-card:hover {
-    transform: translateY(-10px);
-  }
-
-  .auto-feature-card img {
-    width: 100%;
-    height: 220px;
-    object-fit: cover;
-    transition: transform 0.5s;
-  }
-
-  .auto-feature-card:hover img {
-    transform: scale(1.05);
-  }
-
-  .auto-feature-card h3 {
-    color: #fff;
-    padding: 20px;
-    text-align: center;
-    font-size: 1.1rem;
-    margin: 0;
-    font-weight: 700;
-    letter-spacing: 1px;
-  }
-
-  /* --- Top Listings Grid --- */
-  .cv-section-title {
-    color: #fff;
-    font-weight: 800;
-    text-transform: uppercase;
-    border-left: 5px solid #e11d48;
-    padding-left: 15px;
-    margin-bottom: 30px;
-  }
-
-  .cs-card {
-    background: #0f172a;
-    border: 1px solid rgba(255,255,255,0.05);
-    border-radius: 12px;
-    overflow: hidden;
-    transition: transform 0.3s, box-shadow 0.3s;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .cs-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-    border-color: rgba(255,255,255,0.15);
-  }
-
-  .cs-card-img {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-  }
-
-  .cs-thumbs {
-    display: flex;
-    gap: 5px;
-  }
-
-  .cs-thumb {
-    width: calc(25% - 4px);
-    height: 45px;
-    object-fit: cover;
-    border-radius: 4px;
-    cursor: pointer;
-    border: 1px solid transparent;
-    transition: border 0.2s;
-  }
-
-  .cs-thumb:hover {
-    border-color: #e11d48;
-  }
-
-  .cs-card-body {
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-  }
-
-  .cs-card-title {
-    color: #f8fafc;
-    font-weight: 700;
-    font-size: 1.1rem;
-    margin-bottom: 10px;
-  }
-
-  .cs-card-price {
-    font-size: 1.4rem;
-    font-weight: 800;
-    color: #e11d48;
-    margin-bottom: 20px;
-  }
-
-  /* Buttons */
-  .btn-primary {
-    background-color: #e11d48;
-    border: none;
-    font-weight: 600;
-    text-transform: uppercase;
-  }
-  
-  .btn-primary:hover {
-    background-color: #be123c;
-  }
-
-  .btn-outline-dark {
-    border-color: rgba(255,255,255,0.2);
-    color: #fff;
-  }
-
-  .btn-outline-dark:hover {
-    background-color: rgba(255,255,255,0.1);
-    color: #fff;
-    border-color: #fff;
-  }
-
-  .btn-outline-primary {
-    border-color: #3b82f6;
-    color: #3b82f6;
-  }
-
-  .btn-outline-primary:hover {
-    background-color: #3b82f6;
-    color: #fff;
-  }
-</style>
-
-<section class="auto-hero">
+<section class="auto-hero hero">
   <div class="container">
-    <div class="row align-items-center">
-      
-      <div class="col-lg-8 mb-4 mb-lg-0">
-        <div class="auto-hero-content">
-          <h2>DOMINATE<br><span>THE ROAD</span></h2>
-          <p>Attract, Engage, & Convert <span class="auto-highlight">more</span> qualified vehicle shoppers</p>
-        </div>
-
-        <div class="cs-glass-panel mt-4">
-          <h1 class="cs-hero-title">Find Your Dream Car</h1>
-          <p class="text-secondary mb-3">Browse thousands of new and used vehicles</p>
-          
-          <div class="cs-search">
-            <div class="cs-tabs" role="tablist" aria-label="Search type">
-              <button class="cs-tab cs-tab-active" data-tab="new" aria-selected="true">New Cars</button>
-              <button class="cs-tab" data-tab="used" aria-selected="false">Used Cars</button>
-            </div>
-            
-            <form id="homeSearchForm" action="{% url 'cars' %}" method="get" class="row g-3" aria-label="Search cars">
-              <input type="hidden" name="type" value="new">
-              
-              <div class="col-6 col-md-3">
-                <label class="form-label">Budget</label>
-                <select class="form-select" name="budget">
-                  <option value="">Any</option>
-                  <option value="0-500000">Under ₹ 5 Lakh</option>
-                  <option value="500000-1000000">₹ 5–10 Lakh</option>
-                  <option value="1000000-1500000">₹ 10–15 Lakh</option>
-                  <option value="1500000-2000000">₹ 15–20 Lakh</option>
-                  <option value="2000000-3500000">₹ 20–35 Lakh</option>
-                  <option value="3500000-5000000">₹ 35–50 Lakh</option>
-                  <option value="5000000-10000000">₹ 50 Lakh–1 Cr</option>
-                  <option value="10000000-999000000">Above ₹ 1 Cr</option>
-                </select>
-              </div>
-              
-              <div class="col-6 col-md-3">
-                <label class="form-label">Brand</label>
-                <input class="form-control" type="text" name="brand" placeholder="e.g., Toyota">
-              </div>
-              
-              <div class="col-6 col-md-3">
-                <label class="form-label">Model</label>
-                <input class="form-control" type="text" name="model" placeholder="e.g., Camry">
-              </div>
-              
-              <div class="col-6 col-md-3">
-                <label class="form-label">Fuel</label>
-                <select class="form-select" name="fuel">
-                  <option value="">All</option>
-                  <option value="Petrol">Petrol</option>
-                  <option value="Diesel">Diesel</option>
-                  <option value="Electric">Electric</option>
-                  <option value="Hybrid">Hybrid</option>
-                  <option value="CNG">CNG</option>
-                </select>
-              </div>
-              
-              <div class="col-12 mt-4">
-                <button class="btn btn-primary w-100 py-2 fs-5">Search Vehicles</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-lg-4">
-        <div class="corner-car h-100">
-          {% if listings and listings.0 %}
-            {% with lst=listings.0 %}
-              <a href="{% url 'listings' %}" class="corner-car-link">
-                {% if lst.images.all %}
-                  <img loading="lazy" src="{{ lst.images.all.0.image.url }}" alt="{{ lst.car.make }} {{ lst.car.model }}" class="corner-car-img" onerror="this.src='{% static 'img/placeholder.svg' %}'">
-                {% else %}
-                  <img loading="lazy" src="{% car_image lst.car.make lst.car.model '600x400' %}" alt="{{ lst.car.make }} {{ lst.car.model }}" class="corner-car-img" onerror="this.src='{% static 'img/placeholder.svg' %}'">
-                {% endif %}
-                <div class="corner-car-info">
-                  <div class="badge bg-danger mb-2">Featured Showroom</div>
-                  <div class="corner-car-title">{{ lst.car.make }} {{ lst.car.model }}</div>
-                  <div class="corner-car-meta">{{ lst.car.year }} • {{ lst.car.fuel_type|default:'—' }}</div>
-                  <div class="d-flex justify-content-between align-items-center mt-3">
-                    <span class="corner-car-price">{{ lst.price|inr }}</span>
-                    <span class="btn btn-danger btn-sm">Test Drive</span>
-                  </div>
-                </div>
-              </a>
-            {% endwith %}
-          {% else %}
-            <a href="{% url 'cars' %}" class="corner-car-link">
-              <img loading="lazy" src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=600&auto=format&fit=crop" alt="Featured car" class="corner-car-img" onerror="this.src='{% static 'img/placeholder.svg' %}'">
-              <div class="corner-car-info">
-                <div class="badge bg-danger mb-2">Featured Showroom</div>
-                <div class="corner-car-title">Explore Top Cars</div>
-                <div class="corner-car-meta">Popular picks • Petrol • Automatic</div>
-                <div class="d-flex justify-content-between align-items-center mt-3">
-                  <span class="corner-car-price">Explore Now</span>
-                  <span class="btn btn-primary btn-sm">Browse</span>
-                </div>
-              </div>
-            </a>
-          {% endif %}
-        </div>
-      </div>
-
+    <div class="auto-hero-content">
+      <h2>DOMINATE<br><span>THE INTERNET</span></h2>
+      <p>Attract, Engage, & Convert <span class="auto-highlight">more</span> qualified vehicle shoppers</p>
     </div>
   </div>
 </section>
-
-<section class="auto-features">
+<section class="container mt-3">
+  <div class="cs-hero cs-hero-single">
+    <div class="cs-hero-left">
+      <h1 class="cs-hero-title">Find Your Dream Car</h1>
+      <p class="cs-hero-sub">Browse thousands of new and used vehicles</p>
+      <div class="cs-search">
+        <div class="cs-tabs" role="tablist" aria-label="Search type">
+          <button class="cs-tab cs-tab-active" data-tab="new" aria-selected="true">New</button>
+          <button class="cs-tab" data-tab="used" aria-selected="false">Used</button>
+        </div>
+        <form id="homeSearchForm" action="{% url 'cars' %}" method="get" class="row g-2 mt-2" aria-label="Search cars">
+          <input type="hidden" name="type" value="new">
+          <div class="col-6 col-md-3">
+            <label class="form-label">Budget</label>
+            <select class="form-select" name="budget">
+              <option value="">Any</option>
+              <option value="0-500000">Under ₹ 5 Lakh</option>
+              <option value="500000-1000000">₹ 5–10 Lakh</option>
+              <option value="1000000-1500000">₹ 10–15 Lakh</option>
+              <option value="1500000-2000000">₹ 15–20 Lakh</option>
+              <option value="2000000-3500000">₹ 20–35 Lakh</option>
+              <option value="3500000-5000000">₹ 35–50 Lakh</option>
+              <option value="5000000-10000000">₹ 50 Lakh–1 Cr</option>
+              <option value="10000000-999000000">Above ₹ 1 Cr</option>
+            </select>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label">Brand</label>
+            <input class="form-control" type="text" name="brand" placeholder="e.g., Toyota, BMW">
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label">Model</label>
+            <input class="form-control" type="text" name="model" placeholder="e.g., Camry" aria-label="Model">
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label">Fuel</label>
+            <select class="form-select" name="fuel"><option value="">All</option><option value="Petrol">Petrol</option><option value="Diesel">Diesel</option><option value="Electric">Electric</option><option value="Hybrid">Hybrid</option><option value="CNG">CNG</option></select>
+          </div>
+          <div class="col-12 col-md-3">
+            <button class="btn btn-primary w-100 mt-2">Search</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="corner-car">
+      {% load images %}
+      {% if listings and listings.0 %}
+        {% with lst=listings.0 %}
+          <a href="{% url 'listings' %}" class="corner-car-link">
+            {% if lst.images.all %}
+              <img loading="lazy" src="{{ lst.images.all.0.image.url }}" alt="{{ lst.car.make }} {{ lst.car.model }}" class="corner-car-img" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+            {% else %}
+              <img loading="lazy" src="{% car_image lst.car.make lst.car.model '600x400' %}" alt="{{ lst.car.make }} {{ lst.car.model }}" class="corner-car-img" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+            {% endif %}
+            <div class="corner-car-info">
+              <div class="corner-car-title">{{ lst.car.make }} {{ lst.car.model }}</div>
+              <div class="corner-car-meta">{{ lst.car.year }} • {{ lst.car.fuel_type|default:'—' }}</div>
+              <div class="corner-car-actions">
+                <span class="corner-car-price">{{ lst.price|inr }}</span>
+                <span class="btn btn-danger btn-sm">Schedule Test Drive</span>
+              </div>
+            </div>
+          </a>
+        {% endwith %}
+      {% else %}
+        <a href="{% url 'cars' %}" class="corner-car-link">
+          <img loading="lazy" src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=1200&auto=format&fit=crop" alt="Featured car" class="corner-car-img" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+          <div class="corner-car-info">
+            <div class="corner-car-title">Explore Top Cars</div>
+            <div class="corner-car-meta">Popular picks • Petrol • Automatic</div>
+            <div class="corner-car-actions">
+              <span class="corner-car-price">₹ —</span>
+              <span class="btn btn-primary btn-sm">Browse</span>
+            </div>
+          </div>
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+<section class="auto-features features">
   <div class="container">
     <div class="auto-features-grid">
       <div class="auto-feature-card">
@@ -456,14 +108,29 @@
     </div>
   </div>
 </section>
-
-<section class="container mt-5 mb-5">
+<script>
+  (function(){
+    const tabs = document.querySelectorAll('.cs-tab');
+    const form = document.getElementById('homeSearchForm');
+    tabs.forEach(t=>{
+      t.addEventListener('click',()=>{
+        tabs.forEach(x=>{x.classList.remove('cs-tab-active');x.setAttribute('aria-selected','false')});
+        t.classList.add('cs-tab-active');t.setAttribute('aria-selected','true');
+        const type = t.dataset.tab;
+        form.querySelector('input[name=type]').value = type;
+        form.setAttribute('action', type === 'used' ? '{% url "listings" %}' : '{% url "cars" %}');
+      });
+    });
+  })();
+</script>
+<!-- Removed edge rails per request -->
+<section class="container mt-5">
   <h2 class="cv-section-title">Top Listings</h2>
-  <div class="row g-4">
+  <div class="row g-3">
     {% for lst in listings %}
     <div class="col-12 col-md-6 col-lg-3">
       <article class="cs-card h-100">
-        
+        {% load images %}
         {% if lst.images.all %}
           <img loading="lazy" src="{{ lst.images.all.0.image.url }}" alt="{{ lst.images.all.0.alt|default:lst.car.make }}" class="cs-card-img" onerror="this.src='{% static 'img/placeholder.svg' %}'">
           <div class="cs-thumbs mt-2 px-2">
@@ -480,52 +147,24 @@
             {% endfor %}
           </div>
         {% endif %}
-        
         <div class="cs-card-body">
           <h5 class="cs-card-title">{{ lst.car.make }} {{ lst.car.model }} ({{ lst.car.year }})</h5>
           <p class="cs-card-price">{{ lst.price|inr }}</p>
-          
-          <div class="d-flex gap-2 mt-auto">
-            <a href="{% url 'listings' %}" class="btn btn-outline-dark btn-sm flex-fill">View</a>
-            <a href="https://www.carwale.com/{{ lst.car.make|lower }}-cars/{{ lst.car.model|lower }}/" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-sm flex-fill">Info</a>
+          <div class="d-flex gap-2">
+            <a href="{% url 'listings' %}" class="btn btn-outline-dark flex-fill">View Details</a>
+            <a href="https://www.carwale.com/{{ lst.car.make|lower }}-cars/{{ lst.car.model|lower }}/" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary flex-fill">More info</a>
+            {% if request.user.is_staff or request.user == lst.seller %}
+            <a href="{% url 'listing_edit' lst.listing_id %}" class="btn btn-warning">Edit</a>
+            <a href="{% url 'listing_delete' lst.listing_id %}" class="btn btn-danger">Delete</a>
+            {% endif %}
           </div>
-          
-          {% if request.user.is_staff or request.user == lst.seller %}
-          <div class="d-flex gap-2 mt-2">
-            <a href="{% url 'listing_edit' lst.listing_id %}" class="btn btn-warning btn-sm flex-fill">Edit</a>
-            <a href="{% url 'listing_delete' lst.listing_id %}" class="btn btn-danger btn-sm flex-fill">Delete</a>
-          </div>
-          {% endif %}
         </div>
-
       </article>
     </div>
     {% empty %}
-    <div class="col-12">
-        <div class="p-5 text-center" style="background: #0f172a; border-radius: 12px; border: 1px dashed rgba(255,255,255,0.2);">
-            <h4 class="text-secondary">No listings yet.</h4>
-            <p class="text-muted">Check back later for exciting new cars.</p>
-        </div>
-    </div>
+    <div class="col-12"><div class="cv-card p-4 text-center">No listings yet.</div></div>
     {% endfor %}
   </div>
 </section>
-
-<script>
-  (function(){
-    const tabs = document.querySelectorAll('.cs-tab');
-    const form = document.getElementById('homeSearchForm');
-    tabs.forEach(t=>{
-      t.addEventListener('click',()=>{
-        tabs.forEach(x=>{x.classList.remove('cs-tab-active');x.setAttribute('aria-selected','false')});
-        t.classList.add('cs-tab-active');
-        t.setAttribute('aria-selected','true');
-        const type = t.dataset.tab;
-        form.querySelector('input[name=type]').value = type;
-        form.setAttribute('action', type === 'used' ? '{% url "listings" %}' : '{% url "cars" %}');
-      });
-    });
-  })();
-</script>
-
+<!-- Removed bottom edge rail per request -->
 {% endblock %}
