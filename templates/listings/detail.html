@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load currency %}{% load static %}{% load images %}
+{% block title %}Listing Detail | Car Scout{% endblock %}
+{% block content %}
+<section class="container">
+  <div class="cv-card p-3 mb-3">
+    <div class="row g-3">
+      <div class="col-md-7">
+        {% if listing.images.all %}
+          <img loading="lazy" src="{{ listing.images.all.0.image.url }}" alt="{{ listing.images.all.0.alt|default:listing.car.make }}" class="w-100 rounded" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+        {% else %}
+          <img loading="lazy" src="{% car_image listing.car.make listing.car.model '900x600' %}" alt="{{ listing.car.make }} {{ listing.car.model }}" class="w-100 rounded" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+        {% endif %}
+        {% if listing.images.all %}
+        <div class="d-flex gap-2 mt-2 flex-wrap">
+          {% for img in listing.images.all|slice:":8" %}
+            <img loading="lazy" src="{{ img.image.url }}" alt="{{ img.alt }}" class="rounded" style="width:110px;height:80px;object-fit:cover" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+      <div class="col-md-5">
+        <h3 class="mb-1">{{ listing.car.make }} {{ listing.car.model }} ({{ listing.car.year }})</h3>
+        <div class="fs-4 fw-bold text-danger mb-2">{{ listing.price|inr }}</div>
+        <div class="text-muted mb-2">Mileage: {{ listing.mileage }} km</div>
+        <div class="text-muted mb-2">Fuel: {{ listing.car.fuel_type|default:'—' }}</div>
+        <div class="text-muted mb-2">Transmission: {{ listing.car.transmission|default:'—' }}</div>
+        <div class="text-muted mb-2">Body: {{ listing.car.body_type|default:'—' }}</div>
+        <div class="text-muted mb-3">Seller: {{ listing.seller.email }}</div>
+        {% if listing.description %}
+        <div class="mb-3">{{ listing.description }}</div>
+        {% endif %}
+        <div class="d-flex gap-2">
+          {% if is_buyer %}
+          <form method="post" action="{% url 'listing_purchase' listing.listing_id %}">
+            {% csrf_token %}
+            <button class="btn btn-primary">Purchase</button>
+          </form>
+          {% endif %}
+          <a href="{% url 'listings' %}" class="btn btn-outline-dark">Back to Listings</a>
+        </div>
+        <div class="mt-3">
+          <form method="post" action="{% url 'listing_message' listing.listing_id %}">
+            {% csrf_token %}
+            <label class="form-label">Message Seller</label>
+            <textarea name="content" class="form-control" rows="3" placeholder="Type your message"></textarea>
+            <button class="btn btn-outline-primary mt-2">Send</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
