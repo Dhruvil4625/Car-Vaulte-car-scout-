@@ -1,41 +1,264 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Edit Test Drive | Car Scout{% endblock %}
+
 {% block content %}
-<section class="container">
-  <h2 class="cv-section-title">Edit Test Drive</h2>
-  <div class="cv-card p-3 mb-3">
-    <div class="mb-2">
-      <strong>{{ drive.listing.car.make }} {{ drive.listing.car.model }}</strong>
-      <div class="text-muted">{{ drive.listing.car.year }} • Buyer: {{ drive.buyer.name|default:drive.buyer.email }}</div>
+<style>
+  /* --- Test Drive Hero Section --- */
+  .drive-hero {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%), 
+                url('https://images.unsplash.com/photo-1469285994282-454ceb49e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    padding: 60px 0 80px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .drive-hero h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .drive-hero h1 span {
+    color: #ef4444; /* Vibrant Red Accent */
+  }
+
+  .drive-hero p {
+    color: #94a3b8;
+    font-size: 1.05rem;
+    margin: 0;
+  }
+
+  /* --- Premium Form Card --- */
+  .drive-card-wrapper {
+    margin-top: -50px; 
+    position: relative;
+    z-index: 10;
+    padding-bottom: 60px;
+  }
+
+  .drive-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 40px;
+  }
+
+  /* --- Context Summary Box --- */
+  .context-summary {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+  }
+
+  .context-item {
+    flex: 1;
+  }
+
+  .context-item:first-child {
+    border-right: 1px dashed #cbd5e1;
+    padding-right: 20px;
+  }
+
+  .context-label {
+    font-size: 0.75rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+    margin-bottom: 5px;
+    display: block;
+  }
+
+  .context-value {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .context-value i {
+    color: #ef4444;
+  }
+
+  /* --- Form Auto-Styling --- */
+  .crm-form label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  .crm-form input[type="datetime-local"],
+  .crm-form select,
+  .crm-form textarea {
+    width: 100%;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    border-radius: 8px;
+    padding: 12px 15px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    box-shadow: none;
+    margin-bottom: 20px;
+  }
+
+  .crm-form input:focus,
+  .crm-form select:focus,
+  .crm-form textarea:focus {
+    background-color: #fff;
+    border-color: #ef4444;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+    outline: none;
+  }
+
+  .status-select-wrapper {
+    position: relative;
+  }
+  
+  .status-select-wrapper i {
+    position: absolute;
+    right: 15px;
+    top: 40px;
+    color: #94a3b8;
+    pointer-events: none;
+  }
+
+  /* --- Action Buttons --- */
+  .action-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px dashed #e2e8f0;
+  }
+
+  .btn-save-custom {
+    background-color: #ef4444;
+    color: #fff;
+    font-weight: 700;
+    padding: 14px 30px;
+    border-radius: 8px;
+    border: none;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex: 2;
+  }
+
+  .btn-save-custom:hover {
+    background-color: #dc2626;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(239, 68, 68, 0.2);
+  }
+
+  .btn-cancel-custom {
+    background-color: transparent;
+    color: #475569;
+    border: 2px solid #cbd5e1;
+    font-weight: 700;
+    padding: 14px 30px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+  }
+
+  .btn-cancel-custom:hover {
+    background-color: #f1f5f9;
+    border-color: #94a3b8;
+    color: #0f172a;
+  }
+</style>
+
+<section class="drive-hero">
+  <div class="container">
+    <h1>Manage <span>Test Drive</span></h1>
+    <p>Update the schedule and status of this client appointment.</p>
+  </div>
+</section>
+
+<section class="container drive-card-wrapper">
+  <div class="drive-card">
+    
+    <div class="context-summary">
+      <div class="context-item">
+        <span class="context-label">Vehicle</span>
+        <div class="context-value">
+          <i class="fa-solid fa-car"></i>
+          {{ drive.listing.car.make }} {{ drive.listing.car.model }} <span class="text-muted fw-normal fs-6">({{ drive.listing.car.year }})</span>
+        </div>
+      </div>
+      <div class="context-item">
+        <span class="context-label">Client / Buyer</span>
+        <div class="context-value">
+          <i class="fa-solid fa-user-tie"></i>
+          {{ drive.buyer.name|default:drive.buyer.email }}
+        </div>
+      </div>
     </div>
-    <form method="post" class="mt-2">
+
+    <form method="post" class="crm-form">
       {% csrf_token %}
-      <div class="mb-2">
-        <label class="form-label">Status</label>
+      
+      <div class="status-select-wrapper mb-2">
+        <label><i class="fa-solid fa-signal me-2 text-muted"></i> Appointment Status</label>
         <select name="status" class="form-select">
           {% for key,label in drive.Status.choices %}
-          <option value="{{ key }}" {% if drive.status == key %}selected{% endif %}>{{ label }}</option>
+            <option value="{{ key }}" {% if drive.status == key %}selected{% endif %}>{{ label }}</option>
           {% endfor %}
         </select>
       </div>
-      <div class="mb-2">
-        <label class="form-label">Proposed Date</label>
-        <input type="datetime-local" name="proposed_date" value="{{ drive.proposed_date|date:'Y-m-d\\TH:i' }}" class="form-control">
+
+      <div class="row">
+        <div class="col-md-6">
+          <label><i class="fa-regular fa-calendar-plus me-2 text-muted"></i> Proposed Date & Time</label>
+          <input type="datetime-local" name="proposed_date" value="{{ drive.proposed_date|date:'Y-m-d\\TH:i' }}" class="form-control">
+        </div>
+        <div class="col-md-6">
+          <label><i class="fa-regular fa-calendar-check me-2 text-muted"></i> Actual Completed Date</label>
+          <input type="datetime-local" name="actual_date" value="{% if drive.actual_date %}{{ drive.actual_date|date:'Y-m-d\\TH:i' }}{% endif %}" class="form-control">
+        </div>
       </div>
-      <div class="mb-2">
-        <label class="form-label">Actual Date</label>
-        <input type="datetime-local" name="actual_date" value="{% if drive.actual_date %}{{ drive.actual_date|date:'Y-m-d\\TH:i' }}{% endif %}" class="form-control">
+
+      <div>
+        <label><i class="fa-solid fa-clipboard-list me-2 text-muted"></i> Drive Notes / Feedback</label>
+        <textarea name="notes" class="form-control" rows="4" placeholder="Enter any notes from the client or about the test drive here...">{{ drive.notes }}</textarea>
       </div>
-      <div class="mb-2">
-        <label class="form-label">Notes</label>
-        <textarea name="notes" class="form-control" rows="3">{{ drive.notes }}</textarea>
+
+      <div class="action-buttons">
+        <a href="{% url 'testdrives' %}" class="btn-cancel-custom">Cancel</a>
+        <button type="submit" class="btn-save-custom">
+          <i class="fa-solid fa-floppy-disk me-2"></i> Save Appointment
+        </button>
       </div>
-      <div class="d-flex gap-2 mt-3">
-        <button class="btn btn-primary">Save</button>
-        <a href="{% url 'testdrives' %}" class="btn btn-secondary">Cancel</a>
-      </div>
+
     </form>
+
   </div>
 </section>
-{% endblock %}
 
+{% endblock %}
