@@ -103,6 +103,12 @@
     <a href="/admin/" target="_blank" class="list-group-item list-group-item-action">
       <i class="fa-solid fa-database"></i> {% trans "Django Admin" %} <i class="fa-solid fa-arrow-up-right-from-square ms-auto text-muted" style="font-size: 0.75rem; width: auto;"></i>
     </a>
+    <a href="/admin/core/inspection/" target="_blank" class="list-group-item list-group-item-action">
+      <i class="fa-solid fa-clipboard-check"></i> {% trans "Inspections" %} <i class="fa-solid fa-arrow-up-right-from-square ms-auto text-muted" style="font-size: 0.75rem; width: auto;"></i>
+    </a>
+    <a href="{% url 'inspection_new' %}" class="list-group-item list-group-item-action {% if cur == 'inspection_new' %}active{% endif %}">
+      <i class="fa-solid fa-file-circle-check"></i> {% trans "Add Inspection" %}
+    </a>
     
     <div class="list-group-item section-label">{% trans "Activity Center" %}</div>
     
