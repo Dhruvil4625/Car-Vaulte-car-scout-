@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.html import strip_tags
 from django.contrib.auth import get_user_model
-from .forms import UserLoginForm
+from .forms import UserLoginForm, InspectionForm
 from django.http import JsonResponse
 from django.core.mail import send_mail
 from django.conf import settings
@@ -67,9 +67,13 @@ def ListingsListView(request):
     return render(request, "listings/list.html", {"listings": listings, "q": q, "budget": budget, "fuel": fuel, "brand": brand, "model": model})
 
 def ListingDetailView(request, listing_id):
-    listing = CarListing.objects.select_related("car", "seller").prefetch_related("images").get(listing_id=listing_id)
+    listing = CarListing.objects.select_related("car", "seller").prefetch_related("images", "inspections").get(listing_id=listing_id)
     is_buyer = request.user.is_authenticated and request.user.role == User.Role.BUYER
-    return render(request, "listings/detail.html", {"listing": listing, "is_buyer": is_buyer})
+    try:
+        inspection = listing.inspections.order_by("-inspection_date").first()
+    except Exception:
+        inspection = None
+    return render(request, "listings/detail.html", {"listing": listing, "is_buyer": is_buyer, "inspection": inspection})
 
 @login_required
 def ListingMessageView(request, listing_id):
@@ -394,6 +398,28 @@ def TestDriveCreateView(request):
     return render(request, "testdrives/new.html", {"listings": listings, "buyers": buyers, "preselected_listing_id": preselected_listing_id})
 
 @login_required
+def InspectionCreateView(request):
+    if not (request.user.is_staff or request.user.role == User.Role.SELLER):
+        return redirect("listings")
+    preselected_listing_id = request.GET.get("listing_id") or ""
+    initial = {}
+    if preselected_listing_id:
+        try:
+            pre_listing = CarListing.objects.get(listing_id=preselected_listing_id)
+            initial["listing"] = pre_listing
+        except CarListing.DoesNotExist:
+            pass
+    form = InspectionForm(request.POST or None, user=request.user, initial=initial)
+    if request.method == "POST":
+        if form.is_valid():
+            insp = form.save(commit=False)
+            if request.user.role == User.Role.SELLER and insp.listing.seller != request.user:
+                return redirect("listings")
+            insp.save()
+            return redirect("listing_detail", listing_id=insp.listing.listing_id)
+    return render(request, "inspections/new.html", {"form": form})
+
+@login_required
 def TestDriveUpdateView(request, test_drive_id):
     if not request.user.is_staff:
         return redirect("testdrives")
@@ -566,9 +592,10 @@ def AccountSettingsView(request):
         sellers_count = Seller.objects.count()
         listings_total = CarListing.objects.count()
         messages_total = Message.objects.count()
-        from .models import TestDrive, Transaction
+        from .models import TestDrive, Transaction, Inspection
         drives_total = TestDrive.objects.count()
         sales_total = Transaction.objects.filter(status__in=["Paid", "Completed"]).count()
+        inspections_total = Inspection.objects.count()
     return render(request, 'account/settings.html', {
         'user': user,
         'msgs_in': msgs_in,
@@ -588,6 +615,7 @@ def AccountSettingsView(request):
         'messages_total': messages_total,
         'drives_total': drives_total,
         'sales_total': sales_total,
+        'inspections_total': inspections_total if (user.is_staff or user.is_superuser) else 0,
     })
 
 def LogoutViewCustom(request):
