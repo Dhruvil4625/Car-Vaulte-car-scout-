@@ -1,42 +1,241 @@
 {% extends 'base.html' %}
-{% block title %}New Test Drive | Car Scout{% endblock %}
+{% load static %}
+{% block title %}Schedule Test Drive | Car Scout{% endblock %}
+
 {% block content %}
-<section class="container">
-  <h2 class="cv-section-title">Add Test Drive</h2>
-  <form method="post" class="cv-card p-3">
-    {% csrf_token %}
-    <div class="mb-2">
-      <label class="form-label">Car / Listing</label>
-      <select name="listing_id" class="form-select">
-        {% for l in listings %}
-        <option value="{{ l.listing_id }}" {% if preselected_listing_id == l.listing_id|stringformat:"s" %}selected{% endif %}>
-          {{ l.car.make }} {{ l.car.model }} ({{ l.car.year }}) • {{ l.price }} • {{ l.status }}
-        </option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="mb-2">
-      <label class="form-label">Buyer</label>
-      <select name="buyer_id" class="form-select">
-        {% for b in buyers %}
-        <option value="{{ b.user_id }}">{{ b.name|default:b.email }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="mb-2">
-      <label class="form-label">Proposed Date</label>
-      <input type="datetime-local" name="proposed_date" class="form-control">
-    </div>
-    <div class="mb-2">
-      <label class="form-label">Notes</label>
-      <textarea name="notes" class="form-control" rows="3"></textarea>
-    </div>
-    <div class="d-flex gap-2 mt-2">
-      <button class="btn btn-primary">Create</button>
-      <a href="{% url 'testdrives' %}" class="btn btn-secondary">Cancel</a>
-    </div>
-  </form>
-  <div class="mt-3">
-    <a href="{% url 'testdrives' %}" class="btn btn-outline-dark">Back to Test Drives</a>
+<style>
+  /* --- Hero Section --- */
+  .booking-hero {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%), 
+                url('https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    padding: 60px 0 80px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .booking-hero h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .booking-hero h1 span {
+    color: #ef4444; /* Vibrant Red Accent */
+  }
+
+  .booking-hero p {
+    color: #94a3b8;
+    font-size: 1.05rem;
+    margin: 0;
+  }
+
+  /* --- Booking Card --- */
+  .booking-card-wrapper {
+    margin-top: -50px; 
+    position: relative;
+    z-index: 10;
+    padding-bottom: 60px;
+  }
+
+  .booking-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    max-width: 750px;
+    margin: 0 auto;
+    padding: 40px;
+  }
+
+  /* --- Form Styling --- */
+  .booking-form-section {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px dashed #e2e8f0;
+  }
+
+  .booking-form-section:last-of-type {
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .section-label i {
+    color: #ef4444;
+  }
+
+  .booking-form label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 8px;
+  }
+
+  .booking-form .form-select,
+  .booking-form .form-control {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    border-radius: 8px;
+    padding: 12px 15px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    box-shadow: none;
+    width: 100%;
+    margin-bottom: 15px;
+  }
+
+  .booking-form .form-select:focus,
+  .booking-form .form-control:focus {
+    background-color: #fff;
+    border-color: #ef4444;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+    outline: none;
+  }
+
+  /* --- Action Buttons --- */
+  .action-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+  }
+
+  .btn-create-custom {
+    background-color: #ef4444;
+    color: #fff;
+    font-weight: 700;
+    padding: 14px 30px;
+    border-radius: 8px;
+    border: none;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex: 2;
+  }
+
+  .btn-create-custom:hover {
+    background-color: #dc2626;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(239, 68, 68, 0.2);
+  }
+
+  .btn-cancel-custom {
+    background-color: transparent;
+    color: #475569;
+    border: 2px solid #cbd5e1;
+    font-weight: 700;
+    padding: 14px 30px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+  }
+
+  .btn-cancel-custom:hover {
+    background-color: #f1f5f9;
+    border-color: #94a3b8;
+    color: #0f172a;
+  }
+</style>
+
+<section class="booking-hero">
+  <div class="container">
+    <h1>Schedule <span>New Appointment</span></h1>
+    <p>Coordinate vehicle logistics and buyer availability in one place.</p>
   </div>
+</section>
+
+<section class="container booking-card-wrapper">
+  <div class="booking-card">
+    
+    <form method="post" class="booking-form">
+      {% csrf_token %}
+
+      <div class="booking-form-section">
+        <div class="section-label">
+          <i class="fa-solid fa-handshake"></i>
+          Listing & Buyer
+        </div>
+        
+        <div class="row">
+          <div class="col-md-7">
+            <label>Select Vehicle / Listing</label>
+            <select name="listing_id" class="form-select">
+              {% for l in listings %}
+                <option value="{{ l.listing_id }}" {% if preselected_listing_id == l.listing_id|stringformat:"s" %}selected{% endif %}>
+                  {{ l.car.make }} {{ l.car.model }} ({{ l.car.year }}) — {{ l.price }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-5">
+            <label>Assigned Buyer</label>
+            <select name="buyer_id" class="form-select">
+              {% for b in buyers %}
+                <option value="{{ b.user_id }}">{{ b.name|default:b.email }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="booking-form-section">
+        <div class="section-label">
+          <i class="fa-regular fa-calendar-check"></i>
+          Appointment Details
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <label>Proposed Date & Time</label>
+            <input type="datetime-local" name="proposed_date" class="form-control" required>
+            <small class="text-muted d-block mb-3" style="font-size: 0.75rem;">Coordinate this with the buyer's preference.</small>
+          </div>
+          <div class="col-md-6">
+            </div>
+        </div>
+
+        <label>Internal Notes / Requests</label>
+        <textarea name="notes" class="form-control" rows="4" placeholder="Mention any specific requirements (e.g., 'Buyer wants to check highway performance', 'Meet at city park')"></textarea>
+      </div>
+
+      <div class="action-buttons">
+        <a href="{% url 'testdrives' %}" class="btn-cancel-custom">Cancel</a>
+        <button type="submit" class="btn-create-custom">
+          <i class="fa-solid fa-calendar-plus me-2"></i> Confirm Appointment
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+
+  <div class="text-center mt-4">
+    <a href="{% url 'testdrives' %}" class="text-decoration-none text-muted fw-bold" style="font-size: 0.9rem;">
+      <i class="fa-solid fa-arrow-left me-1"></i> Return to Schedule Dashboard
+    </a>
+  </div>
+</section>
+
 {% endblock %}
