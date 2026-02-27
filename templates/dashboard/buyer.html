@@ -210,6 +210,11 @@
 </style>
 
 <section class="container mb-5">
+  <div class="row g-4">
+    <aside class="col-lg-3 d-none d-lg-block">
+      {% include 'users/sidebar.html' %}
+    </aside>
+    <div class="col-lg-9">
   
   <div class="dash-header reveal">
     <div class="dash-title-group">
@@ -329,5 +334,7 @@
     </div>
   </div>
 
+    </div>
+  </div>
 </section>
 {% endblock %}
