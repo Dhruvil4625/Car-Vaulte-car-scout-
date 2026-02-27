@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,7 +26,7 @@ SECRET_KEY = "django-insecure-lrlo3+$od@=29)w==emln9*szhfo!ege3mvj*oo$pwg0pli2j$
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"] if DEBUG else []
 
 
 # Application definition
@@ -44,9 +45,11 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "core.middleware.AuthGateMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -116,6 +119,28 @@ USE_I18N = True
 
 USE_TZ = True
 
+LANGUAGES = [
+    ("en", "English"),
+    ("hi", "Hindi"),
+    ("gu", "Gujarati"),
+    ("bn", "Bengali"),
+    ("ta", "Tamil"),
+    ("te", "Telugu"),
+    ("mr", "Marathi"),
+    ("kn", "Kannada"),
+    ("ml", "Malayalam"),
+    ("pa", "Punjabi"),
+    ("es", "Spanish"),
+    ("fr", "French"),
+    ("de", "German"),
+    ("ar", "Arabic"),
+    ("zh-hans", "Chinese"),
+    ("ja", "Japanese"),
+    ("ru", "Russian"),
+]
+
+LOCALE_PATHS = [BASE_DIR / "locale"]
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
@@ -135,3 +160,23 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "core.User"
 LOGIN_REDIRECT_URL = "/"
+LOGIN_URL = "/login/"
+
+# Email
+# Allow explicit override via environment, otherwise:
+# - console backend in DEBUG
+# - smtp backend in non-DEBUG
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'dkrramolia20@gmail.com'
+EMAIL_HOST_PASSWORD = 'tkrsplzrbcktxfvp' #app password
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+_DEV_HOST_IP = os.getenv("DEV_HOST_IP", "").strip()
+_CSRF_ORIGINS = ["http://127.0.0.1:8000", "http://localhost:8000"]
+if _DEV_HOST_IP:
+    _CSRF_ORIGINS.append(f"http://{_DEV_HOST_IP}:8000")
+CSRF_TRUSTED_ORIGINS = _CSRF_ORIGINS
+CSRF_USE_SESSIONS = True
