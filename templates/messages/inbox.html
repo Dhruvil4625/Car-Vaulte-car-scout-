@@ -1,30 +1,228 @@
 {% extends 'base.html' %}
-{% block title %}Messages | Car Scout{% endblock %}
+{% block title %}Message Center | Car Scout{% endblock %}
+
 {% block content %}
-<section class="container">
-  <h2 class="cv-section-title">Inbox</h2>
-  <div class="list-group">
-    {% for m in messages %}
-      <a class="list-group-item list-group-item-action">
-        <div class="d-flex w-100 justify-content-between">
-          <h6 class="mb-1">
-            {{ m.sender.email }}
-            {% if m.sender.role == 'Buyer' %}
-              <span class="badge bg-primary ms-2">Buyer</span>
-            {% elif m.sender.role == 'Seller' %}
-              <span class="badge bg-dark ms-2">Seller</span>
-            {% endif %}
-          </h6>
-          <small>{{ m.sent_at }}</small>
-        </div>
-        <p class="mb-1">{{ m.content }}</p>
-        {% if m.listing %}
-        <small>Regarding: {{ m.listing.car.make }} {{ m.listing.car.model }} ({{ m.listing.car.year }}) • {{ m.listing.price }}</small>
-        {% endif %}
-      </a>
-    {% empty %}
-      <div class="cv-card p-4 text-center">No messages.</div>
-    {% endfor %}
+<style>
+  /* --- Inbox Hero Section --- */
+  .inbox-hero {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%), 
+                url('https://images.unsplash.com/photo-1512428559087-560fa5ceab42?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    padding: 60px 0 80px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .inbox-hero h1 {
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .inbox-hero h1 span {
+    color: #ef4444; /* Vibrant Red Accent */
+  }
+
+  .inbox-hero p {
+    color: #94a3b8;
+    font-size: 1.05rem;
+    margin: 0;
+  }
+
+  /* --- Message List Container --- */
+  .message-wrapper {
+    margin-top: -40px; 
+    position: relative;
+    z-index: 10;
+    padding-bottom: 80px;
+  }
+
+  .message-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    padding: 25px;
+    margin-bottom: 15px;
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+  }
+
+  .message-card:hover {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+
+  /* --- Message Header & Avatar --- */
+  .msg-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+  }
+
+  .msg-sender-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .msg-avatar {
+    width: 45px;
+    height: 45px;
+    background: #f1f5f9;
+    color: #64748b;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    border: 1px solid #e2e8f0;
+  }
+
+  .msg-sender-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 2px 0;
+  }
+
+  .msg-time {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  /* --- Badges --- */
+  .role-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .role-buyer { background: rgba(59, 130, 246, 0.1); color: #2563eb; border: 1px solid rgba(59, 130, 246, 0.2); }
+  .role-seller { background: rgba(15, 23, 42, 0.1); color: #0f172a; border: 1px solid rgba(15, 23, 42, 0.2); }
+
+  /* --- Message Content --- */
+  .msg-body {
+    font-size: 0.95rem;
+    color: #475569;
+    line-height: 1.6;
+    margin-bottom: 15px;
+  }
+
+  /* --- Listing Context Box --- */
+  .msg-context {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+  }
+
+  .msg-context-car {
+    color: #334155;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .msg-context-price {
+    font-weight: 800;
+    color: #ef4444;
+    font-size: 1rem;
+  }
+
+  .empty-state {
+    background: #ffffff;
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 60px 20px;
+    text-align: center;
+    color: #64748b;
+  }
+</style>
+
+<section class="inbox-hero">
+  <div class="container">
+    <h1>Message <span>Center</span></h1>
+    <p>Communicate securely with buyers and sellers regarding vehicle listings.</p>
   </div>
 </section>
+
+<section class="container message-wrapper">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      
+      <div class="message-list">
+        {% for m in messages %}
+          <div class="message-card">
+            
+            <div class="msg-header">
+              <div class="msg-sender-info">
+                <div class="msg-avatar">
+                  <i class="fa-solid fa-user"></i>
+                </div>
+                <div>
+                  <h5 class="msg-sender-name">
+                    {{ m.sender.email }}
+                    {% if m.sender.role == 'Buyer' %}
+                      <span class="role-badge role-buyer ms-2">Buyer</span>
+                    {% elif m.sender.role == 'Seller' %}
+                      <span class="role-badge role-seller ms-2">Seller</span>
+                    {% endif %}
+                  </h5>
+                  <span class="text-muted" style="font-size: 0.8rem;">Incoming Message</span>
+                </div>
+              </div>
+              <div class="msg-time">
+                <i class="fa-regular fa-clock"></i> {{ m.sent_at }}
+              </div>
+            </div>
+
+            <div class="msg-body">
+              "{{ m.content }}"
+            </div>
+
+            {% if m.listing %}
+            <div class="msg-context">
+              <div class="msg-context-car">
+                <i class="fa-solid fa-car text-muted"></i> 
+                Regarding: {{ m.listing.car.make }} {{ m.listing.car.model }} ({{ m.listing.car.year }})
+              </div>
+              <div class="msg-context-price">
+                <i class="fa-solid fa-tag me-1 text-muted" style="font-size: 0.8rem;"></i> {{ m.listing.price }}
+              </div>
+            </div>
+            {% endif %}
+
+          </div>
+
+        {% empty %}
+          <div class="empty-state">
+            <i class="fa-regular fa-envelope-open fs-1 mb-3 text-muted"></i>
+            <h4 class="text-secondary fw-bold">Your inbox is empty</h4>
+            <p class="mb-0">You don't have any messages right now. When buyers or sellers contact you, they will appear here.</p>
+          </div>
+        {% endfor %}
+      </div>
+
+    </div>
+  </div>
+</section>
+
 {% endblock %}
