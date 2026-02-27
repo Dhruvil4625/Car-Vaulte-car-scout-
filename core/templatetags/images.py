@@ -1,4 +1,5 @@
 from django import template
+from core.models import CarListing
 
 register = template.Library()
 
@@ -37,3 +38,25 @@ def car_gallery(make=None, model=None, size="600x400", count=4):
     for i in range(int(count)):
         urls.append(f"{base}&sig={i}")
     return urls
+
+@register.simple_tag
+def listing_main_image(listing, size="600x400"):
+    try:
+        imgs = getattr(listing, "images").all()
+        if imgs:
+            return imgs[0].image.url
+    except Exception:
+        pass
+    return car_image(getattr(listing.car, "make", None), getattr(listing.car, "model", None), size)
+
+@register.simple_tag
+def car_main_image(car, size="600x400"):
+    try:
+        lst = car.listings.order_by("-created_at").first()
+        if lst:
+            imgs = lst.images.all()
+            if imgs:
+                return imgs[0].image.url
+    except Exception:
+        pass
+    return car_image(getattr(car, "make", None), getattr(car, "model", None), size)
