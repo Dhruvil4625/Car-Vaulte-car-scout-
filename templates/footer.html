@@ -1,40 +1,30 @@
 {% load static %}
 
 <style>
-  /* --- Footer Styling matching the Dark UI Image --- */
+  /* --- Premium Footer Styling --- */
   .cv-footer {
-    background-color: #0b1120; /* Deep dark slate matching the image background */
-    color: #94a3b8; /* Muted gray-blue for text */
-    font-family: 'Poppins', sans-serif;
-    padding-top: 60px;
-    border-top: 2px solid rgba(255, 255, 255, 0.05); /* Subtle separation */
+    background-color: #020617; /* Deep master slate */
+    color: #94a3b8; 
+    font-family: 'Montserrat', sans-serif;
+    padding-top: 70px;
+    border-top: 4px solid #e11d48; /* Signature Crimson Red top border */
     position: relative;
-  }
-
-  /* Subtle Red Top Accent (mimics the red line in your image) */
-  .cv-footer::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: 0;
-    width: 100px;
-    height: 2px;
-    background-color: #f43f5e; /* Bright pinkish-red from the image */
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.1);
   }
 
   .cv-footer h4 {
     color: #ffffff;
-    font-weight: 700;
-    font-size: 1.2rem;
-    margin-bottom: 20px;
+    font-weight: 800;
+    font-size: 1.1rem;
+    margin-bottom: 25px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1.5px;
   }
 
   .cv-footer p {
     font-size: 0.95rem;
-    line-height: 1.6;
-    margin-bottom: 20px;
+    line-height: 1.8;
+    margin-bottom: 25px;
   }
 
   /* Links Styling */
@@ -49,9 +39,10 @@
   }
 
   .cv-footer ul li a {
-    color: #94a3b8;
+    color: #cbd5e1;
     text-decoration: none;
     font-size: 0.95rem;
+    font-weight: 500;
     transition: all 0.3s ease;
     display: inline-flex;
     align-items: center;
@@ -61,40 +52,59 @@
     content: '\f105'; /* FontAwesome right angle bracket */
     font-family: 'Font Awesome 6 Free';
     font-weight: 900;
-    margin-right: 8px;
+    margin-right: 10px;
     font-size: 0.8rem;
-    color: #475569;
+    color: #e11d48;
     transition: all 0.3s ease;
+    opacity: 0;
+    transform: translateX(-10px);
   }
 
   .cv-footer ul li a:hover {
-    color: #f43f5e; /* Bright pinkish-red on hover */
+    color: #ffffff;
     transform: translateX(5px);
   }
 
   .cv-footer ul li a:hover::before {
-    color: #f43f5e;
+    opacity: 1;
+    transform: translateX(0);
   }
 
   /* Contact & Social */
   .footer-contact-item {
     display: flex;
     align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 15px;
+    gap: 15px;
+    margin-bottom: 20px;
     font-size: 0.95rem;
   }
 
-  .footer-contact-item i {
-    color: #f43f5e;
-    font-size: 1.2rem;
-    margin-top: 3px;
+  /* Upgraded Image Wrapper for Email & Phone */
+  .footer-contact-icon {
+    width: 38px;
+    height: 38px;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 1px solid rgba(225, 29, 72, 0.2);
+    margin-top: 2px;
+  }
+
+  .footer-contact-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   .footer-contact-item a {
-    color: #94a3b8;
+    color: #cbd5e1;
     text-decoration: none;
     transition: color 0.3s ease;
+    font-weight: 500;
   }
 
   .footer-contact-item a:hover {
@@ -103,69 +113,116 @@
 
   .social-icons {
     display: flex;
-    gap: 15px;
-    margin-top: 20px;
+    gap: 12px;
+    margin-top: 25px;
   }
 
   .social-icons a {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
     color: #ffffff;
     font-size: 1.1rem;
     text-decoration: none;
     transition: all 0.3s ease;
+    overflow: hidden; 
+  }
+
+  .social-icons img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    border-radius: 4px; 
+    transition: all 0.3s ease;
   }
 
   .social-icons a:hover {
-    background: #f43f5e;
-    transform: translateY(-3px);
+    background: #e11d48;
+    border-color: #e11d48;
+    transform: translateY(-4px);
+    box-shadow: 0 5px 15px rgba(225, 29, 72, 0.4);
   }
 
-  /* Newsletter Input (Matches the dark input fields from the image) */
-  .footer-newsletter .form-control {
-    background: rgba(255, 255, 255, 0.05);
+  .social-icons a:hover img {
+    transform: scale(1.1);
+  }
+
+  /* Modern Inline Newsletter Input */
+  .footer-newsletter .input-group {
+    background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    padding: 4px;
+    transition: border-color 0.3s ease;
+  }
+
+  .footer-newsletter .input-group:focus-within {
+    border-color: #e11d48;
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  .footer-newsletter .form-control {
+    background: transparent;
+    border: none;
     color: #ffffff;
     padding: 12px 15px;
-    border-radius: 8px;
-  }
-
-  .footer-newsletter .form-control:focus {
-    background: rgba(0, 0, 0, 0.5);
-    border-color: #f43f5e;
+    font-size: 0.95rem;
     box-shadow: none;
   }
 
-  .footer-newsletter .btn {
-    background-color: #f43f5e;
-    border: none;
-    color: #fff;
-    font-weight: 600;
-    padding: 12px 20px;
-    border-radius: 8px;
-    margin-top: 10px;
-    width: 100%;
-    transition: background-color 0.3s;
+  .footer-newsletter .form-control::placeholder {
+    color: #64748b;
   }
 
-  .footer-newsletter .btn:hover {
+  .footer-newsletter .form-control:focus {
+    background: transparent;
+    box-shadow: none;
+    color: #ffffff;
+  }
+
+  .btn-subscribe {
     background-color: #e11d48;
+    color: #fff;
+    border: none;
+    border-radius: 8px !important;
+    padding: 0 20px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-subscribe:hover {
+    background-color: #be123c;
+    color: #fff;
   }
 
   /* Bottom Copyright Bar */
   .cv-footer-bottom {
-    background-color: #060b14; /* Even darker shade for the very bottom */
-    padding: 20px 0;
-    margin-top: 50px;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    background-color: #01030a; /* Ultra dark for the absolute bottom */
+    padding: 25px 0;
+    margin-top: 60px;
     text-align: center;
     font-size: 0.85rem;
     color: #64748b;
+    font-weight: 500;
+  }
+
+  .cv-footer-bottom .brand-text {
+    color: #e11d48;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
   }
 </style>
 
@@ -174,13 +231,18 @@
     <div class="row g-5">
       
       <div class="col-lg-4 col-md-6">
-        <h4>Car Vault</h4>
+        <h4>Car Scout</h4>
         <p>Dominate the road. Discover, compare, and buy your dream car with confidence. We provide the most extensive inventory of premium new and used vehicles.</p>
         <div class="social-icons">
-          <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
-          <a href="#" aria-label="Twitter"><i class="fa-brands fa-twitter"></i></a>
-          <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
-          <a href="#" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+          <a href="https://www.linkedin.com/in/dhruvil-ramolia-3b9026266/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/LinkedIn_icon.svg/3840px-LinkedIn_icon.svg.png" alt="LinkedIn">
+          </a>
+          <a href="#" aria-label="X (Twitter)">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQuBxtToiQzRm4NoOqz6zWoDzNh4nejlZGlTg&s" alt="X">
+          </a>
+          <a href="#" aria-label="Instagram">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8qOK7A5IKaNOw-ZPeg_2OOD5ZIW3JOha8FA&s" alt="Instagram">
+          </a>
         </div>
       </div>
 
@@ -188,10 +250,9 @@
         <h4>Explore</h4>
         <ul>
           <li><a href="{% url 'home' %}">Home</a></li>
-          <li><a href="{% url 'cars' %}">Used Cars</a></li>
-          <li><a href="#">Sell Car</a></li>
-          <li><a href="#">Services</a></li>
-          <li><a href="https://www.carwale.com/bmw-cars/m4/" target="_blank" rel="noopener noreferrer">BMW M4</a></li>
+          <li><a href="{% url 'cars' %}">Inventory</a></li>
+          <li><a href="{% url 'sell' %}">Sell Your Car</a></li>
+          <li><a href="{% url 'cities' %}">Browse by City</a></li>
         </ul>
       </div>
 
@@ -206,25 +267,35 @@
       </div>
 
       <div class="col-lg-4 col-md-6">
-        <h4>Contact Us</h4>
+        <h4>Get in Touch</h4>
+        
         <div class="footer-contact-item">
-          <i class="fa-solid fa-envelope"></i>
+          <div class="footer-contact-icon">
+            <img src="https://thumbs.dreamstime.com/b/%D0%BF%D0%B5%D1%87%D0%B0%D1%82%D1%8C-201003176.jpg" alt="Email Icon">
+          </div>
           <div>
-            <strong>Email</strong><br>
+            <span class="d-block text-uppercase" style="font-size:0.7rem; color:#64748b; font-weight:700;">Email Address</span>
             <a href="mailto:ramoliadk@gmail.com">ramoliadk@gmail.com</a>
           </div>
         </div>
+        
         <div class="footer-contact-item">
-          <i class="fa-solid fa-phone"></i>
+          <div class="footer-contact-icon">
+            <img src="https://media.istockphoto.com/id/1494579261/vector/telephone-handset-simple-circle-icon.jpg?s=612x612&w=0&k=20&c=bpf-J3OuFFZDNS3gQQ25Xgp6PKJ_lhbmvuO-kYgNCSg=" alt="Phone Icon">
+          </div>
           <div>
-            <strong>Phone</strong><br>
+            <span class="d-block text-uppercase" style="font-size:0.7rem; color:#64748b; font-weight:700;">Phone Number</span>
             <a href="tel:+919909945734">+91 99099 45734</a>
           </div>
         </div>
         
         <form class="footer-newsletter mt-4" onsubmit="event.preventDefault();">
-          <input type="email" class="form-control" placeholder="Enter your email" aria-label="Newsletter Email" required>
-          <button type="submit" class="btn">Subscribe for Updates</button>
+          <div class="input-group">
+            <input type="email" class="form-control" placeholder="Subscribe to updates..." aria-label="Newsletter Email" required>
+            <button class="btn btn-subscribe" type="submit">
+              Subscribe <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
         </form>
       </div>
 
@@ -233,9 +304,9 @@
 
   <div class="cv-footer-bottom">
     <div class="container">
-      <div class="row align-items-center">
-        <div class="col-md-12">
-          <span>&copy; {% now 'Y' %} Car Vault. All rights reserved. Designed for the modern driver.</span>
+      <div class="row">
+        <div class="col-12">
+          &copy; {% now 'Y' %} <span class="brand-text">Car Scout</span>. All rights reserved. Designed for the modern driver.
         </div>
       </div>
     </div>
