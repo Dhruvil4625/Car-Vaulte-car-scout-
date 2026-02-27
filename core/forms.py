@@ -1,6 +1,7 @@
 from django.contrib.auth.forms import UserCreationForm
-from .models import User, CarListing, Car
 from django import forms
+from django.core.exceptions import ValidationError
+from .models import User, CarListing, Car, Showroom, UpcomingArrival
 
 class UserSignupForm(UserCreationForm):
     class Meta:
@@ -15,15 +16,37 @@ class UserSignupForm(UserCreationForm):
             'password2': forms.PasswordInput(attrs={'class': 'form-control'}),
         }
 
+class UserLoginForm(forms.Form):
+    email = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control'}))
+    password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+
+    def clean(self):
+        cleaned = super().clean()
+        email = cleaned.get('email')
+        password = cleaned.get('password')
+        if not email or not password:
+            raise ValidationError('Please enter email and password.')
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise ValidationError('No account found for this email. Please register first.')
+        if not user.is_active:
+            raise ValidationError('This account is inactive.')
+        if not user.check_password(password):
+            raise ValidationError('Invalid password.')
+        self.user = user
+        return cleaned
+
 class CarListingForm(forms.ModelForm):
     class Meta:
         model = CarListing
-        fields = ('price', 'mileage', 'description', 'status')
+        fields = ('price', 'mileage', 'description', 'status', 'showroom')
         widgets = {
             'price': forms.NumberInput(attrs={'class': 'form-control'}),
             'mileage': forms.NumberInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'status': forms.Select(attrs={'class': 'form-select'}),
+            'showroom': forms.Select(attrs={'class': 'form-select'}),
         }
 
 class MultiFileInput(forms.ClearableFileInput):
@@ -45,4 +68,18 @@ class CarForm(forms.ModelForm):
             'transmission': forms.TextInput(attrs={'class': 'form-control'}),
             'mileage': forms.NumberInput(attrs={'class': 'form-control'}),
             'body_type': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+class UpcomingArrivalForm(forms.ModelForm):
+    class Meta:
+        model = UpcomingArrival
+        fields = ('showroom', 'make', 'model', 'year', 'expected_date', 'status', 'notes')
+        widgets = {
+            'showroom': forms.Select(attrs={'class': 'form-select'}),
+            'make': forms.TextInput(attrs={'class': 'form-control'}),
+            'model': forms.TextInput(attrs={'class': 'form-control'}),
+            'year': forms.NumberInput(attrs={'class': 'form-control'}),
+            'expected_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
