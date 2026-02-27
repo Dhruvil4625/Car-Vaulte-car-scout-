@@ -4,47 +4,58 @@
 
 {% block content %}
 <style>
+  /* --- Global Background --- */
+  body {
+    background-color: #020617;
+  }
+
   /* --- Legal Hero Section --- */
   .legal-hero {
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(11, 17, 32, 0.98) 100%), 
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(2, 6, 23, 0.95) 100%), 
                 url('https://images.unsplash.com/photo-1589829085413-56de8ae18c73?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
-    padding: 80px 0 60px;
+    padding: 100px 0 80px;
     text-align: center;
     color: #fff;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   }
 
   .legal-hero h1 {
-    font-size: 2.8rem;
+    font-size: 3.5rem;
     font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 10px;
+    letter-spacing: 2px;
+    margin-bottom: 15px;
   }
 
   .legal-hero h1 span {
-    color: #f43f5e; /* Vibrant Red Accent */
+    color: #e11d48; /* Premium Crimson Red */
   }
 
   .legal-hero p {
     color: #94a3b8;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     max-width: 600px;
     margin: 0 auto;
+    letter-spacing: 0.5px;
   }
 
-  /* --- Legal Content Card --- */
+  /* --- Glassmorphism Content Card --- */
   .legal-section {
-    padding: 60px 0 80px;
+    padding: 80px 0;
+    position: relative;
+    z-index: 10;
   }
 
   .legal-content-card {
-    background: #0f172a;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 16px;
-    padding: 50px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
-    color: #94a3b8;
+    background: rgba(20, 25, 35, 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 4px solid #e11d48;
+    border-radius: 20px;
+    padding: 60px 50px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    color: #cbd5e1;
     font-size: 1.05rem;
     line-height: 1.8;
   }
@@ -52,45 +63,69 @@
   .legal-header {
     text-align: center;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding-bottom: 30px;
-    margin-bottom: 40px;
+    padding-bottom: 40px;
+    margin-bottom: 50px;
   }
 
   .badge-update {
-    background-color: rgba(244, 63, 94, 0.1);
-    color: #f43f5e;
-    border: 1px solid rgba(244, 63, 94, 0.2);
-    font-weight: 600;
-    padding: 8px 16px;
+    background-color: rgba(225, 29, 72, 0.1);
+    color: #e11d48;
+    border: 1px solid rgba(225, 29, 72, 0.3);
+    font-weight: 700;
+    padding: 8px 20px;
     border-radius: 30px;
     font-size: 0.85rem;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
     display: inline-block;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(225, 29, 72, 0.15);
+  }
+
+  .legal-header p {
+    color: #f8fafc;
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
   }
 
   .legal-content-card h3 {
     color: #ffffff;
-    font-weight: 700;
-    font-size: 1.3rem;
-    margin-top: 35px;
+    font-weight: 800;
+    font-size: 1.4rem;
+    margin-top: 40px;
     margin-bottom: 15px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
   }
 
-  .legal-content-card h3 i {
-    color: #f43f5e;
-    font-size: 1.2rem;
-    background: rgba(244, 63, 94, 0.1);
-    width: 35px;
-    height: 35px;
+  /* Polished Wrapper for Custom Image Icons */
+  .legal-icon {
+    width: 48px;
+    height: 48px;
+    background: #ffffff; 
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 8px;
+    border-radius: 12px;
+    border: 2px solid rgba(225, 29, 72, 0.3);
+    overflow: hidden;
+    padding: 6px;
+    flex-shrink: 0;
+  }
+
+  .legal-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; 
+  }
+
+  .legal-content-card p {
+    margin-bottom: 25px;
+    color: #94a3b8;
   }
 
   .legal-content-card p:last-child {
@@ -99,7 +134,11 @@
 
   @media (max-width: 768px) {
     .legal-content-card {
-      padding: 30px 20px;
+      padding: 40px 25px;
+    }
+    
+    .legal-hero h1 {
+      font-size: 2.8rem;
     }
   }
 </style>
@@ -114,22 +153,37 @@
 <section class="legal-section">
   <div class="container">
     <div class="row justify-content-center">
-      <div class="col-lg-8">
+      <div class="col-lg-9">
         
         <div class="legal-content-card">
           
           <div class="legal-header">
             <span class="badge-update">Last Updated: February 2026</span>
-            <p class="mb-0 text-light">Welcome to Car Scout. By accessing or using our platform, you agree to be bound by the following terms and conditions.</p>
+            <p class="mb-0">Welcome to Car Scout. By accessing or using our platform, you agree to be bound by the following terms and conditions.</p>
           </div>
 
-          <h3><i class="fa-solid fa-clipboard-check"></i> Accuracy of Information</h3>
+          <h3>
+            <div class="legal-icon">
+              <img src="https://www.shutterstock.com/image-vector/accuracy-icon-vector-dual-tone-600nw-2526895989.jpg" alt="Accuracy of Information">
+            </div>
+            Accuracy of Information
+          </h3>
           <p>By using Car Scout, you agree to list highly accurate and truthful information regarding any vehicle you post for sale. Misrepresentation of a vehicle's condition, mileage, or history is strictly prohibited and may result in account termination.</p>
 
-          <h3><i class="fa-solid fa-scale-balanced"></i> Compliance with Laws</h3>
+          <h3>
+            <div class="legal-icon">
+              <img src="https://img.freepik.com/premium-vector/legal-compliance-icon-vector-image-can-be-used-legal-services_120816-189806.jpg" alt="Compliance with Laws">
+            </div>
+            Compliance with Laws
+          </h3>
           <p>Users must adhere to all applicable local, state, and national laws regarding the sale and transfer of motor vehicles. You are solely responsible for ensuring you have the legal right to sell any listed vehicle.</p>
 
-          <h3><i class="fa-solid fa-handshake-angle"></i> Platform Transactions</h3>
+          <h3>
+            <div class="legal-icon">
+              <img src="https://www.shutterstock.com/image-vector/banking-icon-dollar-sign-chipenabled-260nw-2669971493.jpg" alt="Platform Transactions">
+            </div>
+            Platform Transactions
+          </h3>
           <p>Car Scout provides the platform, digital showroom, and tools to help connect buyers and sellers. However, please accept and acknowledge that all final transactions, financial agreements, and physical vehicle transfers are strictly between the buyer and the seller. Car Scout is not a party to the actual sale contract.</p>
 
         </div>
