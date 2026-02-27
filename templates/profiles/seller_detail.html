@@ -1,35 +1,347 @@
 {% extends 'base.html' %}
-{% block title %}Seller Details | Car Scout{% endblock %}
+{% load static %}
+{% block title %}Seller Profile | Car Scout{% endblock %}
+
 {% block content %}
-<section class="container">
-  <h2 class="cv-section-title">Seller</h2>
-  <div class="cv-card p-3">
-    <div><strong>{{ seller.user.name|default:seller.user.email }}</strong></div>
-    <div class="text-muted">{{ seller.dealership_name|default:"Independent" }} • {{ seller.location|default:"—" }}</div>
-    <div>Rating: {{ seller.rating }}</div>
-  </div>
-  <div class="mt-3">
-    <form method="post" action="{% url 'seller_request_sell' seller.user.user_id %}" class="cv-card p-3">
-      {% csrf_token %}
-      <label class="form-label">Request to buy a car from this seller</label>
-      {% if listings %}
-      <div class="mb-2">
-        <label class="form-label">Car / Listing (optional)</label>
-        <select name="listing_id" class="form-select">
-          <option value="">Select a specific car (optional)</option>
-          {% for l in listings %}
-          <option value="{{ l.listing_id }}">{{ l.car.make }} {{ l.car.model }} ({{ l.car.year }}) • {{ l.price }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      {% endif %}
-      <textarea name="content" class="form-control" rows="3" placeholder="Describe your car and preferred price"></textarea>
-      <div class="d-flex gap-2 mt-2">
-        <button class="btn btn-primary">Send Request</button>
-        <a href="{% url 'sellers' %}" class="btn btn-secondary">Back</a>
-      </div>
-      {% if error %}<div class="text-danger mt-2">{{ error }}</div>{% endif %}
-    </form>
+<style>
+  /* --- Profile Hero Section --- */
+  .profile-hero {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%), 
+                url('https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    padding: 60px 0 80px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .profile-hero h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .profile-hero h1 span {
+    color: #ef4444; /* Vibrant Red Accent */
+  }
+
+  .profile-hero p {
+    color: #94a3b8;
+    font-size: 1.05rem;
+    margin: 0;
+  }
+
+  /* --- Layout Wrapper --- */
+  .crm-wrapper {
+    margin-top: -50px;
+    position: relative;
+    z-index: 10;
+    padding-bottom: 80px;
+  }
+
+  /* --- Premium Cards --- */
+  .premium-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    padding: 30px;
+    height: 100%;
+  }
+
+  /* --- Seller Profile Card --- */
+  .seller-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .seller-name {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 5px;
+  }
+
+  .seller-badge {
+    display: inline-block;
+    background: rgba(15, 23, 42, 0.1);
+    color: #0f172a;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 20px;
+  }
+
+  .contact-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 25px 0;
+  }
+
+  .contact-list li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #475569;
+    font-size: 0.95rem;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed #e2e8f0;
+  }
+
+  .contact-list li:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .contact-list i {
+    color: #ef4444; /* Accent color for seller icons */
+    width: 20px;
+    text-align: center;
+  }
+
+  .stat-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .stat-box-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+  }
+
+  .stat-box-value {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #f59e0b; /* Golden yellow for rating */
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  /* --- Composer Form Styling --- */
+  .composer-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f1f5f9;
+  }
+
+  .composer-icon {
+    width: 45px;
+    height: 45px;
+    background: #0f172a;
+    color: #ffffff;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+  }
+
+  .composer-header h3 {
+    font-weight: 700;
+    color: #0f172a;
+    font-size: 1.3rem;
+    margin: 0;
+  }
+
+  .crm-form label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .crm-form .form-control,
+  .crm-form .form-select {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    border-radius: 8px;
+    padding: 12px 15px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    box-shadow: none;
+    width: 100%;
+  }
+
+  .crm-form .form-control:focus,
+  .crm-form .form-select:focus {
+    background-color: #fff;
+    border-color: #ef4444;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+  }
+
+  .crm-form textarea {
+    min-height: 120px;
+    resize: vertical;
+  }
+
+  /* --- Buttons --- */
+  .btn-primary-custom {
+    background-color: #ef4444;
+    color: #fff;
+    font-weight: 700;
+    padding: 12px 25px;
+    border-radius: 8px;
+    border: none;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex: 2;
+  }
+
+  .btn-primary-custom:hover {
+    background-color: #dc2626;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(239, 68, 68, 0.2);
+  }
+
+  .btn-cancel-custom {
+    background-color: transparent;
+    color: #475569;
+    border: 2px solid #cbd5e1;
+    font-weight: 700;
+    padding: 12px 25px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+  }
+
+  .btn-cancel-custom:hover {
+    background-color: #f1f5f9;
+    border-color: #94a3b8;
+    color: #0f172a;
+  }
+</style>
+
+<section class="profile-hero">
+  <div class="container">
+    <h1>Seller <span>Profile</span></h1>
+    <p>View dealership details and inquire about their available inventory.</p>
   </div>
 </section>
+
+<section class="container crm-wrapper">
+  <div class="row g-4">
+    
+    <div class="col-lg-4">
+      <div class="premium-card">
+        
+        <div class="seller-avatar">
+          <img src="https://www.iconpacks.net/icons/2/free-user-icon-3296-thumb.png" alt="User" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+        </div>
+        
+        <h2 class="seller-name">{{ seller.user.name|default:seller.user.email }}</h2>
+        <div class="seller-badge">Verified Seller</div>
+        
+        <ul class="contact-list">
+          <li>
+            <i class="fa-solid fa-building"></i> 
+            <span class="fw-bold">{{ seller.dealership_name|default:"Independent Seller" }}</span>
+          </li>
+          <li>
+            <i class="fa-solid fa-location-dot"></i> 
+            <span>{{ seller.location|default:"<em class='text-muted'>Location not specified</em>" }}</span>
+          </li>
+          <li>
+            <i class="fa-regular fa-envelope"></i> 
+            <span style="word-break: break-all;">{{ seller.user.email }}</span>
+          </li>
+        </ul>
+
+        <div class="stat-box mt-4">
+          <div class="stat-box-title">
+            Seller Rating
+          </div>
+          <div class="stat-box-value">
+            {{ seller.rating }} <i class="fa-solid fa-star text-warning" style="font-size: 1rem;"></i>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+      <div class="premium-card">
+        
+        <div class="composer-header">
+          <div class="composer-icon">
+            <i class="fa-solid fa-comment-dots"></i>
+          </div>
+          <div>
+            <h3>Send an Inquiry</h3>
+            <p class="text-muted mb-0" style="font-size: 0.85rem;">Reach out directly to request a purchase or ask questions.</p>
+          </div>
+        </div>
+
+        <form method="post" action="{% url 'seller_request_sell' seller.user.user_id %}" class="crm-form">
+          {% csrf_token %}
+          
+          {% if error %}
+            <div class="alert alert-danger" style="border-radius: 8px;">
+              <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ error }}
+            </div>
+          {% endif %}
+
+          {% if listings %}
+          <div class="mb-4">
+            <label>Inquire About a Specific Vehicle (Optional)</label>
+            <select name="listing_id" class="form-select">
+              <option value="">-- General Inquiry --</option>
+              {% for l in listings %}
+                <option value="{{ l.listing_id }}">{{ l.car.make }} {{ l.car.model }} ({{ l.car.year }}) - {{ l.price }}</option>
+              {% endfor %}
+            </select>
+            <small class="text-muted mt-1 d-block"><i class="fa-solid fa-circle-info me-1"></i> Selecting a car will attach a direct link to your message.</small>
+          </div>
+          {% endif %}
+
+          <div class="mb-4">
+            <label>Your Message</label>
+            <textarea name="content" class="form-control" placeholder="Hi there, I am interested in purchasing a vehicle and would like to know..." required></textarea>
+          </div>
+
+          <div class="d-flex gap-3 pt-3 border-top">
+            <a href="{% url 'sellers' %}" class="btn-cancel-custom">Cancel</a>
+            <button type="submit" class="btn-primary-custom">
+              <i class="fa-solid fa-paper-plane me-2"></i> Send Request
+            </button>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+
 {% endblock %}
