@@ -1,136 +1,520 @@
 {% extends 'base.html' %}
 {% block title %}Account Settings | Car Scout{% endblock %}
+
 {% block content %}
-<section class="container mt-3">
-  <h2 class="cv-section-title">Account Settings</h2>
-  <div class="row g-3">
-    <div class="col-12 col-md-6">
-      <div class="cv-card p-3 reveal">
-        <h5 class="mb-3">Profile</h5>
-        <form method="post">
-          {% csrf_token %}
-          <div class="mb-3">
-            <label class="form-label">Name</label>
-            <input class="form-control" type="text" name="name" value="{{ user.name }}">
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Phone</label>
-            <input class="form-control" type="text" name="phone" value="{{ user.phone }}">
-          </div>
-          <button class="btn btn-primary">Save Changes</button>
-        </form>
-      </div>
-    </div>
-    <div class="col-12 col-md-6">
-      <div class="cv-card p-3 reveal">
-        <h5 class="mb-3">Role</h5>
-        <p class="mb-2">Current role: <strong>{{ user.role }}</strong></p>
-        <form method="post">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="switch">
-          <button class="btn btn-outline-dark">Switch to {% if user.role == 'Buyer' %}Seller{% else %}Buyer{% endif %}</button>
-        </form>
-        <p class="mt-2 text-muted">Switching creates the required profile automatically.</p>
-      </div>
-    </div>
+<style>
+  /* --- Dashboard Hero Section --- */
+  .dashboard-hero {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%), 
+                url('https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    padding: 50px 0 40px;
+    margin-bottom: 40px;
+  }
+
+  .dashboard-hero h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 5px;
+  }
+
+  .dashboard-hero h1 span {
+    color: #ef4444; /* Vibrant Red Accent */
+  }
+
+  .dashboard-hero p {
+    color: #94a3b8;
+    font-size: 1.05rem;
+    margin: 0;
+  }
+
+  /* --- Premium Dashboard Cards --- */
+  .dash-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    height: 100%;
+    transition: all 0.3s ease;
+    overflow: hidden;
+  }
+
+  .dash-card:hover {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    transform: translateY(-3px);
+  }
+
+  .dash-header {
+    padding: 20px 25px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background-color: #fff;
+  }
+
+  /* Custom Image Wrapper Styling */
+  .dash-icon {
+    width: 45px;
+    height: 45px;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+  }
+
+  .dash-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Ensures images are not stretched */
+    border-radius: 8px;
+  }
+
+  /* Fallback for FontAwesome Icons (Listings & Sales) */
+  .dash-icon i {
+    font-size: 1.2rem;
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+  }
+
+  .dash-header h5 {
+    margin: 0;
+    font-weight: 700;
+    color: #0f172a;
+    font-size: 1.15rem;
+  }
+
+  .dash-body {
+    padding: 25px;
+  }
+
+  /* --- Form Styling --- */
+  .dash-form label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  .dash-form .form-control {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    border-radius: 8px;
+    padding: 12px 15px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+  }
+
+  .dash-form .form-control:focus {
+    background-color: #fff;
+    border-color: #ef4444;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+  }
+
+  /* --- Buttons & Badges --- */
+  .btn-primary-custom {
+    background-color: #ef4444;
+    color: #fff;
+    font-weight: 600;
+    padding: 12px 25px;
+    border-radius: 8px;
+    border: none;
+    transition: all 0.3s ease;
+  }
+
+  .btn-primary-custom:hover {
+    background-color: #dc2626;
+    color: #fff;
+    transform: translateY(-2px);
+  }
+
+  .btn-outline-custom {
+    border: 2px solid #cbd5e1;
+    color: #475569;
+    background: transparent;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+
+  .btn-outline-custom:hover {
+    border-color: #0f172a;
+    color: #0f172a;
+    background: #f8fafc;
+  }
+
+  .role-badge {
+    display: inline-block;
+    background: rgba(15, 23, 42, 0.05);
+    color: #0f172a;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    padding: 6px 15px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+  }
+
+  /* --- Custom List Groups (For Messages/Sales) --- */
+  .custom-list-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .custom-list-item {
+    display: block;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 15px 20px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+  }
+
+  .custom-list-item:hover {
+    background: #fff;
+    border-color: rgba(239, 68, 68, 0.3);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  }
+
+  .list-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .list-item-title {
+    font-weight: 700;
+    color: #0f172a;
+    font-size: 1rem;
+  }
+
+  .list-item-time {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    font-weight: 500;
+  }
+
+  .list-item-meta {
+    font-size: 0.85rem;
+    color: #ef4444; 
+    font-weight: 600;
+    margin-bottom: 8px;
+    background: rgba(239, 68, 68, 0.05);
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+
+  .list-item-content {
+    font-size: 0.95rem;
+    color: #475569;
+    line-height: 1.5;
+  }
+
+  .price-highlight {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #ef4444;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 30px 20px;
+    color: #94a3b8;
+    font-style: italic;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px dashed #cbd5e1;
+  }
+</style>
+
+<section class="dashboard-hero">
+  <div class="container">
+    <h1>Account <span>Dashboard</span></h1>
+    <p>Manage your profile, messages, and marketplace activity.</p>
   </div>
-  <div class="row g-3 mt-3">
-    <div class="col-12 col-lg-6">
-      <div class="cv-card p-3 reveal">
-        <h5 class="mb-3">Inbox</h5>
-        <div class="list-group">
-          {% for m in msgs_in %}
-            <a class="list-group-item">
-              <div class="d-flex w-100 justify-content-between">
-                <strong>{{ m.sender.email }}</strong>
-                <small>{{ m.sent_at }}</small>
-              </div>
-              <div class="text-muted mb-1">{% if m.listing %}{{ m.listing.car.make }} {{ m.listing.car.model }} ({{ m.listing.car.year }}) • {{ m.listing.price }}{% endif %}</div>
-              <div>{{ m.content }}</div>
-            </a>
-          {% empty %}
-            <div class="text-muted">No messages.</div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-    <div class="col-12 col-lg-6">
-      <div class="cv-card p-3 reveal">
-        <h5 class="mb-3">Sent</h5>
-        <div class="list-group">
-          {% for m in msgs_out %}
-            <a class="list-group-item">
-              <div class="d-flex w-100 justify-content-between">
-                <strong>{{ m.receiver.email }}</strong>
-                <small>{{ m.sent_at }}</small>
-              </div>
-              <div class="text-muted mb-1">{% if m.listing %}{{ m.listing.car.make }} {{ m.listing.car.model }} ({{ m.listing.car.year }}) • {{ m.listing.price }}{% endif %}</div>
-              <div>{{ m.content }}</div>
-            </a>
-          {% empty %}
-            <div class="text-muted">No messages.</div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-  </div>
-  {% if user.role == 'Seller' %}
-  <div class="row g-3 mt-3">
-    <div class="col-12 col-lg-6">
-      <div class="cv-card p-3 reveal">
-        <h5 class="mb-3">Your Listings</h5>
-        <div class="list-group">
-          {% for l in listings %}
-            <a class="list-group-item d-flex justify-content-between" href="{% url 'listing_detail' l.listing_id %}">
-              <div><strong>{{ l.car.make }} {{ l.car.model }}</strong><div class="text-muted">{{ l.car.year }} • {{ l.status }}</div></div>
-              <div class="fw-bold">{{ l.price }}</div>
-            </a>
-          {% empty %}
-            <div class="text-muted">No listings.</div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-    <div class="col-12 col-lg-6">
-      <div class="cv-card p-3 reveal">
-        <h5 class="mb-3">Sales</h5>
-        <div class="list-group">
-          {% for t in sales %}
-            <a class="list-group-item">
-              <div class="d-flex w-100 justify-content-between">
-                <div><strong>{{ t.listing.car.make }} {{ t.listing.car.model }}</strong><div class="text-muted">{{ t.listing.car.year }}</div></div>
-                <div class="fw-bold">{{ t.final_price }}</div>
-              </div>
-              <div class="text-muted">Buyer: {{ t.buyer.email }} • {{ t.status }}</div>
-            </a>
-          {% empty %}
-            <div class="text-muted">No sales.</div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-  </div>
-  {% else %}
-  <div class="row g-3 mt-3">
+</section>
+
+<section class="container mb-5">
+  <div class="row g-4">
+    <aside class="col-lg-3 d-none d-lg-block">
+      {% if user.is_staff or user.is_superuser %}
+        {% include 'admin/sidebar.html' %}
+      {% else %}
+        {% include 'users/sidebar.html' %}
+      {% endif %}
+    </aside>
+    <div class="col-lg-9">
+  
+  <div class="row g-4 mb-4">
+    {% if user.is_staff %}
     <div class="col-12">
-      <div class="cv-card p-3 reveal">
-        <h5 class="mb-3">Purchases</h5>
-        <div class="list-group">
-          {% for t in purchases %}
-            <a class="list-group-item">
-              <div class="d-flex w-100 justify-content-between">
-                <div><strong>{{ t.listing.car.make }} {{ t.listing.car.model }}</strong><div class="text-muted">{{ t.listing.car.year }}</div></div>
-                <div class="fw-bold">{{ t.final_price }}</div>
+      <div class="dash-card">
+        <div class="dash-header">
+          <div class="dash-icon"><i class="fa-solid fa-gauge-high"></i></div>
+          <h5>Admin Dashboard Summary</h5>
+          <a href="{% url 'dashboard_admin' %}" class="btn btn-outline-custom ms-auto">Open Full Dashboard</a>
+        </div>
+        <div class="dash-body">
+          <div class="row g-3">
+            <div class="col-6 col-md-3"><div class="cv-card p-3 text-center"><div class="fw-bold">Users</div><div class="fs-4">{{ users_count }}</div></div></div>
+            <div class="col-6 col-md-3"><div class="cv-card p-3 text-center"><div class="fw-bold">Listings</div><div class="fs-4">{{ listings_total }}</div></div></div>
+            <div class="col-6 col-md-3"><div class="cv-card p-3 text-center"><div class="fw-bold">Messages</div><div class="fs-4">{{ messages_total }}</div></div></div>
+            <div class="col-6 col-md-3"><div class="cv-card p-3 text-center"><div class="fw-bold">Test Drives</div><div class="fs-4">{{ drives_total }}</div></div></div>
+            <div class="col-6 col-md-3"><div class="cv-card p-3 text-center"><div class="fw-bold">Inspections</div><div class="fs-4">{{ inspections_total }}</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% elif user.role == 'Seller' %}
+    <div class="col-12">
+      <div class="dash-card">
+        <div class="dash-header">
+          <div class="dash-icon"><i class="fa-solid fa-gauge"></i></div>
+          <h5>Seller Dashboard Summary</h5>
+          <a href="{% url 'dashboard_seller' %}" class="btn btn-outline-custom ms-auto">Open Full Dashboard</a>
+        </div>
+        <div class="dash-body">
+          <div class="row g-3">
+            <div class="col-6 col-md-3"><div class="cv-card p-3 text-center"><div class="fw-bold">Active Listings</div><div class="fs-4">{{ listings_count }}</div></div></div>
+            <div class="col-6 col-md-3"><div class="cv-card p-3 text-center"><div class="fw-bold">Sales</div><div class="fs-4">{{ sales_total }}</div></div></div>
+            <div class="col-6 col-md-3"><div class="cv-card p-3 text-center"><div class="fw-bold">Inbox</div><div class="fs-4">{{ inbox_count }}</div></div></div>
+            <div class="col-6 col-md-3"><div class="cv-card p-3 text-center"><div class="fw-bold">Sent</div><div class="fs-4">{{ sent_count }}</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+      <div class="dash-card">
+        <div class="dash-header">
+          <div class="dash-icon"><i class="fa-solid fa-gauge"></i></div>
+          <h5>Buyer Dashboard Summary</h5>
+          <a href="{% url 'dashboard_buyer' %}" class="btn btn-outline-custom ms-auto">Open Full Dashboard</a>
+        </div>
+        <div class="dash-body">
+          <div class="row g-3">
+            <div class="col-6 col-md-3"><div class="cv-card p-3 text-center"><div class="fw-bold">Purchases</div><div class="fs-4">{{ purchases_count }}</div></div></div>
+            <div class="col-6 col-md-3"><div class="cv-card p-3 text-center"><div class="fw-bold">Test Drives</div><div class="fs-4">{{ drives_count }}</div></div></div>
+            <div class="col-6 col-md-3"><div class="cv-card p-3 text-center"><div class="fw-bold">Inbox</div><div class="fs-4">{{ inbox_count }}</div></div></div>
+            <div class="col-6 col-md-3"><div class="cv-card p-3 text-center"><div class="fw-bold">Sent</div><div class="fs-4">{{ sent_count }}</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    
+    <div class="col-12 col-md-6">
+      <div class="dash-card">
+        <div class="dash-header">
+          <div class="dash-icon"><img src="data:image/jpeg;base64,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" alt="Profile Icon"></div>
+          <h5>Personal Profile</h5>
+        </div>
+        <div class="dash-body">
+          <form method="post" class="dash-form">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="form-label">Full Name</label>
+              <input class="form-control" type="text" name="name" value="{{ user.name }}">
+            </div>
+            <div class="mb-4">
+              <label class="form-label">Phone Number</label>
+              <input class="form-control" type="text" name="phone" value="{{ user.phone }}">
+            </div>
+            <button class="btn btn-primary-custom w-100"><i class="fa-solid fa-floppy-disk me-2"></i> Save Changes</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-6">
+      <div class="dash-card">
+        <div class="dash-header">
+          <div class="dash-icon"><img src="data:image/png;base64,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" alt="Role Icon"></div>
+          <h5>Account Role</h5>
+        </div>
+        <div class="dash-body text-center py-4">
+          <p class="text-muted mb-2">You are currently operating as a:</p>
+          <div class="role-badge">{{ user.role }}</div>
+          
+          <form method="post" class="mt-3">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="switch">
+            <button class="btn btn-outline-custom">
+              <i class="fa-solid fa-arrow-right-arrow-left me-2"></i> Switch to {% if user.role == 'Buyer' %}Seller{% else %}Buyer{% endif %}
+            </button>
+          </form>
+          <p class="mt-3 text-muted" style="font-size: 0.85rem;"><i class="fa-solid fa-circle-info me-1"></i> Switching creates the required profile automatically.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    
+    <div class="col-12 col-lg-6">
+      <div class="dash-card">
+        <div class="dash-header">
+          <div class="dash-icon"><img src="https://img.freepik.com/premium-vector/inbox-icon-vector-image-can-be-used-productivity_120816-222910.jpg" alt="Inbox Icon"></div>
+          <h5>Inbox</h5>
+        </div>
+        <div class="dash-body">
+          <div class="custom-list-group">
+            {% for m in msgs_in %}
+              <a href="#" class="custom-list-item">
+                <div class="list-item-header">
+                  <span class="list-item-title">{{ m.sender.email }}</span>
+                  <span class="list-item-time"><i class="fa-regular fa-clock me-1"></i> {{ m.sent_at }}</span>
+                </div>
+                {% if m.listing %}
+                <div class="list-item-meta">
+                  <i class="fa-solid fa-car me-1"></i> {{ m.listing.car.make }} {{ m.listing.car.model }} ({{ m.listing.car.year }}) &nbsp;|&nbsp; {{ m.listing.price }}
+                </div>
+                {% endif %}
+                <div class="list-item-content">"{{ m.content }}"</div>
+              </a>
+            {% empty %}
+              <div class="empty-state">Your inbox is currently empty.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+      <div class="dash-card">
+        <div class="dash-header">
+          <div class="dash-icon"><img src="https://thumbs.dreamstime.com/b/beautiful-meticulously-designed-email-delivery-icon-send-message-120275205.jpg" alt="Sent Message Icon"></div>
+          <h5>Sent Messages</h5>
+        </div>
+        <div class="dash-body">
+          <div class="custom-list-group">
+            {% for m in msgs_out %}
+              <a href="#" class="custom-list-item">
+                <div class="list-item-header">
+                  <span class="list-item-title">To: {{ m.receiver.email }}</span>
+                  <span class="list-item-time"><i class="fa-regular fa-clock me-1"></i> {{ m.sent_at }}</span>
+                </div>
+                {% if m.listing %}
+                <div class="list-item-meta">
+                  <i class="fa-solid fa-car me-1"></i> {{ m.listing.car.make }} {{ m.listing.car.model }} ({{ m.listing.car.year }}) &nbsp;|&nbsp; {{ m.listing.price }}
+                </div>
+                {% endif %}
+                <div class="list-item-content">"{{ m.content }}"</div>
+              </a>
+            {% empty %}
+              <div class="empty-state">You haven't sent any messages yet.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if user.role == 'Seller' %}
+  <div class="row g-4">
+    
+    <div class="col-12 col-lg-6">
+      <div class="dash-card">
+        <div class="dash-header">
+          <div class="dash-icon"><i class="fa-solid fa-tags"></i></div>
+          <h5>Your Active Listings</h5>
+        </div>
+        <div class="dash-body">
+          <div class="custom-list-group">
+            {% for l in listings %}
+              <a href="{% url 'listing_detail' l.listing_id %}" class="custom-list-item d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="list-item-title">{{ l.car.make }} {{ l.car.model }}</div>
+                  <div class="text-muted" style="font-size: 0.85rem;"><i class="fa-regular fa-calendar me-1"></i> {{ l.car.year }} &nbsp;|&nbsp; Status: <strong class="text-dark">{{ l.status }}</strong></div>
+                </div>
+                <div class="price-highlight">{{ l.price }}</div>
+              </a>
+            {% empty %}
+              <div class="empty-state">You don't have any active listings.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+      <div class="dash-card">
+        <div class="dash-header">
+          <div class="dash-icon"><i class="fa-solid fa-handshake"></i></div>
+          <h5>Your Sales History</h5>
+        </div>
+        <div class="dash-body">
+          <div class="custom-list-group">
+            {% for t in sales %}
+              <div class="custom-list-item">
+                <div class="list-item-header">
+                  <span class="list-item-title">{{ t.listing.car.make }} {{ t.listing.car.model }}</span>
+                  <span class="price-highlight">{{ t.final_price }}</span>
+                </div>
+                <div class="d-flex justify-content-between text-muted" style="font-size: 0.85rem;">
+                  <span><i class="fa-solid fa-user me-1"></i> Buyer: {{ t.buyer.email }}</span>
+                  <span class="badge bg-success">{{ t.status }}</span>
+                </div>
               </div>
-              <div class="text-muted">Seller: {{ t.seller.email }} • {{ t.status }}</div>
-            </a>
-          {% empty %}
-            <div class="text-muted">No purchases.</div>
-          {% endfor %}
+            {% empty %}
+              <div class="empty-state">No sales recorded yet.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% else %}
+  
+  <div class="row g-4">
+    <div class="col-12">
+      <div class="dash-card">
+        <div class="dash-header">
+          <div class="dash-icon"><img src="https://www.shutterstock.com/image-vector/online-shopping-design-vector-logo-600nw-2667459097.jpg" alt="Purchases Icon"></div>
+          <h5>Your Purchases</h5>
+        </div>
+        <div class="dash-body">
+          <div class="custom-list-group">
+            {% for t in purchases %}
+              <div class="custom-list-item">
+                <div class="list-item-header">
+                  <span class="list-item-title">{{ t.listing.car.make }} {{ t.listing.car.model }} ({{ t.listing.car.year }})</span>
+                  <span class="price-highlight">{{ t.final_price }}</span>
+                </div>
+                <div class="d-flex justify-content-between text-muted" style="font-size: 0.85rem;">
+                  <span><i class="fa-solid fa-store me-1"></i> Seller: {{ t.seller.email }}</span>
+                  <span class="badge bg-primary">{{ t.status }}</span>
+                </div>
+              </div>
+            {% empty %}
+              <div class="empty-state">You haven't made any purchases yet.</div>
+            {% endfor %}
+          </div>
         </div>
       </div>
     </div>
   </div>
   {% endif %}
+    </div>
+  </div>
 </section>
 {% endblock %}
