@@ -1,160 +1,188 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}FAQ | Car Vault{% endblock %}
+{% block title %}FAQ | Car Scout{% endblock %}
 
 {% block content %}
 <style>
+  /* --- Global FAQ Background --- */
+  body {
+    background-color: #020617; /* Deep dark background to match the theme */
+  }
+
   /* --- FAQ Hero Section --- */
   .faq-hero {
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(11, 17, 32, 0.95) 100%), 
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(2, 6, 23, 0.95) 100%), 
                 url('https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
-    padding: 80px 0 60px;
+    padding: 100px 0 80px;
     text-align: center;
     color: #fff;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   }
 
   .faq-hero h1 {
-    font-size: 3rem;
+    font-size: 3.5rem;
     font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
     margin-bottom: 15px;
   }
 
   .faq-hero h1 span {
-    color: #f43f5e; /* Vibrant Red Accent */
+    color: #e11d48; /* Premium Crimson Red */
   }
 
   .faq-hero p {
     color: #94a3b8;
-    font-size: 1.1rem;
-    max-width: 600px;
+    font-size: 1.15rem;
+    max-width: 650px;
     margin: 0 auto;
+    letter-spacing: 0.5px;
   }
 
-  /* --- Dark Mode Accordion Styling --- */
+  /* --- Glassmorphism Accordion Styling --- */
   .faq-section {
-    padding: 60px 0 80px;
+    padding: 80px 0;
+    position: relative;
+    z-index: 10;
   }
 
   .accordion-custom .accordion-item {
-    background-color: #0f172a;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    margin-bottom: 15px;
+    background: rgba(20, 25, 35, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px !important; /* Forces rounded corners on all items */
+    margin-bottom: 20px;
     overflow: hidden;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
     transition: transform 0.3s ease, border-color 0.3s ease;
   }
 
   .accordion-custom .accordion-item:hover {
-    border-color: rgba(244, 63, 94, 0.3);
+    border-color: rgba(225, 29, 72, 0.4);
     transform: translateY(-2px);
-  }
-
-  /* Remove top/bottom borders that bootstrap adds by default */
-  .accordion-custom .accordion-item:first-of-type,
-  .accordion-custom .accordion-item:last-of-type {
-    border-top-left-radius: 12px;
-    border-top-right-radius: 12px;
-    border-bottom-left-radius: 12px;
-    border-bottom-right-radius: 12px;
   }
 
   .accordion-custom .accordion-button {
     background-color: transparent;
     color: #fff;
-    font-weight: 600;
-    font-size: 1.1rem;
-    padding: 20px 25px;
+    font-weight: 700;
+    font-size: 1.15rem;
+    padding: 25px 30px;
     box-shadow: none;
     letter-spacing: 0.5px;
-  }
-
-  /* Active State Styling */
-  .accordion-custom .accordion-button:not(.collapsed) {
-    background-color: rgba(244, 63, 94, 0.05);
-    color: #f43f5e;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  }
-
-  /* Changing the default Bootstrap chevron icon to white/red */
-  .accordion-custom .accordion-button::after {
-    filter: invert(1) grayscale(100%) brightness(200%); /* Makes it white */
     transition: all 0.3s ease;
   }
 
+  /* Active State Styling - Dashboard Effect */
+  .accordion-custom .accordion-button:not(.collapsed) {
+    background-color: rgba(225, 29, 72, 0.05);
+    color: #e11d48;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-left: 4px solid #e11d48; /* Red accent line on the left */
+  }
+
+  /* Adjusting the default Bootstrap chevron icon */
+  .accordion-custom .accordion-button::after {
+    filter: invert(1) grayscale(100%) brightness(200%);
+    transition: transform 0.3s ease, filter 0.3s ease;
+  }
+
+  /* Making the chevron red when expanded */
   .accordion-custom .accordion-button:not(.collapsed)::after {
-    filter: invert(35%) sepia(85%) saturate(2500%) hue-rotate(325deg) brightness(100%) contrast(105%); /* Approximates the #f43f5e red */
+    filter: invert(24%) sepia(87%) saturate(2971%) hue-rotate(334deg) brightness(94%) contrast(97%); /* Matches #e11d48 */
   }
 
   .accordion-custom .accordion-body {
-    padding: 25px;
-    color: #94a3b8;
+    padding: 30px;
+    color: #cbd5e1;
     font-size: 1rem;
-    line-height: 1.7;
-    background-color: #0b1120; /* Slightly darker inside for depth */
+    line-height: 1.8;
+    background-color: rgba(0, 0, 0, 0.2); /* Slightly darker inner panel */
+    border-left: 4px solid transparent; /* Keeps alignment with header */
   }
 
-  /* --- Support CTA Card --- */
+  .accordion-icon {
+    color: #64748b;
+    transition: color 0.3s ease;
+  }
+
+  .accordion-button:not(.collapsed) .accordion-icon {
+    color: #e11d48;
+  }
+
+  /* --- Premium Support CTA Card --- */
   .support-cta {
-    background: linear-gradient(135deg, rgba(244, 63, 94, 0.1) 0%, rgba(15, 23, 42, 0.5) 100%);
-    border: 1px solid rgba(244, 63, 94, 0.2);
-    border-radius: 16px;
-    padding: 40px;
+    background: rgba(20, 25, 35, 0.8);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 4px solid #e11d48;
+    border-radius: 20px;
+    padding: 50px 40px;
     text-align: center;
-    margin-top: 50px;
+    margin-top: 60px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
   }
 
   .support-cta h3 {
     color: #fff;
-    font-weight: 700;
+    font-weight: 800;
     margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 1.8rem;
   }
 
   .support-cta p {
-    color: #cbd5e1;
-    margin-bottom: 25px;
+    color: #94a3b8;
+    margin-bottom: 30px;
+    font-size: 1rem;
   }
 
+  /* Glowing Pulse Button */
   .btn-outline-red {
-    border: 2px solid #f43f5e;
-    color: #f43f5e;
-    background: transparent;
-    font-weight: 600;
-    padding: 10px 30px;
-    border-radius: 8px;
+    border: 2px solid #e11d48;
+    color: #fff;
+    background: #e11d48;
+    font-weight: 800;
+    padding: 14px 40px;
+    border-radius: 10px;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    transition: all 0.3s ease;
+    letter-spacing: 2px;
+    transition: all 0.4s ease;
+    text-decoration: none;
+    display: inline-block;
+    box-shadow: 0 4px 15px rgba(225, 29, 72, 0.4);
   }
 
   .btn-outline-red:hover {
-    background: #f43f5e;
+    background: #be123c;
+    border-color: #be123c;
     color: #fff;
-    box-shadow: 0 10px 20px rgba(244, 63, 94, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(225, 29, 72, 0.6);
   }
 </style>
 
 <section class="faq-hero">
   <div class="container">
     <h1>Frequently Asked <span>Questions</span></h1>
-    <p>Everything you need to know about buying, selling, and test-driving vehicles on the Car Vault platform.</p>
+    <p>Everything you need to know about buying, selling, and test-driving vehicles on our platform.</p>
   </div>
 </section>
 
 <section class="faq-section">
   <div class="container">
     <div class="row justify-content-center">
-      <div class="col-lg-8">
+      <div class="col-lg-9">
         
         <div class="accordion accordion-custom" id="faqAccordion">
           
           <div class="accordion-item">
             <h2 class="accordion-header" id="headingOne">
               <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                <i class="fa-solid fa-car-side me-3 text-muted"></i> How do I list my car for sale?
+                <i class="fa-solid fa-car-side me-3 accordion-icon"></i> How do I list my car for sale?
               </button>
             </h2>
             <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#faqAccordion">
@@ -167,7 +195,7 @@
           <div class="accordion-item">
             <h2 class="accordion-header" id="headingTwo">
               <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                <i class="fa-solid fa-wallet me-3 text-muted"></i> How do the budget filters work?
+                <i class="fa-solid fa-wallet me-3 accordion-icon"></i> How do the budget filters work?
               </button>
             </h2>
             <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#faqAccordion">
@@ -180,12 +208,12 @@
           <div class="accordion-item">
             <h2 class="accordion-header" id="headingThree">
               <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-                <i class="fa-solid fa-key me-3 text-muted"></i> How do test drives work?
+                <i class="fa-solid fa-key me-3 accordion-icon"></i> How do test drives work?
               </button>
             </h2>
             <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#faqAccordion">
               <div class="accordion-body">
-                When you find a car you like, click the "Schedule Test Drive" button on the listing page. Buyers can request their preferred dates, and our staff or the private seller will coordinate and confirm the schedule directly through the platform's administration tool.
+                When you find a car you like, click the "Schedule Test Drive" button on the listing page. Buyers can request their preferred dates, and our staff or the private seller will coordinate and confirm the schedule directly through the platform's internal dashboard.
               </div>
             </div>
           </div>
@@ -194,8 +222,10 @@
 
         <div class="support-cta">
           <h3>Still have questions?</h3>
-          <p>If you couldn't find the answer you were looking for, our automotive team is here to help.</p>
-          <a href="{% url 'contact' %}" class="btn btn-outline-red">Contact Support</a>
+          <p>If you couldn't find the answer you were looking for, our automotive team is standing by.</p>
+          <a href="{% url 'contact' %}" class="btn-outline-red">
+            <i class="fa-solid fa-headset me-2"></i> Contact Support
+          </a>
         </div>
 
       </div>
