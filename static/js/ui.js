@@ -81,4 +81,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // 6. Button ripple effect
+  document.addEventListener('click', function(e){
+    const btn = e.target.closest('.btn, .btn-activity');
+    if(!btn) return;
+    const r = document.createElement('span');
+    r.className = 'cv-ripple';
+    const rect = btn.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    r.style.width = r.style.height = size + 'px';
+    r.style.left = (e.clientX - rect.left - size/2) + 'px';
+    r.style.top = (e.clientY - rect.top - size/2) + 'px';
+    btn.appendChild(r);
+    setTimeout(()=>{r.remove();}, 500);
+  }, false);
+
 });
