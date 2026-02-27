@@ -1,7 +1,7 @@
 from django.contrib.auth.forms import UserCreationForm
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import User, CarListing, Car, Showroom, UpcomingArrival
+from .models import User, CarListing, Car, Showroom, UpcomingArrival, Inspection
 
 class UserSignupForm(UserCreationForm):
     class Meta:
@@ -83,3 +83,24 @@ class UpcomingArrivalForm(forms.ModelForm):
             'status': forms.Select(attrs={'class': 'form-select'}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
+
+class InspectionForm(forms.ModelForm):
+    class Meta:
+        model = Inspection
+        fields = ('listing', 'inspection_date', 'condition_score', 'accident_history', 'report_details', 'source')
+        widgets = {
+            'listing': forms.Select(attrs={'class': 'form-select'}),
+            'inspection_date': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'condition_score': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1', 'min': '0', 'max': '10', 'placeholder': '0.0 – 10.0'}),
+            'accident_history': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Accident summary...'}),
+            'report_details': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Detailed report or JSON...'}),
+            'source': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        qs = CarListing.objects.select_related("car", "seller").order_by("-created_at")
+        if user and not getattr(user, "is_staff", False) and getattr(user, "role", "") == "Seller":
+            qs = qs.filter(seller=user)
+        self.fields['listing'].queryset = qs
