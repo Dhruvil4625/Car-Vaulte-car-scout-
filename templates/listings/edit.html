@@ -1,29 +1,323 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block title %}Edit Listing | Car Scout{% endblock %}
+
 {% block content %}
-<section class="container">
-  <h2 class="cv-section-title">Edit Listing</h2>
-  <form method="post" enctype="multipart/form-data" class="cv-card p-3">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <h5>Photos</h5>
-    <div class="mb-3">
-      <label class="form-label">Add More Photos</label>
-      <input type="file" name="images" multiple accept="image/*" class="form-control">
-      <small class="text-muted">You can select multiple images.</small>
-    </div>
-    {% if listing.images.all %}
-    <div class="cs-thumbs mt-2">
-      {% for img in listing.images.all %}
-        <img src="{{ img.image.url }}" alt="{{ img.alt }}" class="cs-thumb" onerror="this.src='{% static 'img/placeholder.svg' %}'">
-      {% endfor %}
-    </div>
-    {% endif %}
-    <div class="d-flex gap-2 mt-2">
-      <button class="btn btn-primary">Save</button>
-      <a href="{% url 'listings' %}" class="btn btn-secondary">Cancel</a>
-    </div>
-  </form>
+<style>
+  /* --- Edit Hero Section --- */
+  .edit-hero {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%), 
+                url('https://images.unsplash.com/photo-1583121274602-3e2820c69888?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    padding: 60px 0 80px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .edit-hero h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .edit-hero h1 span {
+    color: #ef4444; /* Vibrant Red Accent */
+  }
+
+  .edit-hero p {
+    color: #94a3b8;
+    font-size: 1.05rem;
+    margin: 0;
+  }
+
+  /* --- Premium Form Card --- */
+  .edit-card-wrapper {
+    margin-top: -50px; 
+    position: relative;
+    z-index: 10;
+    padding-bottom: 60px;
+  }
+
+  .edit-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    max-width: 750px;
+    margin: 0 auto;
+    padding: 40px;
+  }
+
+  .edit-card-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .edit-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+  }
+
+  .edit-card-header h3 {
+    font-weight: 700;
+    color: #0f172a;
+    font-size: 1.4rem;
+    margin: 0;
+  }
+
+  /* --- Django Form Auto-Styling --- */
+  .django-custom-form p {
+    margin-bottom: 1.5rem;
+  }
+
+  .django-custom-form label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  .django-custom-form input[type="text"],
+  .django-custom-form input[type="number"],
+  .django-custom-form input[type="email"],
+  .django-custom-form select,
+  .django-custom-form textarea {
+    width: 100%;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    border-radius: 8px;
+    padding: 12px 15px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    box-shadow: none;
+  }
+
+  .django-custom-form input:focus,
+  .django-custom-form select:focus,
+  .django-custom-form textarea:focus {
+    background-color: #fff;
+    border-color: #ef4444;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+    outline: none;
+  }
+
+  .django-custom-form .helptext {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-top: 5px;
+    display: block;
+  }
+
+  /* --- Photo Upload & Gallery Section --- */
+  .photo-section-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 30px 0 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .photo-section-title i {
+    color: #ef4444;
+  }
+
+  .upload-zone {
+    border: 2px dashed #cbd5e1;
+    background-color: #f8fafc;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+  }
+
+  .upload-zone:hover {
+    border-color: #ef4444;
+    background-color: rgba(239, 68, 68, 0.02);
+  }
+
+  .upload-zone input[type="file"] {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    color: #64748b;
+    font-size: 0.9rem;
+  }
+
+  .upload-zone input[type="file"]::file-selector-button {
+    background-color: #0f172a;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+    margin-right: 15px;
+  }
+
+  .upload-zone input[type="file"]::file-selector-button:hover {
+    background-color: #1e293b;
+  }
+
+  .existing-photos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+  }
+
+  .photo-thumbnail-wrapper {
+    position: relative;
+    width: 100%;
+    padding-bottom: 75%; /* Aspect ratio hack */
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  }
+
+  .photo-thumbnail-wrapper img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  .photo-thumbnail-wrapper:hover img {
+    transform: scale(1.1);
+  }
+
+  /* --- Action Buttons --- */
+  .action-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .btn-save-custom {
+    background-color: #ef4444;
+    color: #fff;
+    font-weight: 700;
+    padding: 12px 30px;
+    border-radius: 8px;
+    border: none;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex: 2;
+  }
+
+  .btn-save-custom:hover {
+    background-color: #dc2626;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(239, 68, 68, 0.2);
+  }
+
+  .btn-cancel-custom {
+    background-color: transparent;
+    color: #475569;
+    border: 2px solid #cbd5e1;
+    font-weight: 700;
+    padding: 12px 30px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+  }
+
+  .btn-cancel-custom:hover {
+    background-color: #f1f5f9;
+    border-color: #94a3b8;
+    color: #0f172a;
+  }
+</style>
+
+<section class="edit-hero">
+  <div class="container">
+    <h1>Edit <span>Marketplace Listing</span></h1>
+    <p>Update your listing details, pricing, and visual gallery.</p>
+  </div>
 </section>
+
+<section class="container edit-card-wrapper">
+  <div class="edit-card">
+    
+    <div class="edit-card-header">
+      <div class="edit-icon">
+        <i class="fa-solid fa-file-signature"></i>
+      </div>
+      <div>
+        <h3>Listing Details</h3>
+        <p class="text-muted mb-0" style="font-size: 0.85rem;">Modify the public information for this vehicle.</p>
+      </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="django-custom-form">
+      {% csrf_token %}
+      
+      {{ form.as_p }}
+      
+      <h4 class="photo-section-title"><i class="fa-solid fa-camera-retro"></i> Vehicle Gallery</h4>
+      
+      <div class="upload-zone">
+        <i class="fa-solid fa-cloud-arrow-up fs-2 text-muted mb-2"></i>
+        <label class="form-label d-block text-dark fw-bold mb-1" style="font-size: 1rem;">Upload Additional Photos</label>
+        <small class="text-muted d-block mb-3">Hold Ctrl/Cmd to select multiple high-quality images.</small>
+        <input type="file" name="images" multiple accept="image/*" class="form-control" style="border:none; background:transparent; padding:0; box-shadow:none;">
+      </div>
+
+      {% if listing.images.all %}
+        <label class="form-label mt-3 mb-2">Current Photos</label>
+        <div class="existing-photos-grid">
+          {% for img in listing.images.all %}
+            <div class="photo-thumbnail-wrapper">
+              <img src="{{ img.image.url }}" alt="{{ img.alt }}" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+      
+      <div class="action-buttons">
+        <a href="{% url 'listings' %}" class="btn-cancel-custom">Cancel</a>
+        <button type="submit" class="btn-save-custom">
+          <i class="fa-solid fa-cloud-arrow-up me-2"></i> Save Listing
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</section>
+
 {% endblock %}
