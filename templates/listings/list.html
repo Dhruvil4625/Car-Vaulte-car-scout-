@@ -1,19 +1,282 @@
 {% extends 'base.html' %}
 {% load currency %}{% load images %}{% load static %}
-{% block title %}Listings | Car Scout{% endblock %}
+{% block title %}Marketplace Listings | Car Scout{% endblock %}
+
 {% block content %}
-<section class="container">
-  <div class="page-banner">
-    <strong>Latest Listings</strong>
-    <span class="banner-meta">Hand-picked deals for drivers</span>
+<style>
+  /* --- Listings Hero Section --- */
+  .listings-hero {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%), 
+                url('https://images.unsplash.com/photo-1552519507-da3b142c6e3d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    padding: 60px 0 80px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .listings-hero h1 {
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .listings-hero h1 span {
+    color: #ef4444; /* Vibrant Red Accent */
+  }
+
+  .listings-hero p {
+    color: #94a3b8;
+    font-size: 1.1rem;
+    margin: 0;
+  }
+
+  /* --- Floating Search Widget --- */
+  .search-widget-container {
+    max-width: 1200px;
+    margin: -50px auto 40px; 
+    position: relative;
+    z-index: 10;
+    padding: 0 20px;
+  }
+
+  .search-widget {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    padding: 25px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .search-widget label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .search-widget .form-control,
+  .search-widget .form-select {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    box-shadow: none;
+  }
+
+  .search-widget .form-control:focus,
+  .search-widget .form-select:focus {
+    background-color: #fff;
+    border-color: #ef4444;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+  }
+
+  .btn-search-custom {
+    background-color: #0f172a;
+    color: #fff;
+    font-weight: 700;
+    padding: 10px 30px;
+    border-radius: 8px;
+    border: none;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    width: 100%;
+    height: 100%;
+  }
+
+  .btn-search-custom:hover {
+    background-color: #1e293b;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  /* --- Modern Listing Cards --- */
+  .modern-card {
+    background: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .modern-card:hover {
+    box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+    transform: translateY(-5px);
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+
+  .card-img-wrapper {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+    background: #f1f5f9;
+  }
+
+  .card-img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+
+  .modern-card:hover .card-img-wrapper img {
+    transform: scale(1.05);
+  }
+
+  /* Thumbnail Gallery inside Card */
+  .card-thumbnails {
+    display: flex;
+    gap: 5px;
+    padding: 10px 15px 0;
+    background: #fff;
+  }
+
+  .card-thumbnails img {
+    width: calc(25% - 4px);
+    height: 45px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .modern-card-body {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+
+  .car-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 8px;
+  }
+
+  .car-price {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #ef4444;
+    margin-bottom: 10px;
+  }
+
+  .seller-info {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .car-meta-grid {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: #475569;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px dashed #e2e8f0;
+  }
+
+  /* --- Buttons --- */
+  .primary-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+  }
+
+  .admin-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .btn-outline-custom {
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    background: transparent;
+    font-weight: 600;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    flex: 1;
+    text-align: center;
+    padding: 8px 10px;
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+
+  .btn-outline-custom:hover {
+    border-color: #0f172a;
+    color: #0f172a;
+    background: #f8fafc;
+  }
+
+  .btn-primary-custom {
+    background-color: #ef4444;
+    color: #fff;
+    font-weight: 600;
+    border-radius: 6px;
+    border: none;
+    transition: all 0.3s ease;
+    flex: 1;
+    padding: 8px 10px;
+    font-size: 0.9rem;
+  }
+
+  .btn-primary-custom:hover {
+    background-color: #dc2626;
+    color: #fff;
+  }
+
+  .status-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+  }
+  .status-active { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
+  .status-other { background: rgba(100, 116, 139, 0.1); color: #475569; }
+
+  .empty-state {
+    text-align: center;
+    padding: 50px 20px;
+    color: #64748b;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 2px dashed #cbd5e1;
+  }
+</style>
+
+<section class="listings-hero">
+  <div class="container">
+    <h1>Latest <span>Listings</span></h1>
+    <p>Browse hand-picked deals from verified sellers and dealerships.</p>
   </div>
-  <h2 class="cv-section-title">All Listings</h2>
-  <div class="cv-card p-3 mb-3">
-    <form method="get" class="row g-2 align-items-end">
+</section>
+
+<div class="search-widget-container">
+  <div class="search-widget">
+    <form method="get" class="row g-3 align-items-end">
+      
       <div class="col-sm-6 col-md-3">
-        <label class="form-label">Budget</label>
+        <label>Budget Range</label>
         <select class="form-select" name="budget">
-          <option value="">Any</option>
+          <option value="">Any Budget</option>
           <option value="0-500000" {% if budget == '0-500000' %}selected{% endif %}>Under ₹ 5 Lakh</option>
           <option value="500000-1000000" {% if budget == '500000-1000000' %}selected{% endif %}>₹ 5–10 Lakh</option>
           <option value="1000000-1500000" {% if budget == '1000000-1500000' %}selected{% endif %}>₹ 10–15 Lakh</option>
@@ -24,18 +287,21 @@
           <option value="10000000-999000000" {% if budget == '10000000-999000000' %}selected{% endif %}>Above ₹ 1 Cr</option>
         </select>
       </div>
-      <div class="col-sm-6 col-md-3">
-        <label class="form-label">Brand</label>
-        <input class="form-control" type="text" name="brand" value="{{ brand }}" placeholder="e.g., Toyota, BMW">
+      
+      <div class="col-sm-6 col-md-2">
+        <label>Brand</label>
+        <input class="form-control" type="text" name="brand" value="{{ brand }}" placeholder="e.g., BMW">
       </div>
-      <div class="col-sm-6 col-md-3">
-        <label class="form-label">Model</label>
-        <input class="form-control" type="text" name="model" value="{{ model }}" placeholder="e.g., Camry">
+      
+      <div class="col-sm-6 col-md-2">
+        <label>Model</label>
+        <input class="form-control" type="text" name="model" value="{{ model }}" placeholder="e.g., X5">
       </div>
-      <div class="col-sm-6 col-md-3">
-        <label class="form-label">Fuel</label>
+      
+      <div class="col-sm-6 col-md-2">
+        <label>Fuel Type</label>
         <select class="form-select" name="fuel">
-          <option value="">All</option>
+          <option value="">All Types</option>
           <option value="Petrol" {% if fuel == 'Petrol' %}selected{% endif %}>Petrol</option>
           <option value="Diesel" {% if fuel == 'Diesel' %}selected{% endif %}>Diesel</option>
           <option value="Electric" {% if fuel == 'Electric' %}selected{% endif %}>Electric</option>
@@ -43,62 +309,94 @@
           <option value="CNG" {% if fuel == 'CNG' %}selected{% endif %}>CNG</option>
         </select>
       </div>
-      <div class="col-sm-6 col-md-3">
-        <button class="btn btn-dark w-100">Apply</button>
+      
+      <div class="col-sm-12 col-md-3">
+        <button class="btn-search-custom" type="submit">
+          <i class="fa-solid fa-filter me-2"></i> Apply Filters
+        </button>
       </div>
+
     </form>
   </div>
-  <div class="row g-3">
+</div>
+
+<section class="container mb-5 pb-4">
+  <div class="row g-4">
     {% for lst in listings %}
-    <div class="col-md-4">
-      <div class="cs-card h-100">
-        {% if lst.images.all %}
-          <img loading="lazy" src="{{ lst.images.all.0.image.url }}" alt="{{ lst.images.all.0.alt|default:lst.car.make }}" class="cs-card-img" onerror="this.src='{% static 'img/placeholder.svg' %}'">
-        {% else %}
-          <img loading="lazy" src="{% car_image lst.car.make lst.car.model '600x400' %}" alt="{{ lst.car.make }} {{ lst.car.model }}" class="cs-card-img" onerror="this.src='{% static 'img/placeholder.svg' %}'">
-        {% endif %}
-        <div class="cs-card-body">
-          <h5 class="cs-card-title">{{ lst.car.make }} {{ lst.car.model }} ({{ lst.car.year }})</h5>
-          <p class="cs-card-price">{{ lst.price|inr }}</p>
-          <p class="text-muted">Seller: {{ lst.seller.email }}</p>
-          {% if lst.images.all %}
-          <div class="cs-thumbs mt-2">
-            {% for img in lst.images.all|slice:":4" %}
-              <img loading="lazy" src="{{ img.image.url }}" alt="{{ img.alt }}" class="cs-thumb" onerror="this.src='{% static 'img/placeholder.svg' %}'">
-            {% endfor %}
-          </div>
-          {% else %}
-          {% car_gallery lst.car.make lst.car.model '300x200' 4 as thumbs %}
-          <div class="cs-thumbs mt-2">
-            {% for t in thumbs %}
-              <img loading="lazy" src="{{ t }}" alt="{{ lst.car.make }} {{ lst.car.model }} image {{ forloop.counter }}" class="cs-thumb" onerror="this.src='{% static 'img/placeholder.svg' %}'">
-            {% endfor %}
-          </div>
-          {% endif %}
-          <div class="d-flex justify-content-between">
-            <span>Mileage: {{ lst.mileage }} km</span>
-            <span>Status: {{ lst.status }}</span>
-          </div>
-          <div class="mt-2 d-flex gap-2">
-            <a href="{% url 'listing_edit' lst.listing_id %}" class="btn btn-warning">Edit</a>
-            <a href="{% url 'listing_delete' lst.listing_id %}" class="btn btn-danger">Delete</a>
-            <a href="{% url 'listing_detail' lst.listing_id %}" class="btn btn-outline-primary">More details</a>
-            {% if request.user.is_staff %}
-            <a href="{% url 'testdrive_new' %}?listing_id={{ lst.listing_id }}" class="btn btn-outline-dark">Test Drive</a>
-            {% endif %}
-            {% if request.user.is_authenticated and request.user.role == 'Buyer' %}
-            <form method="post" action="{% url 'listing_purchase' lst.listing_id %}">
-              {% csrf_token %}
-              <button class="btn btn-primary">Buy</button>
-            </form>
+      <div class="col-12 col-md-6 col-lg-4">
+        <article class="modern-card">
+          
+          <div class="card-img-wrapper">
+            {% if lst.images.all %}
+              <img loading="lazy" src="{{ lst.images.all.0.image.url }}" alt="{{ lst.images.all.0.alt|default:lst.car.make }}" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+            {% else %}
+              <img loading="lazy" src="{% car_image lst.car.make lst.car.model '600x400' %}" alt="{{ lst.car.make }} {{ lst.car.model }}" onerror="this.src='{% static 'img/placeholder.svg' %}'">
             {% endif %}
           </div>
+          
+          <div class="card-thumbnails">
+            {% if lst.images.all %}
+              {% for img in lst.images.all|slice:":4" %}
+                <img loading="lazy" src="{{ img.image.url }}" alt="{{ img.alt }}" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+              {% endfor %}
+            {% else %}
+              {% car_gallery lst.car.make lst.car.model '300x200' 4 as thumbs %}
+              {% for t in thumbs %}
+                <img loading="lazy" src="{{ t }}" alt="{{ lst.car.make }} {{ lst.car.model }} image {{ forloop.counter }}" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+              {% endfor %}
+            {% endif %}
+          </div>
+          
+          <div class="modern-card-body">
+            <h3 class="car-title">{{ lst.car.make }} {{ lst.car.model }} ({{ lst.car.year }})</h3>
+            <div class="car-price">{{ lst.price|inr }}</div>
+            
+            <div class="seller-info">
+              <i class="fa-solid fa-user-circle"></i> {{ lst.seller.email }}
+            </div>
+            
+            <div class="car-meta-grid">
+              <span><i class="fa-solid fa-gauge-high me-1 text-muted"></i> {{ lst.mileage }} km</span>
+              <span class="status-badge {% if lst.status == 'Active' %}status-active{% else %}status-other{% endif %}">
+                {{ lst.status }}
+              </span>
+            </div>
+            
+            <div class="primary-actions">
+              <a href="{% url 'listing_detail' lst.listing_id %}" class="btn-outline-custom">Details</a>
+              
+              {% if request.user.is_staff %}
+                <a href="{% url 'testdrive_new' %}?listing_id={{ lst.listing_id }}" class="btn-outline-custom"><i class="fa-solid fa-key"></i> Drive</a>
+              {% endif %}
+              
+              {% if request.user.is_authenticated and request.user.role == 'Buyer' %}
+                <form method="post" action="{% url 'listing_purchase' lst.listing_id %}" class="d-flex" style="flex:1;">
+                  {% csrf_token %}
+                  <button class="btn-primary-custom w-100">Buy</button>
+                </form>
+              {% endif %}
+            </div>
+
+            {% if request.user.is_staff or request.user == lst.seller %}
+            <div class="admin-actions">
+              <a href="{% url 'listing_edit' lst.listing_id %}" class="btn btn-sm btn-warning flex-fill fw-bold text-dark"><i class="fa-solid fa-pen me-1"></i> Edit</a>
+              <a href="{% url 'listing_delete' lst.listing_id %}" class="btn btn-sm btn-danger flex-fill fw-bold"><i class="fa-solid fa-trash me-1"></i> Delete</a>
+            </div>
+            {% endif %}
+
+          </div>
+        </article>
+      </div>
+    {% empty %}
+      <div class="col-12">
+        <div class="empty-state">
+          <i class="fa-solid fa-car-burst mb-3" style="font-size: 3rem; color: #cbd5e1;"></i>
+          <h4 class="text-secondary fw-bold">No active listings</h4>
+          <p class="mb-0">There are currently no vehicles available matching your search criteria.</p>
         </div>
       </div>
-    </div>
-    {% empty %}
-    <div class="col-12"><div class="cv-card p-4 text-center">No listings yet.</div></div>
     {% endfor %}
   </div>
 </section>
+
 {% endblock %}
