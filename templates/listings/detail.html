@@ -1,54 +1,506 @@
 {% extends 'base.html' %}
 {% load currency %}{% load static %}{% load images %}
-{% block title %}Listing Detail | Car Scout{% endblock %}
+{% block title %}{{ listing.car.make }} {{ listing.car.model }} | Car Scout{% endblock %}
+
 {% block content %}
-<section class="container">
-  <div class="cv-card p-3 mb-3">
-    <div class="row g-3">
-      <div class="col-md-7">
+<style>
+  /* --- Ultra-Smooth Cinematic Pan --- */
+  @keyframes cinematicPan {
+    0% { transform: scale(1.0) translateX(0); }
+    50% { transform: scale(1.05) translateX(-1%); }
+    100% { transform: scale(1.0) translateX(0); }
+  }
+
+  /* --- Detail Hero Section --- */
+  .detail-hero {
+    position: relative;
+    padding: 70px 0 100px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+  }
+
+  .detail-hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    /* High-end cinematic car detail background */
+    background: url('https://images.unsplash.com/photo-1503376712341-ea1c6db88135?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    z-index: 1;
+    animation: cinematicPan 60s ease-in-out infinite;
+    will-change: transform;
+  }
+
+  .detail-hero::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, rgba(2, 6, 23, 0.85) 0%, rgba(2, 6, 23, 0.98) 100%);
+    z-index: 2;
+  }
+
+  .detail-hero .container {
+    position: relative;
+    z-index: 3;
+  }
+
+  .detail-hero h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  }
+
+  .detail-hero p {
+    color: #cbd5e1;
+    font-size: 1.1rem;
+    margin: 0;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+
+  /* --- Main Content Wrapper --- */
+  .detail-wrapper {
+    margin-top: -60px;
+    position: relative;
+    z-index: 10;
+    padding-bottom: 80px;
+  }
+
+  .premium-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05);
+    padding: 30px;
+    margin-bottom: 25px;
+    transition: all 0.3s ease;
+  }
+
+  .premium-card:hover {
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    border-color: rgba(225, 29, 72, 0.2);
+  }
+
+  /* --- Gallery Styling --- */
+  .main-image-container {
+    width: 100%;
+    height: 480px;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 15px;
+    background: #0f172a;
+    position: relative;
+  }
+
+  .main-image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: opacity 0.4s ease;
+  }
+
+  .thumbnail-gallery {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+    scrollbar-width: none; /* Hide scrollbar Firefox */
+  }
+  
+  .thumbnail-gallery::-webkit-scrollbar {
+    display: none; /* Hide scrollbar Chrome/Safari */
+  }
+
+  .thumb-img {
+    width: 100px;
+    height: 70px;
+    border-radius: 8px;
+    object-fit: cover;
+    cursor: pointer;
+    border: 2px solid transparent;
+    opacity: 0.5;
+    transition: all 0.3s ease;
+  }
+
+  .thumb-img:hover, .thumb-img.active {
+    opacity: 1;
+    border-color: #e11d48;
+    transform: translateY(-2px);
+  }
+
+  /* --- Specs Grid --- */
+  .price-tag {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #e11d48;
+    margin-bottom: 25px;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 15px;
+    line-height: 1;
+  }
+
+  .spec-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 25px;
+  }
+
+  .spec-item {
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: all 0.3s ease;
+  }
+  
+  .spec-item:hover {
+    background: #ffffff;
+    border-color: #e11d48;
+    box-shadow: 0 4px 10px rgba(225, 29, 72, 0.05);
+  }
+
+  .spec-item i {
+    color: #e11d48;
+    font-size: 1.3rem;
+  }
+
+  .spec-label {
+    font-size: 0.75rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 700;
+  }
+
+  .spec-value {
+    font-size: 1rem;
+    color: #0f172a;
+    font-weight: 800;
+  }
+
+  /* --- Typography & Elements --- */
+  .section-title {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .section-title i {
+    color: #e11d48;
+  }
+
+  .description-text {
+    color: #475569;
+    line-height: 1.8;
+    font-size: 1.05rem;
+  }
+
+  /* --- Buttons & Forms --- */
+  .btn-primary-custom {
+    background-color: #e11d48;
+    color: #fff;
+    font-weight: 800;
+    padding: 16px 20px;
+    border-radius: 10px;
+    border: none;
+    transition: all 0.3s ease;
+    width: 100%;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 1rem;
+    box-shadow: 0 4px 15px rgba(225, 29, 72, 0.3);
+  }
+
+  .btn-primary-custom:hover {
+    background-color: #be123c;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(225, 29, 72, 0.4);
+    color: #fff;
+  }
+
+  .btn-outline-custom {
+    border: 2px solid #cbd5e1;
+    color: #0f172a;
+    background: transparent;
+    font-weight: 800;
+    padding: 14px 20px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: block;
+    text-align: center;
+    text-decoration: none;
+  }
+
+  .btn-outline-custom:hover {
+    border-color: #0f172a;
+    color: #ffffff;
+    background: #0f172a;
+  }
+
+  .contact-seller-form label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #64748b;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .contact-seller-form .form-control {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+  }
+
+  .contact-seller-form .form-control:focus {
+    background-color: #fff;
+    border-color: #e11d48;
+    box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.1);
+    outline: none;
+  }
+  
+  /* --- Premium Inspection UI --- */
+  .score-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    font-size: 0.9rem;
+  }
+  
+  .source-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    font-size: 0.9rem;
+  }
+
+  /* Diagnostic Terminal Style for Report */
+  .report-pre {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-left: 4px solid #e11d48;
+    border-radius: 10px;
+    padding: 20px;
+    font-size: 0.9rem;
+    color: #cbd5e1;
+    white-space: pre-wrap;
+    font-family: 'Courier New', Courier, monospace;
+    line-height: 1.6;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
+  }
+</style>
+
+<section class="detail-hero">
+  <div class="container">
+    <h1>{{ listing.car.make }} {{ listing.car.model }}</h1>
+    <p><i class="fa-solid fa-location-dot me-2" style="color: #e11d48;"></i> {% if listing.showroom %}{{ listing.showroom.city|default:"Location Pending" }}{% else %}Online Exclusive{% endif %}</p>
+  </div>
+</section>
+
+<section class="container detail-wrapper">
+  <div class="row g-4">
+    
+    <div class="col-lg-8">
+      
+      <div class="premium-card p-3 reveal">
+        <div class="main-image-container">
+          {% if listing.images.all %}
+            <img id="mainDisplayImage" src="{{ listing.images.all.0.image.url }}" alt="{{ listing.car.make }} {{ listing.car.model }}" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+          {% else %}
+            <img id="mainDisplayImage" src="{% car_image listing.car.make listing.car.model '900x600' %}" alt="{{ listing.car.make }} {{ listing.car.model }}" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+          {% endif %}
+        </div>
+        
         {% if listing.images.all %}
-          <img loading="lazy" src="{{ listing.images.all.0.image.url }}" alt="{{ listing.images.all.0.alt|default:listing.car.make }}" class="w-100 rounded" onerror="this.src='{% static 'img/placeholder.svg' %}'">
-        {% else %}
-          <img loading="lazy" src="{% car_image listing.car.make listing.car.model '900x600' %}" alt="{{ listing.car.make }} {{ listing.car.model }}" class="w-100 rounded" onerror="this.src='{% static 'img/placeholder.svg' %}'">
-        {% endif %}
-        {% if listing.images.all %}
-        <div class="d-flex gap-2 mt-2 flex-wrap">
+        <div class="thumbnail-gallery" id="thumbnailContainer">
           {% for img in listing.images.all|slice:":8" %}
-            <img loading="lazy" src="{{ img.image.url }}" alt="{{ img.alt }}" class="rounded" style="width:110px;height:80px;object-fit:cover" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+            <img src="{{ img.image.url }}" alt="{{ img.alt }}" class="thumb-img {% if forloop.first %}active{% endif %}" onclick="changeMainImage(this)" onerror="this.src='{% static 'img/placeholder.svg' %}'">
           {% endfor %}
         </div>
         {% endif %}
       </div>
-      <div class="col-md-5">
-        <h3 class="mb-1">{{ listing.car.make }} {{ listing.car.model }} ({{ listing.car.year }})</h3>
-        <div class="fs-4 fw-bold text-danger mb-2">{{ listing.price|inr }}</div>
-        <div class="text-muted mb-2">Mileage: {{ listing.mileage }} km</div>
-        <div class="text-muted mb-2">Fuel: {{ listing.car.fuel_type|default:'—' }}</div>
-        <div class="text-muted mb-2">Transmission: {{ listing.car.transmission|default:'—' }}</div>
-        <div class="text-muted mb-2">Body: {{ listing.car.body_type|default:'—' }}</div>
-        <div class="text-muted mb-3">Seller: {{ listing.seller.email }}</div>
-        {% if listing.description %}
-        <div class="mb-3">{{ listing.description }}</div>
+
+      {% if listing.description %}
+      <div class="premium-card reveal" style="transition-delay: 0.1s;">
+        <h3 class="section-title"><i class="fa-solid fa-file-lines"></i> Seller's Description</h3>
+        <p class="description-text mb-0">{{ listing.description|linebreaksbr }}</p>
+      </div>
+      {% endif %}
+
+      {% if inspection %}
+      <div class="premium-card reveal" style="transition-delay: 0.2s;">
+        <h3 class="section-title"><i class="fa-solid fa-clipboard-check"></i> Diagnostic Inspection</h3>
+        
+        <div class="d-flex flex-wrap gap-3 mb-4">
+          <span class="score-badge"><i class="fa-solid fa-star"></i> Condition Score: {{ inspection.condition_score|default:"N/A" }} / 10</span>
+          <span class="source-badge"><i class="fa-solid fa-user-shield"></i> Verified By: {{ inspection.get_source_display }}</span>
+        </div>
+        
+        <div class="text-muted mb-4 pb-3 border-bottom" style="font-size: 0.9rem; font-weight: 600;">
+          <i class="fa-regular fa-calendar-check me-1"></i> Inspected on: {{ inspection.inspection_date }}
+        </div>
+        
+        {% if inspection.accident_history %}
+        <div class="mb-4">
+          <div class="spec-label" style="margin-bottom:8px; color: #0f172a;"><i class="fa-solid fa-car-burst me-1 text-danger"></i> Accident History</div>
+          <div class="description-text bg-light p-3 rounded border">{{ inspection.accident_history|linebreaksbr }}</div>
+        </div>
         {% endif %}
-        <div class="d-flex gap-2">
-          {% if is_buyer %}
+        
+        {% if inspection.report_details %}
+        <div class="mt-4">
+          <div class="spec-label" style="margin-bottom:8px; color: #0f172a;"><i class="fa-solid fa-microchip me-1 text-primary"></i> System Report Output</div>
+          <pre class="report-pre">{{ inspection.report_details }}</pre>
+        </div>
+        {% endif %}
+        
+        {% if request.user.is_authenticated %}
+          {% if request.user.is_staff or request.user == listing.seller %}
+            <div class="mt-4 pt-3 border-top text-end">
+              <a href="{% url 'inspection_new' %}?listing_id={{ listing.listing_id }}" class="btn btn-dark fw-bold" style="border-radius:8px; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.5px;">
+                <i class="fa-solid fa-pen-to-square me-2"></i> Update Inspection
+              </a>
+            </div>
+          {% endif %}
+        {% endif %}
+      </div>
+      {% endif %}
+
+    </div>
+
+    <div class="col-lg-4">
+      <div style="position: sticky; top: 100px;">
+        
+        <div class="premium-card reveal">
+          <div class="price-tag">{{ listing.price|inr }}</div>
+          
+          <div class="spec-grid">
+            <div class="spec-item">
+              <i class="fa-regular fa-calendar"></i>
+              <div>
+                <div class="spec-label">Year</div>
+                <div class="spec-value">{{ listing.car.year }}</div>
+              </div>
+            </div>
+            <div class="spec-item">
+              <i class="fa-solid fa-gauge-high"></i>
+              <div>
+                <div class="spec-label">Mileage</div>
+                <div class="spec-value">{{ listing.mileage }} km</div>
+              </div>
+            </div>
+            <div class="spec-item">
+              <i class="fa-solid fa-gas-pump"></i>
+              <div>
+                <div class="spec-label">Fuel Type</div>
+                <div class="spec-value">{{ listing.car.fuel_type|default:'—' }}</div>
+              </div>
+            </div>
+            <div class="spec-item">
+              <i class="fa-solid fa-gears"></i>
+              <div>
+                <div class="spec-label">Transmission</div>
+                <div class="spec-value">{{ listing.car.transmission|default:'—' }}</div>
+              </div>
+            </div>
+            <div class="spec-item" style="grid-column: span 2;">
+              <i class="fa-solid fa-car-side"></i>
+              <div>
+                <div class="spec-label">Body Style</div>
+                <div class="spec-value">{{ listing.car.body_type|default:'—' }}</div>
+              </div>
+            </div>
+          </div>
+
+          {% if is_buyer and listing.status == 'Active' %}
           <form method="post" action="{% url 'listing_purchase' listing.listing_id %}">
             {% csrf_token %}
-            <button class="btn btn-primary">Purchase</button>
+            <button class="btn-primary-custom w-100 mb-3"><i class="fa-solid fa-money-check-dollar me-2"></i> Purchase Vehicle</button>
           </form>
+          {% elif listing.status != 'Active' %}
+            <div class="alert alert-secondary text-center fw-bold mb-3 text-uppercase" style="letter-spacing: 1px;"><i class="fa-solid fa-lock me-2"></i> {{ listing.status }}</div>
           {% endif %}
-          <a href="{% url 'listings' %}" class="btn btn-outline-dark">Back to Listings</a>
+          
+          <a href="{% url 'listings' %}" class="btn-outline-custom"><i class="fa-solid fa-arrow-left me-2"></i> Back to Inventory</a>
         </div>
-        <div class="mt-3">
-          <form method="post" action="{% url 'listing_message' listing.listing_id %}">
+
+        <div class="premium-card reveal" style="transition-delay: 0.1s;">
+          <h3 class="section-title"><i class="fa-solid fa-envelope-open-text"></i> Contact Seller</h3>
+          <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
+            <div style="width: 50px; height: 50px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: #e11d48; border: 1px solid #e2e8f0;">
+              <i class="fa-solid fa-user-tie"></i>
+            </div>
+            <div style="word-break: break-all;">
+              <span class="text-muted d-block" style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Listed By</span>
+              <strong style="color: #0f172a;">{{ listing.seller.email }}</strong>
+            </div>
+          </div>
+
+          <form method="post" action="{% url 'listing_message' listing.listing_id %}" class="contact-seller-form">
             {% csrf_token %}
-            <label class="form-label">Message Seller</label>
-            <textarea name="content" class="form-control" rows="3" placeholder="Type your message"></textarea>
-            <button class="btn btn-outline-primary mt-2">Send</button>
+            <label>Send a Direct Message</label>
+            <textarea name="content" class="form-control" rows="3" placeholder="I'm interested in this {{ listing.car.make }}..."></textarea>
+            <button type="submit" class="btn btn-dark w-100 mt-3 py-3 fw-bold" style="border-radius: 10px; text-transform: uppercase; letter-spacing: 1px;"><i class="fa-regular fa-paper-plane me-2"></i> Send Message</button>
           </form>
         </div>
+
       </div>
     </div>
+
   </div>
 </section>
+
+<script>
+  function changeMainImage(thumbnail) {
+    const mainImage = document.getElementById('mainDisplayImage');
+    
+    // Smooth fade out
+    mainImage.style.opacity = '0.5';
+    
+    setTimeout(() => {
+      // Swap the source
+      mainImage.src = thumbnail.src;
+      // Fade back in
+      mainImage.style.opacity = '1';
+    }, 200);
+
+    // Update active class on thumbnails
+    const thumbnails = document.querySelectorAll('.thumb-img');
+    thumbnails.forEach(img => img.classList.remove('active'));
+    thumbnail.classList.add('active');
+  }
+</script>
+
 {% endblock %}
