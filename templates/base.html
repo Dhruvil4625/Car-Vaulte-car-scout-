@@ -61,7 +61,6 @@
   </style>
 </head>
 <body>
-  
   {% include 'usernavbar.html' %}
   
   <main class="cv-main">
@@ -72,6 +71,27 @@
   
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="{% static 'js/ui.js' %}"></script>
+  <style>
+    .user-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      object-fit: cover;
+      display: inline-block;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    .user-avatar.sm {
+      width: 22px;
+      height: 22px;
+      margin-right: 6px;
+    }
+    .user-avatar.lg {
+      width: 40px;
+      height: 40px;
+      margin-right: 10px;
+    }
+  </style>
 
 </body>
 </html>
