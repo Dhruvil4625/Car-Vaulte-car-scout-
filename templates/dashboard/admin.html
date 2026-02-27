@@ -182,6 +182,11 @@
 </style>
 
 <section class="container mb-5">
+  <div class="row g-4">
+    <aside class="col-lg-3 d-none d-lg-block">
+      {% include 'admin/sidebar.html' %}
+    </aside>
+    <div class="col-lg-9">
   
   <div class="admin-header reveal">
     <div class="admin-title-group">
@@ -204,6 +209,7 @@
     <div class="col-md-3"><div class="cv-card p-3 text-center"><div class="fs-1">🛒</div><div class="fw-bold">Listings</div><div class="fs-4">{{ listings_count }}</div></div></div>
     <div class="col-md-3"><div class="cv-card p-3 text-center"><div class="fs-1">💬</div><div class="fw-bold">Messages</div><div class="fs-4">{{ messages_count }}</div></div></div>
     <div class="col-md-3"><div class="cv-card p-3 text-center"><div class="fs-1">🏁</div><div class="fw-bold">Test Drives</div><div class="fs-4">{{ drives_count }}</div></div></div>
+    <div class="col-md-3"><div class="cv-card p-3 text-center"><div class="fs-1">🧪</div><div class="fw-bold">Inspections</div><div class="fs-4">{{ inspections_count }}</div></div></div>
   </div>
 
   <div class="row g-4">
@@ -252,11 +258,16 @@
           <a href="/admin/" class="action-btn" target="_blank">
             <i class="fa-solid fa-database"></i> Open Django Admin
           </a>
+          <a href="/admin/core/inspection/" class="action-btn" target="_blank">
+            <i class="fa-solid fa-clipboard-check"></i> Manage Inspections
+          </a>
         </div>
       </div>
     </div>
 
   </div>
 
+    </div>
+  </div>
 </section>
 {% endblock %}
