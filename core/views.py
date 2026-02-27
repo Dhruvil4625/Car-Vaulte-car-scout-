@@ -8,7 +8,10 @@ from django.contrib.auth.decorators import login_required
 from django.utils.html import strip_tags
 from django.contrib.auth import get_user_model
 from .forms import UserLoginForm
+from django.conf import settings
+from django.core.mail import send_mail
 import os
+
 User = get_user_model()
 
 def HomeView(request):
@@ -465,12 +468,22 @@ def UserSignupView(request):
         initial['role'] = pref_role
     if request.method == 'POST':
         form = UserSignupForm(request.POST, initial=initial)
+
         if form.is_valid():
             user = form.save()
             if user.role == 'Buyer':
                 Buyer.objects.get_or_create(user=user)
             elif user.role == 'Seller':
                 Seller.objects.get_or_create(user=user)
+
+            send_mail(
+                subject="New user signup",
+                message=f"User {user.email} signed up as {user.role}",
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=[settings.EMAIL_HOST_USER],
+                fail_silently=False,
+            )
+
             auth_login(request, user)
             return redirect('home')
     else:
