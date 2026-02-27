@@ -1,0 +1,67 @@
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f8fafc; padding: 40px 20px; width: 100%; height: 100%;">
+  <tr>
+    <td align="center" valign="top">
+      
+      <table width="600" cellpadding="0" cellspacing="0" border="0" align="center" style="background-color:#ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin: 0 auto;">
+        
+        <tr>
+          <td style="height: 6px; background-color: #e11d48; line-height: 6px; font-size: 6px;">&nbsp;</td>
+        </tr>
+
+        <tr>
+            <td align="center" style="background-color: #020617;">
+                <img src="https://i.pinimg.com/originals/e8/42/bb/e842bb593a207cb1f912e752d5b63486.gif" alt="Car Scout Cinematic" width="600" style="display:block; width: 100%; max-width: 600px; height: auto; border: none; opacity: 0.9;">
+            </td>
+        </tr>
+
+        <tr>
+          <td align="center" style="background-color: #0f172a; padding: 30px 20px 40px;">
+            <img src="cid:hero" width="100" alt="Car Scout Logo" style="display:block; margin: 0 auto; color: #ffffff; font-size: 20px; font-weight: bold; border: none;">
+            <h1 style="color: #ffffff; margin: 20px 0 0 0; font-size: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Welcome to Car Scout!</h1>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding: 40px 30px;">
+            <p style="margin: 0 0 15px 0; color: #0f172a; font-size: 16px; line-height: 24px;">
+              Hi <strong>{{ user.name|default:user.email }}</strong>,
+            </p>
+            <p style="margin: 0 0 25px 0; color: #475569; font-size: 16px; line-height: 24px;">
+              Your account has been successfully created and is now fully active. You are officially registered on the platform as a <strong style="color: #e11d48; text-transform: uppercase;">{{ user.role }}</strong>.
+            </p>
+
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f0fdf4; border-radius: 8px; border-left: 4px solid #16a34a;">
+              <tr>
+                <td style="padding: 15px 20px; color: #334155; font-size: 14px; line-height: 22px;">
+                  <strong>Your journey begins here.</strong> You can now browse our exclusive inventory, schedule test drives with sellers, and manage everything directly from your personal dashboard.
+                </td>
+              </tr>
+            </table>
+
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 35px;">
+              <tr>
+                <td align="center">
+                  <a href="{{ site_url }}" style="display: inline-block; background-color: #e11d48; color: #ffffff; font-size: 16px; font-weight: bold; text-decoration: none; padding: 16px 36px; border-radius: 8px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 3px solid #be123c;">Explore Car Scout</a>
+                </td>
+              </tr>
+            </table>
+            
+          </td>
+        </tr>
+
+        <tr>
+          <td align="center" style="background-color: #f8fafc; padding: 25px 30px; border-top: 1px solid #e2e8f0;">
+            <p style="margin: 0; color: #64748b; font-size: 13px; line-height: 18px;">
+              © 2026 <strong>Car Scout</strong>. All rights reserved.
+            </p>
+            <p style="margin: 10px 0 0 0; color: #94a3b8; font-size: 12px; line-height: 18px;">
+              Have questions? Reply directly to this email or visit our <a href="{{ site_url }}/contact" style="color: #e11d48; text-decoration: underline;">Contact Page</a>.
+            </p>
+          </td>
+        </tr>
+        
+      </table>
+
+    </td>
+  </tr>
+</table>
