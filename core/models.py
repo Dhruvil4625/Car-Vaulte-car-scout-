@@ -88,6 +88,7 @@ class CarListing(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     views_count = models.IntegerField(default=0)
+    showroom = models.ForeignKey('Showroom', on_delete=models.SET_NULL, related_name='car_listings', blank=True, null=True)
 
     def __str__(self):
         return f"Listing {self.listing_id} - {self.car}"
@@ -167,3 +168,56 @@ class Transaction(models.Model):
 
     def __str__(self):
         return f"Transaction {self.transaction_id} - {self.status}"
+
+class Showroom(models.Model):
+    showroom_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=120)
+    city = models.CharField(max_length=80)
+    state = models.CharField(max_length=80)
+    address = models.CharField(max_length=200, blank=True)
+    map_query = models.CharField(max_length=200, blank=True, help_text="Query string used for Google Maps search")
+    seller = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='showrooms', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} — {self.city}, {self.state}"
+
+class UpcomingArrival(models.Model):
+    class Status(models.TextChoices):
+        ANNOUNCED = 'Announced', 'Announced'
+        DELAYED = 'Delayed', 'Delayed'
+        CANCELLED = 'Cancelled', 'Cancelled'
+
+    arrival_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    showroom = models.ForeignKey(Showroom, on_delete=models.CASCADE, related_name='arrivals')
+    make = models.CharField(max_length=50, blank=True)
+    model = models.CharField(max_length=100, blank=True)
+    year = models.PositiveSmallIntegerField(blank=True, null=True)
+    expected_date = models.DateField()
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.ANNOUNCED)
+    notes = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"Arrival {self.make} {self.model} at {self.showroom}"
+
+class Todo(models.Model):
+    todo_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='todos')
+    title = models.CharField(max_length=200)
+    done = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.title
+
+class ActivityLog(models.Model):
+    log_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='activity_logs')
+    action = models.CharField(max_length=200)
+    path = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.email} - {self.action}"
