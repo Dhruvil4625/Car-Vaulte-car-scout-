@@ -1,11 +1,234 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Sell Your Car | Car Scout{% endblock %}
+
 {% block content %}
-<section class="container">
-  <div class="cs-sell-card">
-    <h3>List Your Car</h3>
-    <p>Create a listing with photos, price, and details.</p>
-    <a href="{% url 'listing_new' %}" class="btn btn-primary">Start Listing</a>
+<style>
+  /* --- Sell Hero Section --- */
+  .sell-hero {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(220, 38, 38, 0.85) 100%), 
+                url('https://images.unsplash.com/photo-1560958089-b8a1929cea89?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    padding: 80px 0 100px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .sell-hero h1 {
+    font-size: 3.2rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .sell-hero p {
+    color: #f8fafc;
+    font-size: 1.2rem;
+    max-width: 600px;
+    margin: 0 auto;
+    font-weight: 300;
+  }
+
+  /* --- How It Works Section --- */
+  .steps-wrapper {
+    margin-top: -60px;
+    position: relative;
+    z-index: 10;
+    padding-bottom: 50px;
+  }
+
+  .step-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 30px 20px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    height: 100%;
+    transition: transform 0.3s ease, border-color 0.3s ease;
+  }
+
+  .step-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+
+  /* Updated for Custom Image Logos */
+  .step-icon {
+    width: 80px;
+    height: 80px;
+    background: transparent;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    overflow: hidden;
+    border: 2px solid rgba(239, 68, 68, 0.1);
+    transition: all 0.3s ease;
+    background-color: #fff;
+  }
+
+  .step-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Ensures the image fills the circle perfectly */
+  }
+
+  .step-card:hover .step-icon {
+    border-color: #ef4444;
+    transform: scale(1.05);
+  }
+
+  .step-card h4 {
+    font-weight: 800;
+    color: #0f172a;
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+  }
+
+  .step-card p {
+    color: #64748b;
+    font-size: 0.95rem;
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  /* --- Main CTA Card --- */
+  .cta-wrapper {
+    padding-bottom: 80px;
+  }
+
+  .cs-sell-card {
+    background: #0f172a;
+    border-radius: 16px;
+    padding: 50px 30px;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Subtle background pattern for the dark card */
+  .cs-sell-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(239, 68, 68, 0.05) 0%, transparent 60%);
+    z-index: 0;
+  }
+
+  .cs-sell-card-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  .cs-sell-card h3 {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 15px;
+  }
+
+  .cs-sell-card p {
+    font-size: 1.1rem;
+    color: #94a3b8;
+    margin-bottom: 30px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .btn-start-listing {
+    background-color: #ef4444;
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 1.1rem;
+    padding: 16px 40px;
+    border-radius: 8px;
+    border: none;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    box-shadow: 0 10px 20px rgba(239, 68, 68, 0.25);
+  }
+
+  .btn-start-listing:hover {
+    background-color: #dc2626;
+    color: #ffffff;
+    transform: translateY(-3px);
+    box-shadow: 0 15px 25px rgba(239, 68, 68, 0.35);
+  }
+</style>
+
+<section class="sell-hero">
+  <div class="container">
+    <h1>Turn Your Car Into <span>Cash</span></h1>
+    <p>Reach thousands of active buyers across the country. Listing your vehicle on Car Scout is fast, secure, and highly effective.</p>
   </div>
 </section>
+
+<section class="container steps-wrapper">
+  <div class="row g-4">
+    
+    <div class="col-12 col-md-4">
+      <div class="step-card">
+        <div class="step-icon">
+          <img src="https://www.shutterstock.com/image-vector/download-icon-input-field-arrow-260nw-2674774901.jpg" alt="Enter Details Logo">
+        </div>
+        <h4>1. Enter Details</h4>
+        <p>Provide basic information about your vehicle, including make, model, year, and mileage to set your baseline.</p>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-4">
+      <div class="step-card">
+        <div class="step-icon">
+          <img src="https://media.istockphoto.com/id/1021471354/vector/image-upload-icon.jpg?s=612x612&w=0&k=20&c=TBKGW7vES1EtPcaxIvCAKxXL0W9EGd5FPBWHhtC2kFg=" alt="Upload Photos Logo">
+        </div>
+        <h4>2. Upload Photos</h4>
+        <p>Upload high-quality images of your car's exterior and interior to attract maximum attention from buyers.</p>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-4">
+      <div class="step-card">
+        <div class="step-icon">
+          <img src="https://img.freepik.com/free-vector/best-offer-inscription-paint-blot_1262-7445.jpg?w=360" alt="Get Offers Logo">
+        </div>
+        <h4>3. Get Offers</h4>
+        <p>Publish your listing to the marketplace, chat securely with interested buyers, and close the best deal.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section class="container cta-wrapper">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      
+      <div class="cs-sell-card">
+        <div class="cs-sell-card-content">
+          <h3>Ready to List Your Car?</h3>
+          <p>Join thousands of successful sellers. Create your public listing with pricing, detailed specs, and a rich photo gallery in under 5 minutes.</p>
+          
+          <a href="{% url 'listing_new' %}" class="btn-start-listing">
+            <i class="fa-solid fa-plus-circle me-2"></i> Start Your Listing Now
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
 {% endblock %}
