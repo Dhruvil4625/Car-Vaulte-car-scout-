@@ -1,15 +1,235 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}New Upcoming Arrival | Car Scout{% endblock %}
+
 {% block content %}
-<section class="container">
-  <h2 class="cv-section-title">Publish Upcoming Arrival</h2>
-  <form method="post" class="cv-card p-3">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <div class="d-flex gap-2 mt-2">
-      <button class="btn btn-primary">Publish</button>
-      <a href="{% url 'cities' %}" class="btn btn-secondary">Cancel</a>
-    </div>
-  </form>
+<style>
+  /* --- Publish Hero Section --- */
+  .publish-hero {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%), 
+                url('https://images.unsplash.com/photo-1493238792000-8113da705763?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    padding: 60px 0 80px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .publish-hero h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .publish-hero h1 span {
+    color: #ef4444; /* Vibrant Red Accent */
+  }
+
+  .publish-hero p {
+    color: #94a3b8;
+    font-size: 1.05rem;
+    margin: 0;
+  }
+
+  /* --- Premium Form Card --- */
+  .publish-card-wrapper {
+    margin-top: -50px; /* Pulls the card slightly over the hero section */
+    position: relative;
+    z-index: 10;
+    padding-bottom: 60px;
+  }
+
+  .publish-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 40px;
+  }
+
+  .publish-card-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .publish-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+  }
+
+  .publish-card-header h3 {
+    font-weight: 700;
+    color: #0f172a;
+    font-size: 1.4rem;
+    margin: 0;
+  }
+
+  /* --- Django Form Auto-Styling --- */
+  /* Targets Django's {{ form.as_p }} output */
+  .django-custom-form p {
+    margin-bottom: 1.5rem;
+  }
+
+  .django-custom-form label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  .django-custom-form input[type="text"],
+  .django-custom-form input[type="number"],
+  .django-custom-form input[type="email"],
+  .django-custom-form input[type="date"],
+  .django-custom-form select,
+  .django-custom-form textarea {
+    width: 100%;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    border-radius: 8px;
+    padding: 12px 15px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    box-shadow: none;
+  }
+
+  .django-custom-form input:focus,
+  .django-custom-form select:focus,
+  .django-custom-form textarea:focus {
+    background-color: #fff;
+    border-color: #ef4444;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+    outline: none;
+  }
+
+  .django-custom-form .helptext {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-top: 5px;
+    display: block;
+  }
+
+  .django-custom-form .errorlist {
+    color: #ef4444;
+    list-style: none;
+    padding: 0;
+    font-size: 0.85rem;
+    margin-top: 5px;
+    font-weight: 500;
+  }
+
+  /* --- Action Buttons --- */
+  .action-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px dashed #e2e8f0;
+  }
+
+  .btn-publish-custom {
+    background-color: #ef4444;
+    color: #fff;
+    font-weight: 700;
+    padding: 12px 30px;
+    border-radius: 8px;
+    border: none;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex: 2; /* Makes the publish button naturally wider */
+  }
+
+  .btn-publish-custom:hover {
+    background-color: #dc2626;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(239, 68, 68, 0.2);
+  }
+
+  .btn-cancel-custom {
+    background-color: transparent;
+    color: #475569;
+    border: 2px solid #cbd5e1;
+    font-weight: 700;
+    padding: 12px 30px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+  }
+
+  .btn-cancel-custom:hover {
+    background-color: #f1f5f9;
+    border-color: #94a3b8;
+    color: #0f172a;
+  }
+</style>
+
+<section class="publish-hero">
+  <div class="container">
+    <h1>Upcoming <span>Arrival</span></h1>
+    <p>Announce a new vehicle arriving soon in your city.</p>
+  </div>
 </section>
+
+<section class="container publish-card-wrapper">
+  <div class="publish-card">
+    
+    <div class="publish-card-header">
+      <div class="publish-icon">
+        <i class="fa-solid fa-bullhorn"></i>
+      </div>
+      <div>
+        <h3>Publish Details</h3>
+        <p class="text-muted mb-0" style="font-size: 0.85rem;">Fill out the form below to alert buyers.</p>
+      </div>
+    </div>
+
+    <form method="post" class="django-custom-form">
+      {% csrf_token %}
+      
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger p-2 mb-4" style="border-radius: 8px;">
+           {{ form.non_field_errors }}
+        </div>
+      {% endif %}
+
+      {{ form.as_p }}
+      
+      <div class="action-buttons">
+        <a href="{% url 'cities' %}" class="btn-cancel-custom">Cancel</a>
+        <button type="submit" class="btn-publish-custom">
+          <i class="fa-solid fa-paper-plane me-2"></i> Publish Arrival
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</section>
+
 {% endblock %}
