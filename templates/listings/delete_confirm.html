@@ -1,15 +1,170 @@
 {% extends 'base.html' %}
 {% block title %}Delete Listing | Car Scout{% endblock %}
+
 {% block content %}
-<section class="container">
-  <h2 class="cv-section-title">Delete Listing</h2>
-  <div class="cv-card p-3">
-    <p>Are you sure you want to delete {{ listing.car.make }} {{ listing.car.model }} ({{ listing.car.year }})?</p>
-    <form method="post" class="d-flex gap-2">
+<style>
+  /* --- Delete Hero Section --- */
+  .delete-hero {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(220, 38, 38, 0.8) 100%), 
+                url('https://images.unsplash.com/photo-1503376712341-ea1c6db88135?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    padding: 60px 0 80px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .delete-hero h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .delete-hero p {
+    color: #f8fafc;
+    font-size: 1.05rem;
+    margin: 0;
+    opacity: 0.9;
+  }
+
+  /* --- Warning Card --- */
+  .delete-card-wrapper {
+    margin-top: -50px; /* Pulls the card up into the hero section */
+    position: relative;
+    z-index: 10;
+    padding-bottom: 60px;
+  }
+
+  .delete-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 40px 30px;
+    text-align: center;
+  }
+
+  .warning-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    margin: 0 auto 20px;
+  }
+
+  .delete-card h3 {
+    font-weight: 800;
+    color: #0f172a;
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+  }
+
+  .listing-highlight {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 20px 0;
+    color: #334155;
+    font-weight: 600;
+    font-size: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .delete-card p {
+    color: #64748b;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 30px;
+  }
+
+  /* --- Buttons --- */
+  .btn-danger-custom {
+    background-color: #ef4444;
+    color: #fff;
+    font-weight: 700;
+    padding: 12px 20px;
+    border-radius: 8px;
+    border: none;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex: 1;
+  }
+
+  .btn-danger-custom:hover {
+    background-color: #dc2626;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(239, 68, 68, 0.2);
+  }
+
+  .btn-cancel-custom {
+    background-color: transparent;
+    color: #475569;
+    border: 2px solid #cbd5e1;
+    font-weight: 700;
+    padding: 12px 20px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+  }
+
+  .btn-cancel-custom:hover {
+    background-color: #f1f5f9;
+    border-color: #94a3b8;
+    color: #0f172a;
+  }
+</style>
+
+<section class="delete-hero">
+  <div class="container">
+    <h1>Remove Listing</h1>
+    <p>Please review the details below before proceeding.</p>
+  </div>
+</section>
+
+<section class="container delete-card-wrapper">
+  <div class="delete-card">
+    
+    <div class="warning-icon">
+      <i class="fa-solid fa-store-slash"></i>
+    </div>
+    
+    <h3>Delete Marketplace Listing?</h3>
+    <p>This action will permanently remove this vehicle from the public showroom and search results. Any active buyer inquiries tied to this listing may be lost.</p>
+    
+    <div class="listing-highlight">
+      <span><i class="fa-solid fa-car me-2 text-muted"></i> {{ listing.car.make }} {{ listing.car.model }} ({{ listing.car.year }})</span>
+      {% if listing.price %}
+        <span class="text-danger fw-bold" style="font-size: 1.2rem;">{{ listing.price }}</span>
+      {% endif %}
+    </div>
+
+    <form method="post" class="d-flex gap-3 mt-4">
       {% csrf_token %}
-      <button class="btn btn-danger">Delete</button>
-      <a href="{% url 'listings' %}" class="btn btn-secondary">Cancel</a>
+      <a href="{% url 'listings' %}" class="btn-cancel-custom">Cancel</a>
+      <button type="submit" class="btn-danger-custom">
+        <i class="fa-solid fa-trash-can me-2"></i> Delete Listing
+      </button>
     </form>
+
   </div>
 </section>
 {% endblock %}
