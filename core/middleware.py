@@ -21,6 +21,8 @@ class AuthGateMiddleware:
         allowed = {
             "/",
             "/core/",
+            "/email/status/",
+            "/core/email/status/",
             login_url,
             signup_url,
             "/favicon.ico",
