@@ -1,49 +1,237 @@
-{% load static %}
-<div class="top-bar">
-  <div class="container">
-    <div class="top-bar-left">
+{% load static %}{% load i18n %}
+
+<style>
+  /* --- Top Bar (Enterprise Style) --- */
+  .top-bar {
+    background-color: #0f172a; /* Deep Slate to match the dark hero sections */
+    color: #cbd5e1;
+    font-size: 0.85rem;
+    padding: 10px 0;
+    font-family: 'Poppins', sans-serif;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .top-bar a {
+    color: #cbd5e1;
+    text-decoration: none;
+    transition: color 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+  }
+
+  .top-bar a:hover {
+    color: #ef4444; /* Vibrant Red */
+  }
+
+  .top-bar i {
+    color: #94a3b8;
+    font-size: 0.9rem;
+  }
+
+  .top-bar .separator {
+    color: #334155;
+    margin: 0 10px;
+  }
+
+  /* --- Main Navbar --- */
+  .main-header {
+    background-color: #ffffff;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    padding: 8px 0;
+    transition: all 0.3s ease;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  /* Logo Styling */
+  .logo-brand {
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+  }
+
+  .logo-brand h1 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+    letter-spacing: -0.5px;
+  }
+
+  .logo-brand h1 span {
+    color: #ef4444;
+  }
+
+  .logo-brand p {
+    font-size: 0.65rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #64748b;
+    margin: 2px 0 0 2px;
+    font-weight: 600;
+  }
+
+  /* Navigation Links */
+  .navbar-nav .nav-link {
+    font-weight: 600;
+    color: #334155 !important;
+    font-size: 0.95rem;
+    padding: 10px 16px !important;
+    text-transform: capitalize;
+    transition: color 0.3s ease;
+    position: relative;
+  }
+
+  .navbar-nav .nav-link:hover,
+  .navbar-nav .nav-link.active {
+    color: #ef4444 !important;
+  }
+
+  /* Custom Red Underline for Active/Hover State */
+  .navbar-nav .nav-item:not(.cta-item) .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 3px;
+    background-color: #ef4444;
+    transition: width 0.3s ease;
+    border-radius: 3px 3px 0 0;
+  }
+
+  .navbar-nav .nav-item:not(.cta-item) .nav-link:hover::after,
+  .navbar-nav .nav-item:not(.cta-item) .nav-link.active::after {
+    width: 25px;
+  }
+
+  /* Premium 'Sell' Button CTA */
+  .btn-sell-nav {
+    background-color: #ef4444;
+    color: #ffffff !important;
+    border-radius: 8px;
+    padding: 10px 24px !important;
+    font-weight: 700 !important;
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+    transition: all 0.3s ease;
+    margin-left: 15px;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px;
+  }
+
+  .btn-sell-nav:hover {
+    background-color: #dc2626;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(239, 68, 68, 0.3);
+  }
+
+  /* Mobile Toggler Customization */
+  .navbar-toggler {
+    border: none;
+    padding: 5px 10px;
+  }
+  
+  .navbar-toggler:focus {
+    box-shadow: none;
+    outline: none;
+  }
+</style>
+
+<div class="top-bar d-none d-lg-block">
+  <div class="container d-flex justify-content-between align-items-center">
+    
+    <div class="top-bar-left d-flex align-items-center">
       {% if request.user.is_authenticated %}
-        <a href="{% url 'account_settings' %}" title="Account Settings">&#128100; {{ request.user.name|default:request.user.email }}</a>
-        <a href="{% url 'logout' %}">&#128682; Logout</a>
+        <a href="{% url 'account_settings' %}" title="Account Settings">
+          <i class="fa-solid fa-circle-user"></i> {{ request.user.name|default:request.user.email }}
+        </a>
+        <span class="separator">|</span>
+        <a href="{% url 'logout' %}">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i> {% trans "Logout" %}
+        </a>
       {% else %}
-        <a href="{% url 'login' %}">&#128100; Login</a>
-        <a href="{% url 'signup' %}">&#128273; Register</a>
+        <a href="{% url 'login' %}"><i class="fa-solid fa-lock"></i> {% trans "Login" %}</a>
+        <span class="separator">|</span>
+        <a href="{% url 'signup' %}"><i class="fa-solid fa-user-plus"></i> {% trans "Register" %}</a>
       {% endif %}
-      <a href="#">&#127760; Languages</a>
-      <a href="{% url 'cars' %}">&#128269; Search</a>
+      
+      <span class="separator">|</span>
+      <form action="{% url 'set_language' %}" method="post" class="d-inline">
+        {% csrf_token %}
+        <input name="next" type="hidden" value="{{ request.get_full_path }}">
+        <select name="language" class="form-select form-select-sm d-inline w-auto" onchange="this.form.submit()">
+          {% get_current_language as LANGUAGE_CODE %}
+          {% get_available_languages as LANGUAGES %}
+          {% for code, name in LANGUAGES %}
+            <option value="{{ code }}" {% if code == LANGUAGE_CODE %}selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+      </form>
+      <span class="separator">|</span>
+      <a href="{% url 'cars' %}"><i class="fa-solid fa-magnifying-glass"></i> {% trans "Search" %}</a>
     </div>
-    <div class="top-bar-right">
-      <a href="tel:+919909945734" class="phone-link">&#128222; 9909945734</a>
-      <span>&#128205; Dhruvil Ramolia</span>
+
+    <div class="top-bar-right d-flex align-items-center gap-4">
+      <a href="tel:+919909945734" class="phone-link">
+        <i class="fa-solid fa-phone-volume"></i> +91 99099 45734
+      </a>
+      <span><i class="fa-solid fa-location-dot"></i> Dhruvil Ramolia</span>
     </div>
+
   </div>
 </div>
 
-<header class="main-header">
+<nav class="navbar navbar-expand-xl sticky-top main-header">
   <div class="container">
-    <div class="logo">
-      <a href="{% url 'home' %}">
-        <h1>Car Scout</h1>
-        <p>Marketplace</p>
-      </a>
-    </div>
     
-    <button class="mobile-menu-toggle" aria-label="Toggle navigation">
-      &#9776;
+    <a class="navbar-brand logo-brand" href="{% url 'home' %}">
+      <h1>Car<span>Scout</span></h1>
+      <p>Marketplace</p>
+    </a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+      <i class="fa-solid fa-bars fs-2" style="color: #0f172a;"></i>
     </button>
 
-    <nav class="main-nav">
-      <ul class="nav-links">
-        <li><a href="{% url 'home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">Home</a></li>
-        <li><a href="{% url 'cars' %}" class="{% if request.resolver_match.url_name == 'cars' %}active{% endif %}">Inventory</a></li>
-        <li><a href="{% url 'listings' %}" class="{% if request.resolver_match.url_name == 'listings' %}active{% endif %}">Listings</a></li>
-        <li><a href="{% url 'testdrives' %}" class="{% if request.resolver_match.url_name == 'testdrives' %}active{% endif %}">Test Drives</a></li>
-        <li><a href="{% url 'buyers' %}" class="{% if request.resolver_match.url_name == 'buyers' %}active{% endif %}">Buyers</a></li>
-        <li><a href="{% url 'sellers' %}" class="{% if request.resolver_match.url_name == 'sellers' %}active{% endif %}">Sellers</a></li>
-        <li><a href="{% url 'cities' %}" class="{% if request.resolver_match.url_name == 'cities' %}active{% endif %}">Cities</a></li>
-        <li><a href="{% url 'sell' %}" class="{% if request.resolver_match.url_name == 'sell' %}active{% endif %}">Sell</a></li>
-        <li><a href="{% url 'contact' %}" class="{% if request.resolver_match.url_name == 'contact' %}active{% endif %}">Contact</a></li>
+    <div class="collapse navbar-collapse" id="mainNav">
+      <ul class="navbar-nav ms-auto align-items-center">
+        
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">{% trans "Home" %}</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'cars' %}active{% endif %}" href="{% url 'cars' %}">{% trans "Inventory" %}</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'listings' %}active{% endif %}" href="{% url 'listings' %}">{% trans "Listings" %}</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'testdrives' %}active{% endif %}" href="{% url 'testdrives' %}">{% trans "Test Drives" %}</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'buyers' %}active{% endif %}" href="{% url 'buyers' %}">{% trans "Buyers" %}</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'sellers' %}active{% endif %}" href="{% url 'sellers' %}">{% trans "Sellers" %}</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'cities' %}active{% endif %}" href="{% url 'cities' %}">{% trans "Cities" %}</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'contact' %}active{% endif %}" href="{% url 'contact' %}">{% trans "Contact" %}</a>
+        </li>
+        
+        <li class="nav-item cta-item mt-3 mt-xl-0">
+          <a class="nav-link btn-sell-nav" href="{% url 'sell' %}">
+            <i class="fa-solid fa-tag me-2"></i> {% trans "Sell Car" %}
+          </a>
+        </li>
+
       </ul>
-    </nav>
+    </div>
+
   </div>
-</header>
+</nav>
