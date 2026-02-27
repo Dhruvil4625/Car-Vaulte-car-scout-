@@ -5,11 +5,14 @@ from .models import Car, CarListing, Message, TestDrive, Buyer, Seller, CarListi
 from django.contrib.auth import login as auth_login
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.html import strip_tags
 from django.contrib.auth import get_user_model
 from .forms import UserLoginForm
-from django.conf import settings
+from django.http import JsonResponse
 from django.core.mail import send_mail
+from django.conf import settings
+from core.email_utils import send_email_html
 import os
 
 User = get_user_model()
@@ -461,31 +464,49 @@ def CarDeleteView(request, vin):
         return redirect("cars")
     return render(request, "cars/delete_confirm.html", {"car": car})
     
+from django.shortcuts import render, redirect
+from django.conf import settings
+from django.core.mail import send_mail
+from django.contrib.auth import get_user_model
+
+@ensure_csrf_cookie
 def UserSignupView(request):
     initial = {}
     pref_role = request.GET.get('role')
+
     if pref_role in ('Buyer', 'Seller'):
         initial['role'] = pref_role
+
     if request.method == 'POST':
-        form = UserSignupForm(request.POST, initial=initial)
+        form = UserSignupForm(request.POST)
 
         if form.is_valid():
             user = form.save()
+
+            # Create related profile
             if user.role == 'Buyer':
                 Buyer.objects.get_or_create(user=user)
             elif user.role == 'Seller':
                 Seller.objects.get_or_create(user=user)
 
-            send_mail(
-                subject="New user signup",
-                message=f"User {user.email} signed up as {user.role}",
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[settings.EMAIL_HOST_USER],
-                fail_silently=False,
-            )
+            site_url = request.build_absolute_uri("/")
+            img_path = os.path.join(settings.BASE_DIR, "static", "img", "bmw-m4-hero.jpg")
+            try:
+                send_email_html(
+                    subject="Welcome to Car Scout",
+                    template_name="emails/welcome_user.html",
+                    context={"user": user, "site_url": site_url},
+                    recipients=[user.email],
+                    inline_images={"hero": img_path},
+                )
+            except Exception:
+                pass
 
-            auth_login(request, user)
-            return redirect('home')
+            return redirect('login')   # redirect to login page
+
+        else:
+            return render(request, 'core/signup.html', {'form': form})
+
     else:
         form = UserSignupForm(initial=initial)
 
@@ -573,6 +594,7 @@ def LogoutViewCustom(request):
     auth_logout(request)
     return redirect('login')
 
+@ensure_csrf_cookie
 def UserLoginView(request):
     if request.user.is_authenticated:
         return redirect('home')
@@ -582,6 +604,18 @@ def UserLoginView(request):
             user = getattr(form, 'user', None)
             if user:
                 auth_login(request, user)
+                site_url = request.build_absolute_uri("/")
+                img_path = os.path.join(settings.BASE_DIR, "static", "img", "bmw-m4-hero.jpg")
+                try:
+                    send_email_html(
+                        subject="Welcome back to Car Scout",
+                        template_name="emails/login_user.html",
+                        context={"user": user, "site_url": site_url},
+                        recipients=[user.email],
+                        inline_images={"hero": img_path},
+                    )
+                except Exception:
+                    pass
                 next_url = request.GET.get('next') or request.POST.get('next')
                 return redirect(next_url or 'dashboard')
     return render(request, 'core/login.html', {'form': form})
@@ -641,3 +675,36 @@ def ActivityHistoryView(request):
     except Exception:
         logs = []
     return render(request, "activity/history.html", {"logs": logs})
+
+@login_required
+def EmailStatusView(request):
+    backend = getattr(settings, "EMAIL_BACKEND", "")
+    host = getattr(settings, "EMAIL_HOST", "")
+    user = getattr(settings, "EMAIL_HOST_USER", "")
+    use_tls = getattr(settings, "EMAIL_USE_TLS", False)
+    use_ssl = getattr(settings, "EMAIL_USE_SSL", False)
+    port = getattr(settings, "EMAIL_PORT", None)
+    pwd_len = len(getattr(settings, "EMAIL_HOST_PASSWORD", "") or "")
+    status = {
+        "backend": backend,
+        "host_configured": bool(host),
+        "user_configured": bool(user),
+        "use_tls": use_tls,
+        "use_ssl": use_ssl,
+        "port": port,
+        "password_len": pwd_len,
+        "from_email": getattr(settings, "DEFAULT_FROM_EMAIL", ""),
+    }
+    if request.GET.get("send") == "1":
+        to = request.GET.get("to") or request.user.email
+        try:
+            from_email = getattr(settings, "DEFAULT_FROM_EMAIL", None) or getattr(settings, "EMAIL_HOST_USER", None) or "no-reply@carvault.local"
+            n = send_mail("Email delivery test", "If you received this, SMTP is working.", from_email, [to], fail_silently=False)
+            status["test_sent"] = n
+            status["to"] = to
+            return JsonResponse(status)
+        except Exception as e:
+            status["error"] = str(e)
+            status["to"] = to
+            return JsonResponse(status, status=500)
+    return JsonResponse(status)
