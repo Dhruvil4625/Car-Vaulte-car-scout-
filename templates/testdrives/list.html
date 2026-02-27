@@ -1,30 +1,314 @@
 {% extends 'base.html' %}
-{% block title %}Test Drives | Car Scout{% endblock %}
+{% load static %}
+{% block title %}Test Drive Schedule | Car Scout{% endblock %}
+
 {% block content %}
-<section class="container">
-  <div class="d-flex justify-content-between align-items-center mb-2">
-    <h2 class="cv-section-title mb-0">My Test Drives</h2>
-    {% if request.user.is_staff %}
-    <a href="{% url 'testdrive_new' %}" class="btn btn-primary">Add Test Drive</a>
-    {% endif %}
-  </div>
-  <div class="list-group">
-    {% for td in drives %}
-      <div class="list-group-item">
-        <div class="d-flex w-100 justify-content-between">
-          <h6 class="mb-1">{{ td.listing.car.make }} {{ td.listing.car.model }}</h6>
-          <small>Status: {{ td.status }}</small>
-        </div>
-        <p class="mb-1">Proposed: {{ td.proposed_date }}{% if td.actual_date %} • Actual: {{ td.actual_date }}{% endif %}</p>
-        {% if request.user.is_staff %}
-        <div class="mt-1">
-          <a href="{% url 'testdrive_edit' td.test_drive_id %}" class="btn btn-sm btn-outline-secondary">Edit</a>
-        </div>
-        {% endif %}
-      </div>
-    {% empty %}
-      <div class="cv-card p-4 text-center">No test drives scheduled.</div>
-    {% endfor %}
+<style>
+  /* --- Schedule Hero Section --- */
+  .schedule-hero {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%), 
+                url('https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    padding: 60px 0 80px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .schedule-hero h1 {
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .schedule-hero h1 span {
+    color: #ef4444; /* Vibrant Red Accent */
+  }
+
+  .schedule-hero p {
+    color: #94a3b8;
+    font-size: 1.1rem;
+    margin: 0;
+  }
+
+  /* --- Layout & Action Bar --- */
+  .schedule-wrapper {
+    margin-top: -40px;
+    position: relative;
+    z-index: 10;
+    padding-bottom: 80px;
+  }
+
+  .action-bar {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    padding: 20px 25px;
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  .action-bar h3 {
+    margin: 0;
+    font-weight: 800;
+    color: #0f172a;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .action-bar h3 i {
+    color: #ef4444;
+  }
+
+  .btn-create-custom {
+    background-color: #ef4444;
+    color: #fff;
+    font-weight: 700;
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: none;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .btn-create-custom:hover {
+    background-color: #dc2626;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(239, 68, 68, 0.2);
+  }
+
+  /* --- Appointment Cards --- */
+  .apt-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 20px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+  }
+
+  .apt-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+
+  .apt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px dashed #e2e8f0;
+  }
+
+  .car-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .car-icon {
+    width: 45px;
+    height: 45px;
+    background: #f8fafc;
+    color: #64748b;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    border: 1px solid #e2e8f0;
+  }
+
+  .car-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+  }
+
+  /* --- Dynamic Badges --- */
+  .status-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  
+  /* You can add custom logic here if you know the exact status names in your database */
+  .badge-default { background: rgba(15, 23, 42, 0.1); color: #0f172a; }
+
+  /* --- Schedule Details --- */
+  .apt-details {
+    margin-bottom: 20px;
+    flex-grow: 1;
+  }
+
+  .date-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    color: #475569;
+    margin-bottom: 8px;
+    background: #f8fafc;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .date-row i {
+    color: #ef4444;
+    width: 16px;
+    text-align: center;
+  }
+
+  .date-label {
+    font-weight: 600;
+    color: #64748b;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+  }
+
+  /* --- Actions --- */
+  .apt-actions {
+    margin-top: auto;
+    display: flex;
+    gap: 10px;
+  }
+
+  .btn-outline-custom {
+    background: transparent;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    font-weight: 700;
+    padding: 8px 15px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    text-align: center;
+    text-decoration: none;
+    width: 100%;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .btn-outline-custom:hover {
+    background: #0f172a;
+    border-color: #0f172a;
+    color: #ffffff;
+  }
+
+  /* --- Empty State --- */
+  .empty-state {
+    background: #ffffff;
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 60px 20px;
+    text-align: center;
+    color: #64748b;
+  }
+</style>
+
+<section class="schedule-hero">
+  <div class="container">
+    <h1>Test Drive <span>Schedule</span></h1>
+    <p>Manage and track all upcoming client vehicle appointments.</p>
   </div>
 </section>
+
+<section class="container schedule-wrapper">
+  
+  <div class="action-bar">
+    <h3><i class="fa-solid fa-calendar-days"></i> Appointments</h3>
+    {% if request.user.is_staff %}
+    <a href="{% url 'testdrive_new' %}" class="btn-create-custom">
+      <i class="fa-solid fa-plus me-2"></i> Add Appointment
+    </a>
+    {% endif %}
+  </div>
+
+  <div class="row g-4">
+    {% for td in drives %}
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="apt-card">
+          
+          <div class="apt-header">
+            <div class="car-info">
+              <div class="car-icon">
+                <i class="fa-solid fa-car"></i>
+              </div>
+              <div>
+                <h4 class="car-title">{{ td.listing.car.make }} {{ td.listing.car.model }}</h4>
+                </div>
+            </div>
+            
+            <div class="status-badge badge-default">
+              {{ td.status }}
+            </div>
+          </div>
+
+          <div class="apt-details">
+            <div class="date-row">
+              <i class="fa-regular fa-clock"></i>
+              <div>
+                <div class="date-label">Proposed Date</div>
+                <div class="fw-bold text-dark">{{ td.proposed_date }}</div>
+              </div>
+            </div>
+            
+            {% if td.actual_date %}
+            <div class="date-row">
+              <i class="fa-regular fa-calendar-check text-success"></i>
+              <div>
+                <div class="date-label">Actual Date</div>
+                <div class="fw-bold text-dark">{{ td.actual_date }}</div>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+
+          {% if request.user.is_staff %}
+          <div class="apt-actions">
+            <a href="{% url 'testdrive_edit' td.test_drive_id %}" class="btn-outline-custom">
+              <i class="fa-solid fa-pen-to-square me-1"></i> Update Status
+            </a>
+          </div>
+          {% endif %}
+
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12">
+        <div class="empty-state">
+          <i class="fa-regular fa-calendar-xmark fs-1 mb-3 text-muted"></i>
+          <h4 class="text-secondary fw-bold">No Appointments Scheduled</h4>
+          <p class="mb-0">You currently have no test drives booked. New requests will appear here.</p>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+</section>
+
 {% endblock %}
