@@ -1,41 +1,42 @@
 {% extends 'base.html' %}
 {% load currency %}{% load static %}{% load images %}
-{% block title %}Used Cars | Car Scout{% endblock %}
+{% block title %}Used Inventory | Car Scout{% endblock %}
 
 {% block content %}
 <style>
   /* --- Inventory Hero Section --- */
   .list-hero {
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%), 
+    background: linear-gradient(135deg, rgba(2, 6, 23, 0.7) 0%, rgba(2, 6, 23, 0.95) 100%), 
                 url('https://images.unsplash.com/photo-1552519507-da3b142c6e3d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
-    padding: 60px 0 80px;
+    padding: 80px 0 100px;
     text-align: center;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   }
 
   .list-hero h1 {
-    font-size: 2.8rem;
+    font-size: 3.5rem;
     font-weight: 800;
     color: #ffffff;
-    margin-bottom: 5px;
+    margin-bottom: 10px;
     text-transform: uppercase;
     letter-spacing: 1px;
   }
 
   .list-hero h1 span {
-    color: #ef4444; /* Vibrant Red Accent */
+    color: #e11d48; /* Signature Crimson Red */
   }
 
   .list-hero p {
-    color: #94a3b8;
-    font-size: 1.1rem;
+    color: #cbd5e1;
+    font-size: 1.15rem;
     margin: 0;
+    letter-spacing: 0.5px;
   }
 
   /* --- Floating Search Widget --- */
   .search-widget-container {
     max-width: 1100px;
-    margin: -50px auto 40px; /* Pulls it up over the hero */
+    margin: -60px auto 50px; 
     position: relative;
     z-index: 10;
     padding: 0 20px;
@@ -43,18 +44,18 @@
 
   .search-widget {
     background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
-    padding: 25px;
+    border-radius: 20px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
+    padding: 30px;
     border: 1px solid #e2e8f0;
   }
 
   .search-widget label {
-    font-size: 0.8rem;
-    font-weight: 600;
+    font-size: 0.75rem;
+    font-weight: 700;
     color: #64748b;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
     margin-bottom: 8px;
     display: block;
   }
@@ -64,39 +65,40 @@
     background-color: #f8fafc;
     border: 1px solid #e2e8f0;
     color: #334155;
-    border-radius: 8px;
-    padding: 12px 15px;
+    border-radius: 10px;
+    padding: 14px 15px;
     font-size: 0.95rem;
     transition: all 0.3s ease;
     box-shadow: none;
+    font-weight: 500;
   }
 
   .search-widget .form-control:focus,
   .search-widget .form-select:focus {
     background-color: #fff;
-    border-color: #ef4444;
-    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+    border-color: #e11d48;
+    box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.1);
   }
 
   .btn-search-custom {
     background-color: #0f172a;
     color: #fff;
-    font-weight: 700;
-    padding: 12px 30px;
-    border-radius: 8px;
+    font-weight: 800;
+    padding: 14px 30px;
+    border-radius: 10px;
     border: none;
-    transition: all 0.3s ease;
+    transition: all 0.4s ease;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
     width: 100%;
-    height: 100%;
+    height: 52px; /* Matches input height */
   }
 
   .btn-search-custom:hover {
-    background-color: #1e293b;
+    background-color: #e11d48; /* Flips to red on hover */
     color: #fff;
     transform: translateY(-2px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 20px rgba(225, 29, 72, 0.3);
   }
 
   /* --- Modern Listing Cards --- */
@@ -105,38 +107,38 @@
     border-radius: 16px;
     overflow: hidden;
     border: 1px solid #e2e8f0;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     height: 100%;
     display: flex;
     flex-direction: column;
   }
 
   .modern-card:hover {
-    box-shadow: 0 15px 35px rgba(0,0,0,0.08);
-    transform: translateY(-5px);
-    border-color: rgba(239, 68, 68, 0.3);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+    transform: translateY(-8px);
+    border-color: rgba(225, 29, 72, 0.3);
   }
 
   .card-img-wrapper {
     position: relative;
     height: 220px;
     overflow: hidden;
-    background: #f1f5f9;
+    background: #0f172a;
   }
 
   .card-img-wrapper img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.5s ease;
+    transition: transform 0.6s ease;
   }
 
   .modern-card:hover .card-img-wrapper img {
-    transform: scale(1.05);
+    transform: scale(1.08);
   }
 
   .modern-card-body {
-    padding: 20px;
+    padding: 25px 20px;
     display: flex;
     flex-direction: column;
     flex-grow: 1;
@@ -154,24 +156,24 @@
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin-bottom: 15px;
-    font-size: 0.8rem;
-    color: #64748b;
+    margin-bottom: 20px;
   }
 
   .meta-item {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
     background: #f8fafc;
     border: 1px solid #e2e8f0;
-    padding: 5px 10px;
-    border-radius: 6px;
+    color: #475569;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
     font-weight: 600;
   }
 
   .meta-item i {
-    color: #ef4444;
+    color: #94a3b8;
   }
 
   .car-details-row {
@@ -182,6 +184,11 @@
     border-top: 1px dashed #e2e8f0;
     padding-top: 15px;
     margin-top: auto;
+    font-weight: 600;
+  }
+
+  .car-details-row i {
+    color: #e11d48;
   }
 
   /* Admin Actions */
@@ -189,15 +196,15 @@
     display: flex;
     gap: 10px;
     margin-top: 15px;
-    border-top: 1px solid #f1f5f9;
+    border-top: 1px dashed #e2e8f0;
     padding-top: 15px;
   }
 
   .empty-state {
     background: #ffffff;
     border: 2px dashed #cbd5e1;
-    border-radius: 12px;
-    padding: 50px 20px;
+    border-radius: 16px;
+    padding: 60px 20px;
     text-align: center;
     color: #64748b;
   }
@@ -205,14 +212,14 @@
 
 <section class="list-hero">
   <div class="container">
-    <h1>Used <span>Cars</span></h1>
+    <h1>Used <span>Inventory</span></h1>
     <p>Browse, filter, and find enthusiasts’ picks from across the country.</p>
   </div>
 </section>
 
 <div class="search-widget-container">
-  <div class="search-widget">
-    <form method="get" class="row g-3 align-items-end">
+  <div class="search-widget reveal">
+    <form method="get" class="row g-4 align-items-end">
       
       <div class="col-sm-6 col-md-3">
         <label>Fuel Type</label>
@@ -228,12 +235,18 @@
       
       <div class="col-sm-6 col-md-3">
         <label>Brand / Make</label>
-        <input class="form-control" type="text" name="brand" value="{{ brand }}" placeholder="e.g., Honda">
+        <div class="input-group">
+          <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-car-side text-muted"></i></span>
+          <input class="form-control border-start-0 ps-0" type="text" name="brand" value="{{ brand }}" placeholder="e.g., Honda">
+        </div>
       </div>
       
       <div class="col-sm-6 col-md-3">
         <label>Model</label>
-        <input class="form-control" type="text" name="model" value="{{ model }}" placeholder="e.g., Civic">
+        <div class="input-group">
+          <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-steering-wheel text-muted"></i></span>
+          <input class="form-control border-start-0 ps-0" type="text" name="model" value="{{ model }}" placeholder="e.g., Civic">
+        </div>
       </div>
       
       <div class="col-sm-6 col-md-3">
@@ -246,15 +259,19 @@
   </div>
 </div>
 
-<section class="container mb-5 pb-4">
+<section class="container mb-5 pb-5">
   <div class="row g-4">
     
     {% for car in cars %}
       <div class="col-12 col-md-6 col-lg-4">
-        <article class="modern-card">
+        <article class="modern-card reveal">
           
           <div class="card-img-wrapper">
-            <img loading="lazy" src="{% car_image car.make car.model '600x400' %}" alt="{{ car.make }} {{ car.model }}" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+            {% if car.listings.all and car.listings.all.0.images.all %}
+              <img loading="lazy" src="{{ car.listings.all.0.images.all.0.image.url }}" alt="{{ car.make }} {{ car.model }}" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+            {% else %}
+              <img loading="lazy" src="{% car_main_image car '600x400' %}" alt="{{ car.make }} {{ car.model }}" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+            {% endif %}
           </div>
           
           <div class="modern-card-body">
@@ -267,17 +284,17 @@
             </div>
             
             <div class="car-details-row">
-              <span><i class="fa-solid fa-gauge-high me-1 text-muted"></i> {{ car.mileage|default:'—' }} km</span>
-              <span><i class="fa-solid fa-car-side me-1 text-muted"></i> {{ car.body_type|default:'—' }}</span>
+              <span><i class="fa-solid fa-gauge-high me-1"></i> {{ car.mileage|default:'—' }} km</span>
+              <span><i class="fa-solid fa-truck-pickup me-1"></i> {{ car.body_type|default:'—' }}</span>
             </div>
 
             {% if request.user.is_staff %}
             <div class="admin-actions">
               {% if car.vin %}
-                <a href="{% url 'car_edit' car.vin %}" class="btn btn-warning btn-sm flex-fill fw-bold"><i class="fa-solid fa-pen me-1"></i> Edit</a>
+                <a href="{% url 'car_edit' car.vin %}" class="btn btn-warning btn-sm flex-fill fw-bold text-dark"><i class="fa-solid fa-pen me-1"></i> Edit</a>
                 <a href="{% url 'car_delete' car.vin %}" class="btn btn-danger btn-sm flex-fill fw-bold"><i class="fa-solid fa-trash me-1"></i> Delete</a>
               {% else %}
-                <span class="btn btn-warning btn-sm flex-fill disabled fw-bold"><i class="fa-solid fa-pen me-1"></i> Edit</span>
+                <span class="btn btn-warning btn-sm flex-fill disabled fw-bold text-dark"><i class="fa-solid fa-pen me-1"></i> Edit</span>
                 <span class="btn btn-danger btn-sm flex-fill disabled fw-bold"><i class="fa-solid fa-trash me-1"></i> Delete</span>
               {% endif %}
             </div>
@@ -288,8 +305,8 @@
       </div>
     {% empty %}
       <div class="col-12">
-        <div class="empty-state">
-          <i class="fa-solid fa-car-burst mb-3" style="font-size: 3rem; color: #cbd5e1;"></i>
+        <div class="empty-state reveal">
+          <i class="fa-solid fa-magnifying-glass-minus mb-3" style="font-size: 3rem; color: #cbd5e1;"></i>
           <h4 class="text-secondary fw-bold">No vehicles found</h4>
           <p class="mb-0">Try adjusting your filters or search terms to find what you're looking for.</p>
         </div>
