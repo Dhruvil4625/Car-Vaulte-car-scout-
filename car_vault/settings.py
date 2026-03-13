@@ -190,3 +190,6 @@ CSRF_USE_SESSIONS = True
 
 # Load Groq API key from environment (do not commit secrets)
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+
+RAZORPAY_KEY_ID = ""
+RAZORPAY_KEY_SECRET = ""
