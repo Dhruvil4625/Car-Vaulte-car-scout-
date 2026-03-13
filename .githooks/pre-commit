@@ -1,0 +1,10 @@
+#!/bin/sh
+# Prevent committing common secret patterns (runs on staged files)
+if git rev-parse --git-dir > /dev/null 2>&1; then
+  # search staged content for known secret patterns
+  if git grep -n --cached -e "gsk_" -e "GROQ_API_KEY" -e "EMAIL_HOST_PASSWORD" >/dev/null 2>&1; then
+    echo "ERROR: possible secret detected in staged files. Remove secrets or use environment variables before committing."
+    exit 1
+  fi
+fi
+exit 0
