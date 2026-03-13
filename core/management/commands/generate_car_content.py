@@ -1,6 +1,7 @@
 import json
 from django.core.management.base import BaseCommand
 from django.conf import settings
+from django.db import models
 from openai import OpenAI
 from core.models import Car, CarPro, CarCon
 from decimal import Decimal
