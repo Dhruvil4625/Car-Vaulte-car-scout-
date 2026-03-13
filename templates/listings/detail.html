@@ -1,0 +1,813 @@
+{% extends 'base.html' %}
+{% load currency %}{% load static %}{% load images %}
+{% block title %}{{ listing.car.make }} {{ listing.car.model }} | Car Scout{% endblock %}
+
+{% block content %}
+<style>
+  /* --- Ultra-Smooth Cinematic Pan --- */
+  @keyframes cinematicPan {
+    0% { transform: scale(1.0) translateX(0); }
+    50% { transform: scale(1.05) translateX(-1%); }
+    100% { transform: scale(1.0) translateX(0); }
+  }
+
+  /* --- Detail Hero Section --- */
+  .detail-hero {
+    position: relative;
+    padding: 70px 0 100px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+  }
+  .detail-hero::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: url('https://images.unsplash.com/photo-1503376712341-ea1c6db88135?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    z-index: 1; animation: cinematicPan 60s ease-in-out infinite; will-change: transform;
+  }
+  .detail-hero::after {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, rgba(2, 6, 23, 0.85) 0%, rgba(2, 6, 23, 0.98) 100%);
+    z-index: 2;
+  }
+  .detail-hero .container { position: relative; z-index: 3; }
+  .detail-hero h1 {
+    font-size: 3rem; font-weight: 900; color: #ffffff; margin-bottom: 5px;
+    text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  }
+  .detail-hero p { color: #cbd5e1; font-size: 1.1rem; margin: 0; font-weight: 500; letter-spacing: 0.5px; }
+
+  /* --- Main Content Wrapper --- */
+  .detail-wrapper { margin-top: -60px; position: relative; z-index: 10; padding-bottom: 80px; }
+
+  /* --- Media Stages (Gallery, 360, Turntable) --- */
+  .media-tabs { background: #f1f5f9; padding: 6px; border-radius: 12px; display: inline-flex; gap: 5px; margin-bottom: 15px; }
+  .media-tabs .btn { border: none; border-radius: 8px; font-weight: 800; color: #64748b; padding: 10px 25px; transition: all 0.3s ease; text-transform: uppercase; font-size: 0.85rem; }
+  .media-tabs .btn.active, .media-tabs .btn:hover { background: #ffffff; color: #0f172a; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+  .media-stage { width: 100%; height: 480px; border-radius: 16px; overflow: hidden; background: #0f172a; position: relative; border: 1px solid #e2e8f0; }
+  .media-stage img { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.4s ease; }
+  .nav-arrow { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(15, 23, 42, 0.6); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 12px 16px; border-radius: 10px; cursor: pointer; z-index: 2; transition: all 0.3s ease; }
+  .nav-arrow:hover { background: #e11d48; border-color: #e11d48; }
+  .prev-arrow { left: 15px; } .next-arrow { right: 15px; }
+  .thumbnail-gallery { display: flex; gap: 12px; overflow-x: auto; padding: 15px 0 5px; scrollbar-width: none; }
+  .thumbnail-gallery::-webkit-scrollbar { display: none; }
+  .thumb-img { width: 100px; height: 70px; border-radius: 8px; object-fit: cover; cursor: pointer; border: 2px solid transparent; opacity: 0.5; transition: all 0.3s ease; }
+  .thumb-img:hover, .thumb-img.active { opacity: 1; border-color: #e11d48; transform: translateY(-2px); }
+
+  /* --- CarDekho Style Professional Cards --- */
+  .cd-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.03); padding: 24px; margin-bottom: 24px; transition: box-shadow 0.3s ease; }
+  .cd-card:hover { box-shadow: 0 20px 40px rgba(0,0,0,0.06); }
+  .cd-title { font-weight: 900; color: #0f172a; font-size: 1.3rem; letter-spacing: .3px; text-transform: uppercase; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+  .cd-title i { color: #e11d48; font-size: 1.1rem; }
+  .cd-sub { color: #64748b; font-weight: 600; margin-bottom: 15px; }
+  
+  .cd-tabs { display: flex; gap: 8px; border-bottom: 2px solid #e2e8f0; margin-bottom: 16px; overflow-x: auto; scrollbar-width: none; }
+  .cd-tabs::-webkit-scrollbar { display: none; }
+  .cd-tab { border: none; background: transparent; font-weight: 800; color: #64748b; padding: 10px 14px; position: relative; white-space: nowrap; }
+  .cd-tab.active { color: #0f172a; }
+  .cd-tab.active::after { content: ""; position: absolute; left: 0; right: 0; bottom: -2px; height: 3px; background: #e11d48; border-radius: 10px; }
+  
+  .cd-spec-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .cd-spec { display: flex; gap: 10px; align-items: center; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; font-weight: 700; color: #0f172a; }
+  .cd-spec i { color: #e11d48; width: 20px; text-align: center; }
+  .cd-link { color: #e11d48; font-weight: 800; text-decoration: none; font-size: 0.9rem; }
+  
+  /* --- Pros Cons --- */
+  .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .pros { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 16px; padding: 20px; }
+  .cons { background: #fef2f2; border: 1px solid #fecaca; border-radius: 16px; padding: 20px; }
+  .pc-title { font-weight: 900; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .pros .pc-title { color: #16a34a; } .cons .pc-title { color: #dc2626; }
+  .pc-list { margin: 0; padding-left: 20px; color: #334155; font-size: 0.95rem; line-height: 1.6; font-weight: 500; }
+  .pc-list li { margin-bottom: 8px; }
+
+  /* --- Reviews --- */
+  .review-fade { position: relative; max-height: 180px; overflow: hidden; color: #475569; line-height: 1.6; }
+  .review-fade::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 80px; background: linear-gradient(180deg, rgba(255,255,255,0), #fff); }
+  .read-more-btn { position: absolute; right: 10px; bottom: 0px; z-index: 2; }
+  .tag { border: 1px solid #e2e8f0; background: #fff; border-radius: 999px; padding: 6px 12px; font-weight: 800; color: #475569; font-size: 0.85rem; cursor: pointer; white-space: nowrap; }
+  .tag.active { background: #0f172a; color: #fff; border-color: #0f172a; }
+  .review-row { display: flex; gap: 16px; overflow-x: auto; scrollbar-width: none; padding-bottom: 10px; }
+  .review-row::-webkit-scrollbar { display: none; }
+  .review-card { min-width: 300px; max-width: 300px; background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
+
+  /* --- Tables (Variants, Mileage, Compare) --- */
+  .cd-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.95rem; }
+  .cd-table th, .cd-table td { border-bottom: 1px solid #e2e8f0; padding: 14px 10px; }
+  .cd-table th { background: #f8fafc; font-weight: 900; color: #64748b; text-transform: uppercase; font-size: 0.8rem; }
+  .cd-table td { color: #0f172a; font-weight: 600; }
+  .cmp-wrap { overflow-x: auto; }
+  .cmp-table { min-width: 800px; }
+  .cmp-sticky { position: sticky; left: 0; background: #f8fafc; z-index: 2; font-weight: 900 !important; color: #64748b !important; }
+
+  /* --- Sidebar specific --- */
+  .main-price-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: center; }
+  .main-price { font-size: 2.4rem; font-weight: 900; color: #e11d48; line-height: 1; margin-bottom: 5px; }
+  .btn-primary-custom { background: #e11d48; color: #fff; font-weight: 900; border-radius: 10px; border: none; width: 100%; padding: 14px; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(225, 29, 72, 0.3); transition: all 0.3s; }
+  .btn-primary-custom:hover { background: #be123c; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(225, 29, 72, 0.4); color: #fff; }
+  .btn-outline-custom { border: 2px solid #cbd5e1; color: #0f172a; background: transparent; font-weight: 900; padding: 12px; border-radius: 10px; text-transform: uppercase; display: block; text-align: center; text-decoration: none; transition: all 0.3s; width: 100%; }
+  .btn-outline-custom:hover { border-color: #0f172a; background: #0f172a; color: #fff; }
+  
+  .emi-illus { width: 46px; height: 46px; border-radius: 12px; background: #fff3f2; border: 1px solid #fecaca; display: flex; align-items: center; justify-content: center; color: #e11d48; font-size: 1.2rem; }
+  .emi-big { font-size: 1.6rem; font-weight: 900; color: #0f172a; }
+
+  @media (max-width: 767px) { .cd-spec-grid { grid-template-columns: 1fr; } .pros-cons { grid-template-columns: 1fr; } }
+</style>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css">
+<script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
+<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
+<section class="detail-hero reveal">
+  <div class="container">
+    <h1>{{ listing.car.make }} {{ listing.car.model }}</h1>
+    <p><i class="fa-solid fa-location-dot me-2" style="color: #e11d48;"></i> {% if listing.showroom %}{{ listing.showroom.city|default:"Location Pending" }}{% else %}Online Exclusive{% endif %}</p>
+  </div>
+</section>
+
+<!-- Full Specs & Features Modal -->
+<div class="modal fade" id="specsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">{{ listing.car.make }} {{ listing.car.model }} • Full Specs & Features</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-4">
+          <div class="col-md-6">
+            <div class="cd-card">
+              <div class="cd-title mb-2">Key Specifications</div>
+              <table class="cd-table">
+                <tbody>
+                  <tr><th>Engine</th><td>{{ listing.car.engine_cc|default:"—" }}{% if listing.car.engine_cc %} cc{% endif %}</td></tr>
+                  <tr><th>Power</th><td>{{ listing.car.power_bhp|default:"—" }}{% if listing.car.power_bhp %} bhp{% endif %}</td></tr>
+                  <tr><th>Torque</th><td>{{ listing.car.torque_nm|default:"—" }}{% if listing.car.torque_nm %} Nm{% endif %}</td></tr>
+                  <tr><th>Fuel Type</th><td>{{ listing.car.fuel_type|default:"—" }}</td></tr>
+                  <tr><th>Transmission</th><td>{{ listing.car.transmission|default:"—" }}</td></tr>
+                  <tr><th>Body Type</th><td>{{ listing.car.body_type|default:"—" }}</td></tr>
+                  <tr><th>GNCAP</th><td>{{ listing.car.gncap_rating|default:"—" }}</td></tr>
+                  <tr><th>Odometer</th><td>{{ listing.mileage|default:"—" }}{% if listing.mileage %} km{% endif %}</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="cd-card mt-3">
+              <div class="cd-title mb-2">Pros & Cons</div>
+              <div class="row g-3">
+                <div class="col-sm-6">
+                  <div class="pros" style="padding:12px;">
+                    <div class="pc-title"><i class="fa-solid fa-thumbs-up me-1"></i> Things We Like</div>
+                    <ul class="pc-list">
+                      {% if listing.car.pros.all %}
+                        {% for pro in listing.car.pros.all %}<li>{{ pro.text }}</li>{% endfor %}
+                      {% else %}
+                        <li>Good value and practicality for the class.</li>
+                      {% endif %}
+                    </ul>
+                  </div>
+                </div>
+                <div class="col-sm-6">
+                  <div class="cons" style="padding:12px;">
+                    <div class="pc-title"><i class="fa-solid fa-thumbs-down me-1"></i> Things We Don't Like</div>
+                    <ul class="pc-list">
+                      {% if listing.car.cons.all %}
+                        {% for con in listing.car.cons.all %}<li>{{ con.text }}</li>{% endfor %}
+                      {% else %}
+                        <li>Some variants lack premium conveniences.</li>
+                      {% endif %}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="cd-card">
+              <div class="cd-title mb-2">Expert Highlights</div>
+              <div class="mb-2"><strong>Overview</strong> — {{ listing.car.expert_overview|default:"—" }}</div>
+              <div class="mb-2"><strong>Exterior</strong> — {{ listing.car.expert_exterior|default:"—" }}</div>
+              <div class="mb-2"><strong>Interior</strong> — {{ listing.car.expert_interior|default:"—" }}</div>
+              <div class="mb-2"><strong>Performance</strong> — {{ listing.car.expert_performance|default:"—" }}</div>
+              <div class="mb-0"><strong>Verdict</strong> — {{ listing.car.expert_verdict|default:"—" }}</div>
+            </div>
+            <div class="cd-card mt-3">
+              <div class="cd-title mb-2">Variants & Prices</div>
+              <table class="cd-table">
+                <thead><tr><th>Variant</th><th class="text-end">Ex-Showroom</th></tr></thead>
+                <tbody>
+                  {% if listing.car.variants.all %}
+                    {% for v in listing.car.variants.all %}
+                      <tr>
+                        <td>{{ v.name }} {% if v.is_top_selling %}<span class="badge bg-warning text-dark ms-1">Top Selling</span>{% endif %}</td>
+                        <td class="text-end">{{ v.ex_showroom_price|default:"—"|inr }}</td>
+                      </tr>
+                    {% endfor %}
+                  {% else %}
+                    <tr><td colspan="2" class="text-muted">No variants recorded.</td></tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-dark fw-bold" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="container detail-wrapper">
+  <div class="row g-4">
+    
+    <div class="col-lg-8">
+      
+      <div class="cd-card reveal" style="padding: 15px; transition-delay: 0.1s;">
+        <div class="media-tabs" id="mediaTabs">
+          <button type="button" class="btn active" data-target="galleryContent"><i class="fa-solid fa-images me-1"></i> Gallery</button>
+          {% if pano_exterior or pano_interior %}
+            <button type="button" class="btn" data-target="panoContent"><i class="fa-solid fa-vr-cardboard me-1"></i> 360°</button>
+          {% endif %}
+          <button type="button" class="btn" data-target="turntableContent"><i class="fa-solid fa-arrows-spin me-1"></i> Spin</button>
+          {% if model_3d_url %}
+            <button type="button" class="btn" data-target="model3dContent"><i class="fa-solid fa-cube me-1"></i> 3D Model</button>
+          {% endif %}
+        </div>
+
+        <div id="galleryContent" class="media-view active-view">
+          <div class="media-stage">
+            <button class="nav-arrow prev-arrow" onclick="navigateGallery(-1)">&#10094;</button>
+            {% if images %}
+              <img id="mainDisplayImage" src="{{ images.0.image.url }}" alt="{{ listing.car.make }} {{ listing.car.model }}" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+            {% else %}
+              <img id="mainDisplayImage" src="{% car_image listing.car.make listing.car.model '900x600' %}" alt="{{ listing.car.make }} {{ listing.car.model }}" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+            {% endif %}
+            <button class="nav-arrow next-arrow" onclick="navigateGallery(1)">&#10095;</button>
+          </div>
+          {% if images %}
+          <div class="thumbnail-gallery" id="thumbnailContainer">
+            {% for img in images|slice:":8" %}
+              <img src="{{ img.image.url }}" alt="{{ img.alt }}" class="thumb-img {% if forloop.first %}active{% endif %}" onclick="changeMainImage(this)" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+
+        <div id="panoContent" class="media-view" style="display: none;">
+          <div class="d-flex gap-2 mb-2 px-2">
+            <button class="btn btn-dark fw-bold btn-sm rounded-pill px-3" id="btnExterior">Exterior</button>
+            <button class="btn btn-outline-secondary fw-bold btn-sm rounded-pill px-3" id="btnInterior">Interior</button>
+          </div>
+          <div id="panoExterior" class="media-stage border-0"></div>
+          <div id="panoInterior" class="media-stage border-0" style="display:none;"></div>
+        </div>
+        <div id="turntableContent" class="media-view" style="display: none;">
+          {% if spin_ext or spin_int %}
+            <div class="d-flex gap-2 mb-2 px-2">
+              <button class="btn btn-dark fw-bold btn-sm rounded-pill px-3" id="btnSpinExterior">Exterior</button>
+              <button class="btn btn-outline-danger fw-bold btn-sm rounded-pill px-3 ms-auto" id="btnSpinAuto"><i class="fa-solid fa-play me-1"></i> Auto Spin</button>
+            </div>
+            <div id="spinExterior" class="media-stage border-0" style="cursor: ew-resize;"></div>
+          {% else %}
+            <div class="media-stage d-flex align-items-center justify-content-center flex-column text-muted border-0">
+              <i class="fa-solid fa-arrows-spin fs-1 mb-3 opacity-50"></i>
+              <h5>No Turntable Data Available</h5>
+            </div>
+          {% endif %}
+        </div>
+        {% if model_3d_url %}
+        <div id="model3dContent" class="media-view" style="display: none;">
+          <div class="media-stage border-0 p-0" style="background:#0b1220;">
+            <model-viewer id="carModelViewer"
+                          src="{{ model_3d_url }}"
+                          camera-controls
+                          autoplay
+                          shadow-intensity="1"
+                          exposure="1"
+                          environment-image="neutral"
+                          style="width:100%;height:100%;background:#0b1220;"
+                          ar
+                          ar-modes="webxr scene-viewer quick-look"
+                          alt="{{ listing.car.make }} {{ listing.car.model }} 3D model">
+            </model-viewer>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="cd-card reveal" style="transition-delay: 0.15s;">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <div class="cd-title mb-0"><i class="fa-solid fa-list-check"></i> Key Specifications</div>
+          <div class="cd-tabs mb-0 border-0">
+            <button class="cd-tab active" data-cdtab="specs">Specs</button>
+            <button class="cd-tab" data-cdtab="features">Top Features</button>
+          </div>
+        </div>
+        <hr class="mt-2 mb-4" style="border-color: #e2e8f0;">
+        
+        <div class="cd-specs" data-cdcontent="specs">
+          <div class="cd-spec-grid">
+            <div class="cd-spec"><i class="fa-solid fa-engine-warning"></i> Engine: {{ listing.car.engine_cc|default:"—" }}{% if listing.car.engine_cc %} cc{% endif %}</div>
+            <div class="cd-spec"><i class="fa-solid fa-bolt"></i> Power: {{ listing.car.power_bhp|default:"—" }}{% if listing.car.power_bhp %} bhp{% endif %}</div>
+            <div class="cd-spec"><i class="fa-solid fa-gears"></i> Torque: {{ listing.car.torque_nm|default:"—" }}{% if listing.car.torque_nm %} Nm{% endif %}</div>
+            <div class="cd-spec"><i class="fa-solid fa-gear"></i> Transmission: {{ listing.car.transmission|default:"—" }}</div>
+            <div class="cd-spec"><i class="fa-solid fa-road"></i> Odometer: {{ listing.mileage|default:"—" }}{% if listing.mileage %} km{% endif %}</div>
+            <div class="cd-spec"><i class="fa-solid fa-gas-pump"></i> Fuel: {{ listing.car.fuel_type|default:"—" }}</div>
+            <div class="cd-spec"><i class="fa-solid fa-shield-halved"></i> Safety: {% if inspection %}{{ inspection.condition_score|default:"—" }}/10{% else %}Not Rated{% endif %}</div>
+            <div class="cd-spec"><i class="fa-solid fa-calendar-days"></i> Year: {{ listing.car.year|default:"—" }}</div>
+          </div>
+          <div class="mt-4"><a href="#" class="cd-link" data-bs-toggle="modal" data-bs-target="#specsModal">View All Specs and Features <i class="fa-solid fa-angle-right ms-1"></i></a></div>
+        </div>
+        
+        <div class="cd-specs d-none" data-cdcontent="features">
+          <div class="cd-spec-grid">
+            <div class="cd-spec"><i class="fa-solid fa-snowflake"></i> Auto Climate Control</div>
+            <div class="cd-spec"><i class="fa-solid fa-mobile-screen"></i> Apple CarPlay & Android Auto</div>
+            <div class="cd-spec"><i class="fa-solid fa-music"></i> Premium Sound System</div>
+            <div class="cd-spec"><i class="fa-solid fa-car-side"></i> 360 Camera & Sensors</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cd-card reveal" style="transition-delay: 0.2s;">
+        <div class="cd-title"><i class="fa-solid fa-tags"></i> {{ listing.car.make }} {{ listing.car.model }} Price</div>
+        <div class="cd-sub mb-3">Explore pricing options and configurations for this specific model.</div>
+        
+        <table class="cd-table mt-3">
+          <thead><tr><th>Variant</th><th>Price Estimate</th><th class="text-end">Action</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="fw-bold d-flex align-items-center gap-2">{{ listing.car.make }} {{ listing.car.model }} <span class="badge bg-warning text-dark border border-warning" style="font-size:0.65rem;">Current Listing</span></div>
+                <div class="text-muted mt-1" style="font-size:.85rem">{{ listing.car.year }} • {{ listing.car.transmission|default:'Automatic' }} • {{ listing.car.fuel_type|default:'Petrol' }}</div>
+              </td>
+              <td>
+                <div class="fw-bold text-danger fs-5">{{ listing.price|inr }}</div>
+                <a href="#" class="cd-link" style="font-size: 0.8rem;">View Breakdown</a>
+              </td>
+              <td class="text-end">
+                <button class="btn btn-outline-dark btn-sm fw-bold px-3">View Details</button>
+              </td>
+            </tr>
+            {% for v in variants %}
+            <tr>
+              <td>
+                <div class="fw-bold d-flex align-items-center gap-2">{{ v.car.make }} {{ v.car.model }} {{ v.car.year }}</div>
+                <div class="text-muted mt-1" style="font-size:.85rem">{{ v.car.transmission|default:'—' }} • {{ v.car.fuel_type|default:'—' }}</div>
+              </td>
+              <td>
+                <div class="fw-bold text-danger">{{ v.price|inr }}</div>
+                <a href="{% url 'listing_detail' v.listing_id %}" class="cd-link">Get On-Road Price</a>
+              </td>
+              <td class="text-end">
+                <a href="{% url 'listing_detail' v.listing_id %}" class="btn btn-outline-dark btn-sm fw-bold px-3">View Offers</a>
+              </td>
+            </tr>
+            {% empty %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pros-cons mb-4 reveal" style="transition-delay: 0.25s;">
+        <div class="pros">
+          <div class="pc-title"><i class="fa-solid fa-thumbs-up fs-4"></i> Things We Like</div>
+          <ul class="pc-list">
+            {% if listing.car.pros.all %}
+              {% for pro in listing.car.pros.all %}<li>{{ pro.text }}</li>{% endfor %}
+            {% else %}
+              <li>Incredible performance and handling dynamics.</li>
+              <li>Premium interior materials and build quality.</li>
+              <li>Loaded with advanced safety and tech features.</li>
+            {% endif %}
+          </ul>
+        </div>
+        <div class="cons">
+          <div class="pc-title"><i class="fa-solid fa-thumbs-down fs-4"></i> Things We Don't Like</div>
+          <ul class="pc-list">
+            {% if listing.car.cons.all %}
+              {% for con in listing.car.cons.all %}<li>{{ con.text }}</li>{% endfor %}
+            {% else %}
+              <li>Higher maintenance and running costs.</li>
+              <li>Stiff suspension setup on bad roads.</li>
+              <li>Infotainment system has a steep learning curve.</li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+
+      <div class="cd-card reveal" style="transition-delay: 0.3s;">
+        <div class="cd-title"><i class="fa-solid fa-file-signature"></i> {{ listing.car.make }} {{ listing.car.model }} Expert Review</div>
+        <div class="review-fade" id="expertReview">
+          {% if listing.car.expert_overview or listing.car.expert_exterior or listing.car.expert_interior or listing.car.expert_performance or listing.car.expert_verdict %}
+            {% if listing.car.expert_overview %}<p class="mb-2"><strong>Overview</strong> — {{ listing.car.expert_overview }}</p>{% endif %}
+            {% if listing.car.expert_exterior %}<p class="mb-2"><strong>Exterior</strong> — {{ listing.car.expert_exterior }}</p>{% endif %}
+            {% if listing.car.expert_interior %}<p class="mb-2"><strong>Interior</strong> — {{ listing.car.expert_interior }}</p>{% endif %}
+            {% if listing.car.expert_performance %}<p class="mb-2"><strong>Performance</strong> — {{ listing.car.expert_performance }}</p>{% endif %}
+            {% if listing.car.expert_verdict %}<p class="mb-0"><strong>Verdict</strong> — {{ listing.car.expert_verdict }}</p>{% endif %}
+          {% elif listing.description %}
+            <p>{{ listing.description|safe }}</p>
+          {% else %}
+            <p class="mb-2"><strong>Overview</strong> — The {{ listing.car.make }} {{ listing.car.model }} represents the pinnacle of modern engineering, combining aggressive styling with daily usability.</p>
+            <p class="mb-2"><strong>Exterior</strong> — It features a wide, planted stance with signature aerodynamic elements that not only look incredible but improve downforce.</p>
+            <p class="mb-2"><strong>Interior</strong> — Step inside, and you are greeted by an opulent cabin. High-quality leather, carbon fiber trims, and digital displays dominate the driver-focused cockpit.</p>
+            <p class="mb-2"><strong>Performance</strong> — Under the hood lies a masterpiece. Power delivery is instantaneous, and the transmission shifts with lightning-fast precision.</p>
+            <p class="mb-0"><strong>Verdict</strong> — If you are looking for a vehicle that can tear up the track on weekends and commute comfortably on weekdays, this is it.</p>
+          {% endif %}
+          <button class="btn btn-outline-dark fw-bold btn-sm bg-white read-more-btn" id="readMoreBtn">Read More <i class="fa-solid fa-angle-down ms-1"></i></button>
+        </div>
+      </div>
+
+      <div class="cd-card reveal" style="transition-delay: 0.35s;">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
+          <div>
+            <div class="cd-title mb-1"><i class="fa-solid fa-comments"></i> User Reviews</div>
+            <div class="cd-sub mb-0">4.8 Stars • Based on 124 Verified Owners</div>
+          </div>
+          <button class="btn btn-outline-dark fw-bold"><i class="fa-solid fa-pen-nib me-2"></i> Write a Review</button>
+        </div>
+        
+        <div class="d-flex flex-wrap gap-2 my-3 pb-2">
+          <span class="tag active">All (124)</span>
+          <span class="tag">Performance (82)</span>
+          <span class="tag">Looks (65)</span>
+          <span class="tag">Comfort (40)</span>
+          <span class="tag">Maintenance (28)</span>
+        </div>
+        
+        <div class="subtabs d-flex gap-2 mb-4">
+          <button class="btn active">Latest</button>
+          <button class="btn">Most Helpful</button>
+        </div>
+        
+        <div class="review-row pb-2">
+          <div class="review-card">
+            <div class="d-flex align-items-center gap-3 mb-3">
+              <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold fs-5" style="width:45px;height:45px; background: #3b82f6;">A</div>
+              <div>
+                <div class="fw-bold text-dark">Aryan S.</div>
+                <div class="text-muted" style="font-size:0.8rem;">Verified Owner • Mar 2026</div>
+              </div>
+            </div>
+            <div class="mb-2 text-warning" style="font-size:0.9rem;">★★★★★ <span class="text-dark fw-bold ms-1">5.0</span></div>
+            <div class="fw-bold mb-2 text-dark">Absolute Dream Machine</div>
+            <div class="text-muted" style="font-size:0.9rem;">The power delivery is mind-blowing. The exhaust note puts a smile on my face every single morning. Maintenance is high, but completely worth it.</div>
+          </div>
+
+          <div class="review-card">
+            <div class="d-flex align-items-center gap-3 mb-3">
+              <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold fs-5" style="width:45px;height:45px; background: #10b981;">K</div>
+              <div>
+                <div class="fw-bold text-dark">Kunal M.</div>
+                <div class="text-muted" style="font-size:0.8rem;">Verified Owner • Feb 2026</div>
+              </div>
+            </div>
+            <div class="mb-2 text-warning" style="font-size:0.9rem;">★★★★☆ <span class="text-dark fw-bold ms-1">4.2</span></div>
+            <div class="fw-bold mb-2 text-dark">Great, but stiff ride</div>
+            <div class="text-muted" style="font-size:0.9rem;">Handling is incredibly sharp, but the suspension is very stiff for daily city driving. Interior tech is flawless though.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cd-card reveal" style="transition-delay: 0.4s;">
+        <div class="cd-title mb-3"><i class="fa-solid fa-code-compare"></i> {{ listing.car.model }} Comparison</div>
+        <div class="cmp-wrap">
+          <table class="cmp-table">
+            <thead>
+              <tr>
+                <th class="cmp-sticky">Specification</th>
+                <th>
+                  <div class="d-flex flex-column align-items-center">
+                    <div class="fw-bold text-dark text-center">{{ listing.car.make }}<br>{{ listing.car.model }}</div>
+                    <div class="text-danger fw-bold mt-1" style="font-size:.85rem">{{ listing.price|inr }}</div>
+                  </div>
+                </th>
+                <th>
+                  <div class="d-flex flex-column align-items-center">
+                    <div class="fw-bold text-dark text-center">Competitor 1<br>Premium Model</div>
+                    <div class="text-muted mt-1" style="font-size:.85rem">Similar Price</div>
+                  </div>
+                </th>
+                <th>
+                  <div class="d-flex flex-column align-items-center">
+                    <div class="fw-bold text-dark text-center">Competitor 2<br>Luxury Trim</div>
+                    <div class="text-muted mt-1" style="font-size:.85rem">Similar Price</div>
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td class="cmp-sticky">User Rating</td><td>4.8 (124)</td><td>4.6 (95)</td><td>4.7 (150)</td></tr>
+              <tr><td class="cmp-sticky">Transmission</td><td>{{ listing.car.transmission|default:'Automatic' }}</td><td>Automatic</td><td>Automatic</td></tr>
+              <tr><td class="cmp-sticky">Fuel Type</td><td>{{ listing.car.fuel_type|default:'Petrol' }}</td><td>Petrol</td><td>Hybrid</td></tr>
+              <tr><td class="cmp-sticky">Mileage</td><td>{{ listing.mileage|default:'15' }} kmpl</td><td>14.5 kmpl</td><td>18.0 kmpl</td></tr>
+              <tr><td class="cmp-sticky">Safety Rating</td><td>5 Star NCAP</td><td>5 Star NCAP</td><td>5 Star NCAP</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="col-lg-4">
+      <div style="position: sticky; top: 100px;">
+        
+        <div class="cd-card reveal" style="padding: 25px; border-top: 4px solid #e11d48;">
+          <div class="main-price-box">
+            <div class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.8rem; letter-spacing: 1px;">Asking Price</div>
+            <div class="main-price">{{ listing.price|inr }}</div>
+          </div>
+
+          {% if is_buyer and listing.status == 'Active' %}
+          <form method="post" action="{% url 'listing_purchase' listing.listing_id %}">
+            {% csrf_token %}
+            <button class="btn-primary-custom mb-3"><i class="fa-solid fa-bolt me-2"></i> Buy Securely</button>
+          </form>
+          {% elif listing.status != 'Active' %}
+            <div class="alert alert-secondary text-center fw-bold mb-3 text-uppercase" style="letter-spacing: 1px;"><i class="fa-solid fa-lock me-2"></i> {{ listing.status }}</div>
+          {% endif %}
+          
+          <a href="#" class="btn-outline-custom mb-3"><i class="fa-solid fa-phone me-2"></i> Contact Seller</a>
+          
+          {% if request.user.is_staff or request.user == listing.seller %}
+            <div class="d-flex gap-2 mt-3 pt-3 border-top">
+              <a href="{% url 'listing_edit' listing.listing_id %}" class="btn btn-warning flex-fill fw-bold text-dark btn-sm rounded-pill"><i class="fa-solid fa-pen me-1"></i> Edit</a>
+              <a href="{% url 'listing_delete' listing.listing_id %}" class="btn btn-dark flex-fill fw-bold text-white btn-sm rounded-pill"><i class="fa-solid fa-trash me-1"></i> Delete</a>
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="cd-card reveal" style="transition-delay: 0.1s;">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <div class="cd-title mb-0 fs-5"><i class="fa-solid fa-calculator"></i> Calculate EMI</div>
+            <div class="emi-illus"><i class="fa-solid fa-coins"></i></div>
+          </div>
+          <div class="mb-2">
+            <div class="cd-sub mb-1" style="font-size: 0.85rem;">Estimated Monthly EMI</div>
+            <div class="d-flex align-items-baseline gap-2">
+              <div class="emi-big text-danger">{{ emi.amount|inr }}</div>
+              <a href="#" class="cd-link text-decoration-underline" style="font-size: 0.85rem;">Edit EMI</a>
+            </div>
+          </div>
+          <div class="text-muted mb-4" style="font-size: 0.8rem; font-weight: 600;">Interest calculated at {{ emi.rate }}% for {{ emi.months }} months</div>
+          <button class="btn btn-outline-dark fw-bold w-100" style="border-radius: 8px; border-color: #cbd5e1;">View Finance Offers</button>
+        </div>
+
+        <div class="cd-card reveal" style="transition-delay: 0.15s;">
+          <div class="cd-title mb-3 fs-5"><i class="fa-solid fa-map-location-dot"></i> {{ listing.car.make }} {{ listing.car.model }} Price in India</div>
+          <table class="cd-table" style="font-size: 0.85rem;">
+            <thead><tr><th>City</th><th class="text-end">On-Road Price</th></tr></thead>
+            <tbody class="cd-city">
+              {% for c, p in city_prices %}
+                <tr><td><a href="#" class="text-primary">{{ c }}</a></td><td class="text-end">{{ p|inr }}*</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  // --- UI Interactions Logic ---
+  document.addEventListener('DOMContentLoaded', () => {
+    
+    // Tab switching inside cd-cards
+    const tabs = document.querySelectorAll('.cd-tab');
+    const blocks = document.querySelectorAll('.cd-specs');
+    tabs.forEach(t => t.addEventListener('click', () => {
+      tabs.forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      const k = t.getAttribute('data-cdtab');
+      blocks.forEach(b => {
+        if(b.getAttribute('data-cdcontent') === k) {
+          b.classList.remove('d-none');
+        } else {
+          b.classList.add('d-none');
+        }
+      });
+    }));
+
+    // Expert Review Read More Expand
+    const btn = document.getElementById('readMoreBtn');
+    const wrap = document.getElementById('expertReview');
+    if(btn && wrap){ 
+      btn.addEventListener('click', () => { 
+        wrap.style.maxHeight = '2000px'; // expand
+        wrap.style.overflow = 'visible'; 
+        wrap.style.setProperty('--after-display', 'none');
+        btn.style.display = 'none'; 
+      }); 
+      // Small CSS hack to remove fade via JS
+      const style = document.createElement('style');
+      style.innerHTML = `.review-fade[style*="max-height: 2000px"]::after { display: none; }`;
+      document.head.appendChild(style);
+    }
+  });
+
+  // --- Segmented Media Tabs Logic ---
+  document.querySelectorAll('.media-tabs .btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      document.querySelectorAll('.media-tabs .btn').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      
+      const targetId = e.target.getAttribute('data-target');
+      document.querySelectorAll('.media-view').forEach(view => view.style.display = 'none');
+      document.getElementById(targetId).style.display = 'block';
+      
+      if (targetId === 'panoContent') {
+        try { if (window.__panoInit) window.__panoInit(); } catch(_) {}
+      }
+    });
+  });
+
+  // --- Standard Gallery Logic ---
+  function changeMainImage(thumbnail) {
+    const mainImage = document.getElementById('mainDisplayImage');
+    mainImage.style.opacity = '0.5';
+    setTimeout(() => {
+      mainImage.src = thumbnail.src;
+      mainImage.style.opacity = '1';
+    }, 200);
+
+    const thumbnails = document.querySelectorAll('.thumb-img');
+    thumbnails.forEach(img => img.classList.remove('active'));
+    thumbnail.classList.add('active');
+  }
+
+  function navigateGallery(direction) {
+    const thumbnails = Array.from(document.querySelectorAll('.thumb-img'));
+    if (!thumbnails.length) return;
+    const currentActive = document.querySelector('.thumb-img.active');
+    let currentIndex = thumbnails.indexOf(currentActive);
+    let nextIndex = currentIndex + direction;
+
+    if (nextIndex >= thumbnails.length) nextIndex = 0;
+    if (nextIndex < 0) nextIndex = thumbnails.length - 1;
+
+    changeMainImage(thumbnails[nextIndex]);
+  }
+
+  // --- 360 Panorama Logic ---
+  let extUrl = "{{ pano_exterior|default:'' }}";
+  let intUrl = "{{ pano_interior|default:'' }}";
+  (function(){
+    const fallbackExt = "https://pannellum.org/images/cerro-toco-0.jpg";
+    const fallbackInt = "https://pannellum.org/images/bma-1.jpg";
+    function resolveUrl(src, fallback){
+      return new Promise((res) => {
+        if (!src) { res(fallback || null); return; }
+        const i = new Image();
+        i.onload = () => res(src);
+        i.onerror = () => res(fallback || null);
+        i.src = src;
+      });
+    }
+    function isLikelyPano(u){
+      try { return /pano|equirect|360/i.test(u || ""); } catch(_) { return false; }
+    }
+    function checkRatio(u){
+      return new Promise((resolve) => {
+        try {
+          const img = new Image();
+          img.onload = () => {
+            const r = img.naturalWidth / img.naturalHeight;
+            resolve(r > 1.9 && r < 2.1); // approx 2:1
+          };
+          img.onerror = () => resolve(false);
+          img.src = u;
+        } catch(_) { resolve(false); }
+      });
+    }
+    Promise.all([resolveUrl(extUrl, fallbackExt), resolveUrl(intUrl, null)]).then(async ([extResolved, intResolved]) => {
+      // If no interior provided, reuse exterior
+      if (!intResolved) intResolved = extResolved || fallbackInt;
+      let exteriorViewer = null;
+      let interiorViewer = null;
+      let initialized = false;
+      function fallbackImg(containerId, url){
+        const el = document.getElementById(containerId);
+        if (!el) return;
+        el.innerHTML = "";
+        const img = new Image();
+        img.src = url || fallbackExt;
+        img.style.width = "100%";
+        img.style.height = "100%";
+        img.style.objectFit = "contain";
+        el.appendChild(img);
+      }
+      if (!extResolved && !intResolved) extResolved = fallbackExt;
+      window.__panoInit = function(){
+        if (initialized) return;
+        initialized = true;
+        (async () => {
+          const pe = document.getElementById('panoExterior');
+          const pi = document.getElementById('panoInterior');
+          const canPanoExt = !!extResolved && isLikelyPano(extResolved) && await checkRatio(extResolved);
+          const canPanoInt = !!intResolved && isLikelyPano(intResolved) && await checkRatio(intResolved);
+          const hasPannellum = (typeof pannellum !== 'undefined');
+          // Exterior
+          if (extResolved) {
+            if (hasPannellum && canPanoExt) {
+              try { exteriorViewer = pannellum.viewer('panoExterior', {type: 'equirectangular', panorama: extResolved, autoLoad: true, showZoomCtrl: true, crossOrigin: 'anonymous'}); }
+              catch(_) { fallbackImg('panoExterior', extResolved); }
+            } else {
+              fallbackImg('panoExterior', extResolved);
+            }
+            if (pe) pe.style.display = 'block';
+            if (pi) pi.style.display = 'none';
+          } else if (intResolved) {
+            // Only interior available
+            if (hasPannellum && canPanoInt) {
+              try { interiorViewer = pannellum.viewer('panoInterior', {type: 'equirectangular', panorama: intResolved, autoLoad: true, showZoomCtrl: true, crossOrigin: 'anonymous'}); }
+              catch(_) { fallbackImg('panoInterior', intResolved); }
+            } else {
+              fallbackImg('panoInterior', intResolved);
+            }
+            if (pe) pe.style.display = 'none';
+            if (pi) pi.style.display = 'block';
+          }
+        })();
+      };
+      
+      const btnExterior = document.getElementById('btnExterior');
+      const btnInterior = document.getElementById('btnInterior');
+      
+      if (btnExterior) btnExterior.addEventListener('click', () => {
+        if (!extResolved) return;
+        if (!initialized) window.__panoInit();
+        document.getElementById('panoExterior').style.display = 'block';
+        document.getElementById('panoInterior').style.display = 'none';
+        btnExterior.className = 'btn btn-dark fw-bold btn-sm rounded-pill px-3';
+        if (btnInterior) btnInterior.className = 'btn btn-outline-secondary fw-bold btn-sm rounded-pill px-3';
+      });
+      if (btnInterior) btnInterior.addEventListener('click', () => {
+        if (!intResolved) return;
+        if (!initialized) window.__panoInit();
+        document.getElementById('panoExterior').style.display = 'none';
+        document.getElementById('panoInterior').style.display = 'block';
+        try {
+          const hasPannellum = (typeof pannellum !== 'undefined');
+          if (hasPannellum && !interiorViewer) {
+            const ready = isLikelyPano(intResolved) && true; // viewer already chosen during init
+            if (ready) {
+              interiorViewer = pannellum.viewer('panoInterior', {type: 'equirectangular', panorama: intResolved, autoLoad: true, showZoomCtrl: true, crossOrigin: 'anonymous'});
+            } else {
+              throw new Error("not pano");
+            }
+          }
+        } catch(_) { fallbackImg('panoInterior', intResolved); }
+        btnInterior.className = 'btn btn-dark fw-bold btn-sm rounded-pill px-3';
+        if (btnExterior) btnExterior.className = 'btn btn-outline-secondary fw-bold btn-sm rounded-pill px-3';
+      });
+    });
+  })();
+
+  // --- JS Turntable Logic ---
+  let SPIN_INTERVAL_MS = 240;
+  const spinExt = [];
+  {% for u in spin_ext %} spinExt.push("{{ u }}"); {% endfor %}
+  
+  if (spinExt.length) {
+    function initSpin(containerId, frames) {
+      const el = document.getElementById(containerId);
+      let idx = 0, dragging = false, lastX = 0;
+      const img = new Image();
+      img.style.width = "100%"; img.style.height = "100%"; img.style.objectFit = "contain";
+      el.innerHTML = ""; el.appendChild(img);
+      
+      function show(i) { if (!frames.length) return; idx = (i % frames.length + frames.length) % frames.length; img.src = frames[idx]; }
+      function next() { show(idx + 1); }
+      function prev() { show(idx - 1); }
+      
+      show(0);
+      el.addEventListener("mousedown", e => { dragging = true; lastX = e.clientX; });
+      window.addEventListener("mouseup", () => { dragging = false; });
+      el.addEventListener("mousemove", e => {
+        if (!dragging) return;
+        const dx = e.clientX - lastX;
+        lastX = e.clientX;
+        if (dx > 2) prev(); else if (dx < -2) next(); 
+      });
+      return { show, next, prev, frames, el };
+    }
+    
+    let spinExtViewer = initSpin("spinExterior", spinExt);
+    let autoTimer = null;
+    
+    document.getElementById('btnSpinAuto').addEventListener('click', (e) => {
+      if (autoTimer) {
+        clearInterval(autoTimer); autoTimer = null;
+        e.target.innerHTML = '<i class="fa-solid fa-play me-1"></i> Auto Spin';
+        e.target.classList.replace('btn-danger', 'btn-outline-danger');
+      } else {
+        e.target.innerHTML = '<i class="fa-solid fa-pause me-1"></i> Stop Spin';
+        e.target.classList.replace('btn-outline-danger', 'btn-danger');
+        autoTimer = setInterval(() => spinExtViewer.next(), SPIN_INTERVAL_MS);
+      }
+    });
+  }
+</script>
+
+{% endblock %}

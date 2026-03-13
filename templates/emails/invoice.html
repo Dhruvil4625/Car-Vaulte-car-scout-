@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Receipt | {{ site_name }}</title>
+  <style type="text/css">
+    /* Responsive styles for mobile email clients */
+    @media screen and (max-width: 600px) {
+      .email-container { width: 100% !important; border-radius: 0 !important; }
+      .mobile-stack { display: block !important; width: 100% !important; padding: 10px 0 !important; }
+      .mobile-padding { padding: 20px !important; }
+      .mobile-center { text-align: center !important; }
+      .mobile-hide { display: none !important; }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+
+  <div style="display: none; max-height: 0px; overflow: hidden; opacity: 0; font-size: 0px; line-height: 0px; color: #f1f5f9;">
+    Your payment of ₹{{ booking_amount }} for the {{ car_make }} {{ car_model }} has been successfully processed.
+  </div>
+
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f1f5f9; padding: 40px 20px;">
+    <tr>
+      <td align="center" valign="top">
+        
+        <table class="email-container" width="600" cellpadding="0" cellspacing="0" border="0" align="center" style="background-color:#ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin: 0 auto;">
+          
+          <tr>
+            <td align="center" style="background-color: #0f172a; padding: 0; border-bottom: 3px solid #e11d48;">
+              <img src="cid:hero" alt="{{ site_name }} Logo" width="600" style="display:block; width: 100%; max-width: 600px; height: auto; border: none; margin: 0; padding: 0; color: #ffffff; font-size: 24px; font-weight: bold; text-align: center; line-height: 100px;">
+            </td>
+          </tr>
+
+          <tr>
+            <td class="mobile-padding" style="padding: 35px 35px 20px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td class="mobile-center">
+                    <h1 style="margin:0; color:#0f172a; font-size: 24px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">Payment Receipt</h1>
+                    <p style="margin:6px 0 0 0; color:#64748b; font-size:14px; font-weight: 500;">{{ site_name }} – Transaction Confirmation</p>
+                  </td>
+                  <td align="right" class="mobile-hide" style="vertical-align: top;">
+                    <div style="display:inline-block; padding:8px 16px; border-radius:999px; background:#ecfdf5; color:#065f46; border:1px solid #bbf7d0; font-weight:800; font-size:12px; text-transform: uppercase; letter-spacing: 1px;">Paid</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="mobile-padding" style="padding: 0 35px 25px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px;">
+                <tr>
+                  <td class="mobile-stack" style="padding: 20px; width:50%; vertical-align: top; border-right: 1px solid #e2e8f0;">
+                    <div style="font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Billed To</div>
+                    <div style="color:#0f172a; font-size:15px; font-weight:800; margin-bottom: 4px;">{{ buyer_name }}</div>
+                    <div style="color:#475569; font-size:14px;">{{ buyer_email }}</div>
+                  </td>
+                  <td class="mobile-stack" style="padding: 20px; width:50%; vertical-align: top;">
+                    <div style="font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Seller</div>
+                    <div style="color:#0f172a; font-size:15px; font-weight:800; margin-bottom: 4px;">{{ seller_name }}</div>
+                    <div style="color:#475569; font-size:14px;">{{ seller_email }}</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="mobile-padding" style="padding: 0 35px 25px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e2e8f0; border-radius:12px; overflow:hidden;">
+                <thead>
+                  <tr style="background:#0f172a; color:#fff; text-transform:uppercase; letter-spacing:1px; font-size:12px;">
+                    <th align="left" style="padding:14px 16px;">Item & Description</th>
+                    <th align="right" style="padding:14px 16px;">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style="background:#ffffff; border-bottom:1px solid #e2e8f0;">
+                    <td style="padding:16px; color:#0f172a; border-bottom:1px solid #e2e8f0;">
+                      <strong style="display:block; font-size:15px; margin-bottom:4px;">Booking Fee</strong>
+                      <span style="color:#64748b; font-size:13px;">{{ car_make }} {{ car_model }} ({{ car_year }})</span>
+                    </td>
+                    <td align="right" style="padding:16px; color:#0f172a; font-weight:700; font-size:15px; border-bottom:1px solid #e2e8f0;">₹ {{ booking_amount }}</td>
+                  </tr>
+                  <tr style="background:#f8fafc;">
+                    <td style="padding:16px; color:#64748b; font-size:13px;">
+                      Total Vehicle Price (Reference)
+                    </td>
+                    <td align="right" style="padding:16px; color:#64748b; font-size:13px;">₹ {{ vehicle_price }}</td>
+                  </tr>
+                  <tr>
+                    <td align="right" style="padding:18px 16px; font-weight:900; color:#0f172a; text-transform:uppercase; letter-spacing:1px; font-size: 14px;">Total Amount Paid</td>
+                    <td align="right" style="padding:18px 16px; font-weight:900; color:#e11d48; font-size: 18px;">₹ {{ booking_amount }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="mobile-padding" style="padding: 0 35px 25px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f8fafc; border:1px dashed #cbd5e1; border-radius:12px;">
+                <tr>
+                  <td style="padding: 20px; font-size:13px; color:#334155; line-height: 1.6;">
+                    <div style="margin-bottom: 6px;"><strong>Transaction ID:</strong> {{ transaction_id }}</div>
+                    <div style="margin-bottom: 6px;"><strong>Razorpay Order ID:</strong> {{ razorpay_order_id }}</div>
+                    <div style="margin-bottom: 6px;"><strong>Razorpay Payment ID:</strong> {{ razorpay_payment_id }}</div>
+                    <div style="margin-bottom: 6px;"><strong>Date:</strong> {{ completed_at }}</div>
+                    <div><strong>Status:</strong> <span style="color:#10b981; font-weight:700;">{{ status }}</span></div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="mobile-padding" style="padding: 0 35px 35px; text-align:center;">
+              <div style="margin-top: 10px; margin-bottom: 25px;">
+                <a href="{{ dashboard_url }}" style="display:inline-block; background-color:#e11d48; color:#ffffff; text-decoration:none; font-weight:800; font-size:14px; text-transform:uppercase; letter-spacing:1px; padding:16px 32px; border-radius:8px;">Go To Dashboard</a>
+              </div>
+              <p style="margin: 0; color:#64748b; font-size:13px; line-height: 1.5;">
+                This is a payment confirmation for your booking fee. The seller will contact you shortly to coordinate the next steps to complete the vehicle handover.
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td align="center" style="background-color: #f8fafc; padding: 25px 35px; border-top: 1px solid #e2e8f0;">
+              <p style="margin: 0 0 10px 0; color: #64748b; font-size: 13px;">
+                Have questions? <a href="mailto:support@carvault.com" style="color: #e11d48; text-decoration: none; font-weight: 600;">Contact our support team</a>
+              </p>
+              <p style="margin: 0; color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">
+                © {{ year }} {{ site_name }}. All rights reserved.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

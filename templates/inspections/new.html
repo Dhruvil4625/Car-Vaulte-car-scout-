@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Create Inspection | Car Scout{% endblock %}
+
+{% block content %}
+<style>
+  /* --- Premium Hero Section --- */
+  .inspect-hero {
+    background: linear-gradient(135deg, rgba(2, 6, 23, 0.85) 0%, rgba(2, 6, 23, 0.95) 100%),
+                url('https://images.unsplash.com/photo-1511919884226-fd3cad34687c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    padding: 80px 0 100px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .inspect-hero h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  }
+
+  .inspect-hero h1 span { color: #e11d48; }
+  
+  .inspect-hero p { 
+    color: #cbd5e1; 
+    font-size: 1.15rem; 
+    margin: 0; 
+    letter-spacing: 0.5px;
+  }
+
+  /* --- Glassmorphism Form Wrapper --- */
+  .inspect-wrapper {
+    margin-top: -60px; 
+    position: relative;
+    z-index: 10;
+    padding-bottom: 80px;
+  }
+
+  .inspect-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.08);
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 50px;
+  }
+
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 25px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 10px;
+  }
+
+  .section-label i { color: #e11d48; }
+
+  /* --- Form Inputs --- */
+  .inspect-form label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #64748b;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .inspect-form .form-select,
+  .inspect-form .form-control {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    border-radius: 10px;
+    padding: 14px 15px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    box-shadow: none;
+    width: 100%;
+    margin-bottom: 20px;
+    font-weight: 500;
+  }
+
+  .inspect-form textarea.form-control {
+    min-height: 120px;
+    resize: vertical;
+  }
+
+  .inspect-form .form-select:focus,
+  .inspect-form .form-control:focus {
+    background-color: #fff;
+    border-color: #e11d48;
+    box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.1);
+    outline: none;
+  }
+
+  /* Form Error Styling */
+  .help-block, .errorlist {
+    color: #e11d48;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-top: -15px;
+    margin-bottom: 15px;
+    display: block;
+    list-style: none;
+    padding: 0;
+  }
+
+  /* --- Action Buttons --- */
+  .action-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+  }
+
+  .btn-create-custom {
+    background-color: #e11d48;
+    color: #fff;
+    font-weight: 800;
+    padding: 16px 30px;
+    border-radius: 10px;
+    border: none;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    flex: 2;
+    box-shadow: 0 4px 15px rgba(225, 29, 72, 0.3);
+  }
+
+  .btn-create-custom:hover {
+    background-color: #be123c;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(225, 29, 72, 0.4);
+  }
+
+  .btn-cancel-custom {
+    background-color: transparent;
+    color: #0f172a;
+    border: 2px solid #cbd5e1;
+    font-weight: 800;
+    padding: 14px 30px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+  }
+
+  .btn-cancel-custom:hover {
+    background-color: #0f172a;
+    border-color: #0f172a;
+    color: #ffffff;
+  }
+</style>
+
+<section class="inspect-hero reveal">
+  <div class="container">
+    <h1>Create <span>Inspection</span></h1>
+    <p>Log a professional inspection report for an active listing.</p>
+  </div>
+</section>
+
+<section class="container inspect-wrapper">
+  <div class="inspect-card reveal" style="transition-delay: 0.1s;">
+    
+    <form method="post" class="inspect-form">
+      {% csrf_token %}
+
+      <div class="section-label">
+        <i class="fa-solid fa-clipboard-list"></i> Vehicle & Report Details
+      </div>
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger" style="border-radius: 10px;">
+          {{ form.non_field_errors }}
+        </div>
+      {% endif %}
+
+      <div class="row">
+        <div class="col-md-6">
+          <label for="{{ form.listing.id_for_label }}">Listing</label>
+          {{ form.listing }}
+          {{ form.listing.errors }}
+        </div>
+        
+        <div class="col-md-6">
+          <label for="{{ form.inspection_date.id_for_label }}">Inspection Date & Time</label>
+          <div class="input-group">
+             {{ form.inspection_date }}
+          </div>
+          {{ form.inspection_date.errors }}
+        </div>
+      </div>
+
+      <div class="row mt-2">
+        <div class="col-md-6">
+          <label for="{{ form.condition_score.id_for_label }}">Condition Score (0.0 – 10.0)</label>
+          {{ form.condition_score }}
+          {{ form.condition_score.errors }}
+        </div>
+        
+        <div class="col-md-6">
+          <label for="{{ form.source.id_for_label }}">Source / Inspector Name</label>
+          {{ form.source }}
+          {{ form.source.errors }}
+        </div>
+      </div>
+
+      <div class="row mt-2">
+        <div class="col-md-12">
+            <label for="{{ form.accident_history.id_for_label }}">Accident History</label>
+            {{ form.accident_history }}
+            {{ form.accident_history.errors }}
+        </div>
+      </div>
+
+      <div class="row mt-2">
+        <div class="col-md-12">
+            <label for="{{ form.report_details.id_for_label }}">Detailed Report (JSON or Text)</label>
+            {{ form.report_details }}
+            {{ form.report_details.errors }}
+        </div>
+      </div>
+
+      <div class="action-buttons pt-3 border-top mt-4">
+        <a href="{% url 'listings' %}" class="btn-cancel-custom">Cancel</a>
+        <button type="submit" class="btn-create-custom">
+          <i class="fa-solid fa-shield-check me-2"></i> Save Inspection
+        </button>
+      </div>
+      
+    </form>
+    
+  </div>
+
+  <div class="text-center mt-5 reveal" style="transition-delay: 0.2s;">
+    <a href="{% url 'listings' %}" class="text-decoration-none fw-bold" style="font-size: 0.95rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px;">
+      <i class="fa-solid fa-arrow-left me-2"></i> Return to Listings
+    </a>
+  </div>
+</section>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const inputs = document.querySelectorAll('.inspect-form input:not([type="hidden"]), .inspect-form select, .inspect-form textarea');
+        inputs.forEach(input => {
+            if(input.tagName === 'SELECT') {
+                input.classList.add('form-select');
+            } else {
+                input.classList.add('form-control');
+            }
+        });
+    });
+</script>
+
+{% endblock %}

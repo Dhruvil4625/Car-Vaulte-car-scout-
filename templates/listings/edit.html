@@ -1,0 +1,541 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Edit Listing | Car Scout{% endblock %}
+
+{% block content %}
+<style>
+  /* --- Ultra-Smooth Cinematic Pan --- */
+  @keyframes cinematicPan {
+    0% { transform: scale(1.0) translateX(0); }
+    50% { transform: scale(1.05) translateX(-1%); }
+    100% { transform: scale(1.0) translateX(0); }
+  }
+
+  /* --- Scroll Reveal Animations --- */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* --- Pulsing Button Animation --- */
+  @keyframes pulse-red {
+    0% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(225, 29, 72, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); }
+  }
+  .btn-pulse {
+    animation: pulse-red 2s infinite;
+  }
+
+  /* --- Edit Hero Section --- */
+  .edit-hero {
+    position: relative;
+    padding: 80px 0 100px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+  }
+
+  .edit-hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    /* High-end garage/studio background */
+    background: url('https://images.unsplash.com/photo-1583121274602-3e2820c69888?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    z-index: 1;
+    animation: cinematicPan 60s ease-in-out infinite;
+    will-change: transform;
+  }
+
+  .edit-hero::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, rgba(2, 6, 23, 0.85) 0%, rgba(2, 6, 23, 0.98) 100%);
+    z-index: 2;
+  }
+
+  .edit-hero .container {
+    position: relative;
+    z-index: 3;
+    text-align: center;
+  }
+
+  .edit-hero h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  }
+
+  .edit-hero h1 span { color: #e11d48; }
+
+  .edit-hero p {
+    color: #cbd5e1;
+    font-size: 1.15rem;
+    margin: 0;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+
+  /* --- Premium Form Card --- */
+  .edit-card-wrapper {
+    margin-top: -60px; 
+    position: relative;
+    z-index: 10;
+    padding-bottom: 80px;
+  }
+
+  .edit-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.08);
+    max-width: 850px;
+    margin: 0 auto;
+    padding: 50px;
+  }
+
+  @media (max-width: 768px) {
+    .edit-card { padding: 30px 20px; }
+  }
+
+  .edit-card-header {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 35px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .edit-icon {
+    width: 55px;
+    height: 55px;
+    background: rgba(225, 29, 72, 0.1);
+    color: #e11d48;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+  }
+
+  .edit-card-header h3 {
+    font-weight: 800;
+    color: #0f172a;
+    font-size: 1.5rem;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* --- Django Form Auto-Styling --- */
+  .django-custom-form p {
+    margin-bottom: 1.5rem;
+  }
+
+  .django-custom-form label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  .django-custom-form input[type="text"],
+  .django-custom-form input[type="number"],
+  .django-custom-form input[type="email"],
+  .django-custom-form select,
+  .django-custom-form textarea {
+    width: 100%;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #0f172a;
+    border-radius: 10px;
+    padding: 14px 15px;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: none;
+  }
+
+  .django-custom-form input:focus,
+  .django-custom-form select:focus,
+  .django-custom-form textarea:focus {
+    background-color: #fff;
+    border-color: #e11d48;
+    box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.1);
+    outline: none;
+  }
+
+  .django-custom-form .helptext {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-top: 5px;
+    display: block;
+  }
+  
+  .errorlist {
+    color: #e11d48;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-top: 5px;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* --- Photo & Media Upload Sections --- */
+  .media-section-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+  }
+
+  .photo-section-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 15px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .photo-section-title i {
+    color: #e11d48;
+  }
+
+  .upload-zone {
+    border: 2px dashed #cbd5e1;
+    background-color: #f8fafc;
+    border-radius: 10px;
+    padding: 25px 20px;
+    text-align: center;
+    transition: all 0.3s ease;
+    margin-top: 15px;
+    position: relative;
+  }
+
+  .upload-zone:hover, .upload-zone.dragover {
+    border-color: #e11d48;
+    background-color: rgba(225, 29, 72, 0.02);
+  }
+
+  .upload-zone input[type="file"] {
+    display: block;
+    width: 100%;
+    margin-top: 15px;
+    color: #64748b;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .upload-zone input[type="file"]::file-selector-button {
+    background-color: #0f172a;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+    transition: all 0.3s ease;
+    margin-right: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.8rem;
+  }
+
+  .upload-zone input[type="file"]::file-selector-button:hover {
+    background-color: #e11d48;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(225, 29, 72, 0.2);
+  }
+
+  /* --- AI Diagnostic Output --- */
+  .ai-diagnostic {
+    background: #0f172a;
+    border-left: 4px solid #3b82f6; /* Tech Blue */
+    padding: 15px 20px;
+    border-radius: 10px;
+    margin-top: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  
+  .ai-diagnostic i { font-size: 1.5rem; color: #3b82f6; }
+  .ai-diagnostic-text { color: #cbd5e1; font-size: 0.95rem; font-family: 'Courier New', Courier, monospace; font-weight: 600; margin: 0; }
+
+  /* --- Existing Photos Grid --- */
+  .existing-photos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+  }
+
+  .photo-thumbnail-wrapper {
+    position: relative;
+    width: 100%;
+    padding-bottom: 75%;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    background: #0f172a;
+  }
+
+  .photo-thumbnail-wrapper img {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+
+  .photo-thumbnail-wrapper:hover img { transform: scale(1.1); }
+
+  /* --- Action Buttons --- */
+  .action-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .btn-save-custom {
+    background-color: #e11d48;
+    color: #fff;
+    font-weight: 800;
+    padding: 16px 30px;
+    border-radius: 10px;
+    border: none;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    flex: 2;
+    font-size: 1.05rem;
+  }
+
+  .btn-save-custom:hover {
+    background-color: #be123c;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(225, 29, 72, 0.4);
+  }
+
+  .btn-cancel-custom {
+    background-color: transparent;
+    color: #0f172a;
+    border: 2px solid #cbd5e1;
+    font-weight: 800;
+    padding: 14px 30px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    font-size: 1rem;
+  }
+
+  .btn-cancel-custom:hover {
+    background-color: #0f172a;
+    border-color: #0f172a;
+    color: #ffffff;
+  }
+</style>
+
+<section class="edit-hero reveal">
+  <div class="container">
+    <h1>Edit <span>Marketplace Listing</span></h1>
+    <p>Update specifications, pricing, and high-fidelity media assets.</p>
+  </div>
+</section>
+
+<section class="container edit-card-wrapper">
+  <div class="edit-card reveal" style="transition-delay: 0.1s;">
+    
+    <div class="edit-card-header">
+      <div class="edit-icon">
+        <i class="fa-solid fa-file-signature"></i>
+      </div>
+      <div>
+        <h3>Listing Details</h3>
+        <p class="text-muted mb-0" style="font-size: 0.9rem; font-weight: 500;">Modify the core public data for this vehicle.</p>
+      </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="django-custom-form">
+      {% csrf_token %}
+      
+      <div class="reveal" style="transition-delay: 0.2s;">
+        {{ form.as_p }}
+      </div>
+      
+      <div class="mt-5 mb-4 border-bottom"></div>
+
+      <div class="media-section-card reveal" style="transition-delay: 0.3s;">
+        <h4 class="photo-section-title"><i class="fa-solid fa-camera-retro"></i> Vehicle Gallery</h4>
+        <p class="text-muted mb-0" style="font-size: 0.85rem;">Standard 2D images used for the main listing carousel.</p>
+        
+        <div class="upload-zone">
+          <i class="fa-solid fa-images fs-2 text-muted mb-2" id="gallery-icon"></i>
+          <label class="form-label d-block text-dark fw-bold mb-1" style="font-size: 1rem;">Upload Additional Photos</label>
+          <small class="text-muted d-block mb-3" id="gallery-text">Hold Ctrl/Cmd to select multiple high-quality images.</small>
+          <input type="file" name="images" multiple accept="image/*" class="form-control smart-file-input" data-target-text="gallery-text" data-target-icon="gallery-icon" style="border:none; background:transparent; padding:0; box-shadow:none;">
+        </div>
+
+        {% if listing.images.all %}
+          <label class="form-label mt-4 mb-2 text-dark fw-bold">Current Live Photos</label>
+          <div class="existing-photos-grid">
+            {% for img in listing.images.all %}
+              <div class="photo-thumbnail-wrapper">
+                <img src="{{ img.image.url }}" alt="{{ img.alt }}" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="media-section-card reveal" style="transition-delay: 0.4s;">
+        <h4 class="photo-section-title"><i class="fa-solid fa-vr-cardboard"></i> 360° Panoramas</h4>
+        <p class="text-muted mb-0" style="font-size: 0.85rem;">Immersive static equirectangular images.</p>
+        
+        <div class="upload-zone text-start">
+          <label class="form-label d-block text-dark fw-bold mb-1">Exterior Environment (360°)</label>
+          <input type="file" name="pano_exterior" accept="image/*" class="form-control mb-4 smart-file-input" style="border:none; background:transparent; padding:0; box-shadow:none;">
+          
+          <label class="form-label d-block text-dark fw-bold mb-1">Interior Cabin (360°)</label>
+          <input type="file" name="pano_interior" accept="image/*" class="form-control smart-file-input" style="border:none; background:transparent; padding:0; box-shadow:none;">
+          
+          <small class="text-muted d-block mt-3 border-top pt-2"><i class="fa-solid fa-circle-info me-1"></i> Tip: Export panoramas as a single equirectangular image (2:1 ratio). System will auto-wrap them.</small>
+        </div>
+      </div>
+
+      <div class="media-section-card reveal" style="transition-delay: 0.5s;">
+        <h4 class="photo-section-title"><i class="fa-solid fa-arrows-spin"></i> Turntable 360° Frames</h4>
+        <p class="text-muted mb-0" style="font-size: 0.85rem;">Sequential image sets for interactive drag-to-spin viewing.</p>
+        
+        <div class="upload-zone text-start">
+          <label class="form-label d-block text-dark fw-bold mb-1">Exterior Spin Frames</label>
+          <input type="file" name="spin_exterior" multiple accept="image/*" class="form-control mb-4 smart-file-input" style="border:none; background:transparent; padding:0; box-shadow:none;">
+          
+          <label class="form-label d-block text-dark fw-bold mb-1">Interior Spin Frames</label>
+          <input type="file" name="spin_interior" multiple accept="image/*" class="form-control smart-file-input" style="border:none; background:transparent; padding:0; box-shadow:none;">
+          
+          <small class="text-muted d-block mt-3 border-top pt-2"><i class="fa-solid fa-circle-info me-1"></i> Tip: Upload 24–72 sequential frames. The system will stitch them automatically.</small>
+        </div>
+      </div>
+
+      <div class="media-section-card reveal" style="transition-delay: 0.6s;">
+        <h4 class="photo-section-title"><i class="fa-solid fa-cube"></i> 3D Asset Model <span class="badge bg-dark ms-2" style="font-size: 0.6rem; vertical-align: middle;">BETA</span></h4>
+        <p class="text-muted mb-0" style="font-size: 0.85rem;">Upload a compiled 3D object for web rendering.</p>
+        
+        <div class="upload-zone">
+          <label class="form-label d-block text-dark fw-bold mb-1">Upload GLB / GLTF File</label>
+          <input type="file" name="asset_3d" accept=".glb,.gltf,model/*" class="form-control smart-file-input" style="border:none; background:transparent; padding:0; box-shadow:none;">
+          <small class="text-muted d-block mt-2">Assets will be optimized for the WebGL viewer.</small>
+        </div>
+      </div>
+
+      <div class="media-section-card reveal" style="transition-delay: 0.7s;">
+        <h4 class="photo-section-title"><i class="fa-solid fa-microchip"></i> Visual AI Diagnostics</h4>
+        <p class="text-muted mb-0" style="font-size: 0.85rem;">Automated condition scoring based on uploaded media.</p>
+        
+        {% with ai_inspection=listing.inspections.all.0 %}
+        {% if ai_inspection and ai_inspection.ai_condition_score %}
+          <div class="ai-diagnostic">
+            <i class="fa-solid fa-robot"></i>
+            <p class="ai-diagnostic-text">System Output: Estimated Condition Score is [ {{ ai_inspection.ai_condition_score }} / 10 ]</p>
+          </div>
+        {% else %}
+          <div class="ai-diagnostic" style="border-left-color: #64748b;">
+            <i class="fa-solid fa-satellite-dish" style="color: #64748b;"></i>
+            <p class="ai-diagnostic-text" style="color: #94a3b8;">Awaiting Media... AI condition engine standing by.</p>
+          </div>
+        {% endif %}
+        {% endwith %}
+      </div>
+      
+      <div class="action-buttons reveal" style="transition-delay: 0.8s;">
+        <a href="{% url 'listings' %}" class="btn-cancel-custom">Discard Changes</a>
+        <button type="submit" class="btn-save-custom btn-pulse">
+          <i class="fa-solid fa-cloud-arrow-up me-2"></i> Save Listing Data
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</section>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    
+    // --- Intersection Observer for Scroll Reveals ---
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if(entry.isIntersecting) {
+          entry.target.classList.add('active');
+        }
+      });
+    }, { threshold: 0.05 });
+    reveals.forEach(reveal => observer.observe(reveal));
+
+    // --- Smart File Upload Feedback ---
+    const fileInputs = document.querySelectorAll('.smart-file-input');
+    fileInputs.forEach(input => {
+      input.addEventListener('change', function() {
+        const targetTextId = this.getAttribute('data-target-text');
+        const targetIconId = this.getAttribute('data-target-icon');
+        
+        if (this.files && this.files.length > 0) {
+          // If there's a specific target text element (like the main gallery box)
+          if (targetTextId) {
+            const textEl = document.getElementById(targetTextId);
+            const iconEl = document.getElementById(targetIconId);
+            if (textEl) {
+              textEl.innerHTML = `<span style="color: #10b981; font-weight: 700;">✅ ${this.files.length} file(s) selected and ready for upload.</span>`;
+            }
+            if (iconEl) {
+              iconEl.className = 'fa-solid fa-circle-check fs-2 mb-2';
+              iconEl.style.color = '#10b981';
+            }
+          } else {
+            // Fallback for the smaller upload zones: Create a temporary badge next to the input
+            let badge = this.nextElementSibling;
+            if(!badge || !badge.classList.contains('file-badge')) {
+              badge = document.createElement('div');
+              badge.className = 'file-badge mt-2 fw-bold';
+              badge.style.color = '#10b981';
+              badge.style.fontSize = '0.85rem';
+              this.parentNode.insertBefore(badge, this.nextSibling);
+            }
+            badge.innerHTML = `<i class="fa-solid fa-check me-1"></i> ${this.files.length} file(s) loaded.`;
+          }
+        }
+      });
+    });
+
+  });
+</script>
+{% endblock %}

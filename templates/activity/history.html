@@ -1,0 +1,263 @@
+{% extends 'base.html' %}
+{% block title %}Action History | Activity Center{% endblock %}
+
+{% block content %}
+<style>
+  /* --- Premium Activity Hero --- */
+  .activity-hero {
+    background: linear-gradient(135deg, rgba(2, 6, 23, 0.85) 0%, rgba(2, 6, 23, 0.98) 100%), 
+                url('https://images.unsplash.com/photo-1517940310602-26535839fe47?q=80&w=1600&auto=format&fit=crop') center/cover no-repeat;
+    padding: 60px 0;
+    margin-bottom: 40px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+  }
+
+  .activity-hero h1 {
+    color: #ffffff;
+    font-weight: 800;
+    margin: 0;
+    font-size: 2.5rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  }
+
+  .activity-nav {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+  }
+
+  .activity-nav a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 700;
+    text-decoration: none;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.85rem;
+  }
+
+  .activity-nav a.active, .activity-nav a:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(225, 29, 72, 0.4);
+    transform: translateY(-2px);
+  }
+
+  /* Animated Car Graphic */
+  .activity-car-wrapper {
+    position: relative;
+    width: 100px;
+    height: 50px;
+  }
+
+  .activity-car {
+    width: 70px;
+    height: 35px;
+    background: url('https://cdn-icons-png.flaticon.com/512/743/743988.png') center/contain no-repeat;
+    filter: invert(1); /* Makes it white to match the dark background */
+    opacity: 0;
+    transform: translateX(-50px);
+    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    position: absolute;
+    right: 0;
+    top: 50%;
+    margin-top: -17px;
+  }
+
+  .activity-car.animate-in {
+    opacity: 0.9;
+    transform: translateX(0);
+  }
+
+  /* --- Premium Timeline UI --- */
+  .log-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .timeline {
+    position: relative;
+    padding-left: 30px;
+    margin-top: 10px;
+    border-left: 2px solid var(--border-color);
+  }
+
+  .timeline-item {
+    position: relative;
+    margin-bottom: 25px;
+  }
+
+  .timeline-item:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Glowing Timeline Dots */
+  .timeline-marker {
+    position: absolute;
+    left: -39px; /* Aligns dot perfectly over the border */
+    top: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--primary);
+    border: 3px solid #ffffff;
+    box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.2);
+  }
+
+  .timeline-content {
+    background: var(--bg-subtle);
+    padding: 15px 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+  }
+
+  .timeline-content:hover {
+    background: #ffffff;
+    border-color: rgba(225, 29, 72, 0.3);
+    box-shadow: var(--shadow-sm);
+    transform: translateX(5px);
+  }
+
+  .log-action {
+    font-weight: 700;
+    color: var(--text-main);
+    font-size: 1rem;
+    margin: 0;
+  }
+
+  .log-time {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  /* Empty State */
+  .dash-empty {
+    background: var(--bg-subtle);
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+    padding: 50px 20px;
+    text-align: center;
+    color: var(--text-muted);
+  }
+  
+  .dash-empty i {
+    font-size: 3rem;
+    color: #cbd5e1;
+    margin-bottom: 15px;
+  }
+</style>
+
+<section class="activity-hero reveal">
+  <div class="container d-flex align-items-center justify-content-between">
+    <div>
+      <h1>Activity Center</h1>
+      <div class="activity-nav">
+        <a href="{% url 'activity_todos' %}"><i class="fa-solid fa-list-check"></i> To‑Do</a>
+        <a href="{% url 'activity_meeting' %}"><i class="fa-solid fa-calendar-plus"></i> Meeting</a>
+        <a href="{% url 'activity_history' %}" class="active"><i class="fa-solid fa-clock-rotate-left"></i> History</a>
+      </div>
+    </div>
+    <div class="activity-car-wrapper d-none d-md-block">
+      <div class="activity-car" id="activityCar"></div>
+    </div>
+  </div>
+</section>
+
+<section class="container mb-5">
+  <div class="row g-4">
+    
+    <aside class="col-lg-3 d-none d-lg-block">
+      {% if request.user.is_staff or request.user.is_superuser %}
+        {% include 'admin/sidebar.html' %}
+      {% else %}
+        {% include 'users/sidebar.html' %}
+      {% endif %}
+    </aside>
+    
+    <div class="col-lg-9">
+      <div class="log-card reveal" style="transition-delay: 0.1s;">
+        <h4 class="mb-4 text-uppercase fw-bold" style="font-size: 1.1rem; letter-spacing: 0.5px; color: var(--text-main);">
+          <i class="fa-solid fa-clock-rotate-left me-2" style="color: var(--primary);"></i> Recent Actions
+        </h4>
+        
+        <div class="timeline">
+          {% for l in logs %}
+            <div class="timeline-item">
+              <div class="timeline-marker"></div>
+              <div class="timeline-content">
+                <p class="log-action">{{ l.action }}</p>
+                <div class="log-time">
+                  <i class="fa-regular fa-clock"></i> {{ l.created_at }}
+                </div>
+              </div>
+            </div>
+          {% empty %}
+            <div class="dash-empty">
+              <i class="fa-solid fa-timeline"></i>
+              <h6 class="fw-bold mt-2 text-dark">No activity recorded yet.</h6>
+              <p class="mb-0 text-muted" style="font-size: 0.9rem;">Your account history and actions will appear here automatically.</p>
+            </div>
+          {% endfor %}
+        </div>
+        
+        {% if logs %}
+          <div class="mt-4 pt-3 border-top text-center">
+            <p class="text-muted mb-0" style="font-size: 0.85rem;">
+              <i class="fa-solid fa-circle-info me-1"></i> Activity events are strictly informational and intended for your personal tracking.
+            </p>
+          </div>
+        {% endif %}
+        
+      </div>
+    </div>
+    
+  </div>
+</section>
+
+<script>
+  // Triggers the car driving in when the page loads
+  document.addEventListener('DOMContentLoaded', () => {
+    const car = document.getElementById('activityCar');
+    if (car) {
+      // Slight delay so the user sees it slide into frame
+      setTimeout(() => {
+        car.classList.add('animate-in');
+      }, 300);
+    }
+  });
+
+  // Keep the fast "zoom out" animation when clicking other tabs
+  document.querySelectorAll('.activity-nav a:not(.active)').forEach(a => {
+    a.addEventListener('click', (e) => {
+      const car = document.getElementById('activityCar');
+      if (car) {
+        car.style.transform = 'translateX(100px)'; // Speeds off screen right
+        car.style.opacity = '0';
+      }
+    });
+  });
+</script>
+{% endblock %}

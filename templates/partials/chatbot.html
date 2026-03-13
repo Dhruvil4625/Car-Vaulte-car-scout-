@@ -1,0 +1,324 @@
+<style>
+  /* --- Premium Chatbot UI --- */
+  .chatbot-container {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 500px; /* Fixed height for scrollable chat */
+    max-width: 100%;
+  }
+
+  /* Chat Header */
+  .chatbot-header {
+    background: #0f172a;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 3px solid #e11d48;
+  }
+
+  .chatbot-header-title {
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .chatbot-header-title i {
+    color: #e11d48;
+    font-size: 1.3rem;
+  }
+
+  .chat-badge {
+    background: rgba(225, 29, 72, 0.2);
+    color: #fda4af;
+    border: 1px solid rgba(225, 29, 72, 0.5);
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* Chat Window (Scrollable) */
+  .chat-window {
+    flex: 1;
+    background: #f8fafc;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+
+  .chat-window::-webkit-scrollbar {
+    width: 6px;
+  }
+  .chat-window::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 10px;
+  }
+
+  /* Chat Messages */
+  .chat-message {
+    max-width: 85%;
+    display: flex;
+    flex-direction: column;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg-bubble {
+    padding: 12px 16px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    word-wrap: break-word;
+  }
+
+  /* User Message (Right) */
+  .user-msg {
+    align-self: flex-end;
+  }
+
+  .user-msg .msg-bubble {
+    background: #0f172a;
+    color: #ffffff;
+    border-radius: 16px 16px 0 16px;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.1);
+  }
+
+  /* AI Message (Left) */
+  .ai-msg {
+    align-self: flex-start;
+  }
+
+  .ai-msg .msg-bubble {
+    background: #ffffff;
+    color: #334155;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px 16px 16px 0;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+  }
+
+  /* Typing Indicator Animation */
+  .typing-dots {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding: 16px !important;
+  }
+
+  .typing-dots span {
+    width: 6px;
+    height: 6px;
+    background-color: #94a3b8;
+    border-radius: 50%;
+    animation: typingBounce 1.4s infinite ease-in-out both;
+  }
+
+  .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+  .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+  @keyframes typingBounce {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
+  }
+
+  /* Input Area */
+  .chat-input-area {
+    padding: 15px 20px;
+    background: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .chat-input-wrapper {
+    flex: 1;
+    position: relative;
+  }
+
+  .chat-input-wrapper input {
+    width: 100%;
+    padding: 14px 20px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 30px;
+    color: #0f172a;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+  }
+
+  .chat-input-wrapper input:focus {
+    background: #ffffff;
+    border-color: #e11d48;
+    box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.1);
+    outline: none;
+  }
+
+  .btn-send-chat {
+    background: #e11d48;
+    color: #ffffff;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(225, 29, 72, 0.3);
+    flex-shrink: 0;
+  }
+
+  .btn-send-chat:hover {
+    background: #be123c;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(225, 29, 72, 0.4);
+  }
+
+  .btn-send-chat:disabled {
+    background: #cbd5e1;
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+  }
+</style>
+
+<div class="chatbot-container">
+  
+  <div class="chatbot-header">
+    <div class="chatbot-header-title">
+      <i class="fa-solid fa-robot"></i> Ask Car Scout
+    </div>
+    <span class="chat-badge"><i class="fa-solid fa-bolt me-1"></i> Beta AI</span>
+  </div>
+
+  <div id="chatWindow" class="chat-window">
+    <div class="chat-message ai-msg">
+      <div class="msg-bubble">
+        Hello! I'm the Car Scout AI assistant. How can I help you find your next vehicle today?
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-input-area">
+    <div class="chat-input-wrapper">
+      <input type="text" id="chatbotQ" placeholder="e.g. Find me an SUV under 10 lakh in Vadodara..." autocomplete="off">
+    </div>
+    <button id="chatbotAsk" class="btn-send-chat">
+      <i class="fa-solid fa-paper-plane"></i>
+    </button>
+  </div>
+
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const chatWindow = document.getElementById('chatWindow');
+    const inputField = document.getElementById('chatbotQ');
+    const sendBtn = document.getElementById('chatbotAsk');
+
+    // Helper: Add a message to the chat window
+    function appendMessage(sender, text) {
+      const msgDiv = document.createElement('div');
+      msgDiv.classList.add('chat-message', sender === 'user' ? 'user-msg' : 'ai-msg');
+      
+      // Preserve line breaks from AI responses using white-space: pre-wrap
+      msgDiv.innerHTML = `<div class="msg-bubble" style="${sender === 'ai' ? 'white-space: pre-wrap;' : ''}">${text}</div>`;
+      
+      chatWindow.appendChild(msgDiv);
+      scrollToBottom();
+    }
+
+    // Helper: Show animated typing indicator
+    function showTypingIndicator() {
+      const typingDiv = document.createElement('div');
+      typingDiv.id = 'typingIndicator';
+      typingDiv.classList.add('chat-message', 'ai-msg');
+      typingDiv.innerHTML = `
+        <div class="msg-bubble typing-dots">
+          <span></span><span></span><span></span>
+        </div>`;
+      chatWindow.appendChild(typingDiv);
+      scrollToBottom();
+    }
+
+    // Helper: Remove typing indicator
+    function removeTypingIndicator() {
+      const indicator = document.getElementById('typingIndicator');
+      if (indicator) indicator.remove();
+    }
+
+    // Helper: Auto-scroll to bottom
+    function scrollToBottom() {
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    // Main send function
+    async function handleSend() {
+      const query = inputField.value.trim();
+      if (!query) return;
+
+      // 1. Add user message & clear input
+      appendMessage('user', query);
+      inputField.value = '';
+      sendBtn.disabled = true;
+
+      // 2. Show AI "Thinking..." state
+      showTypingIndicator();
+
+      // 3. Fetch response from your Django backend
+      try {
+        const response = await fetch('/chatbot/?q=' + encodeURIComponent(query));
+        const data = await response.json();
+        
+        removeTypingIndicator();
+        
+        // Output the AI response, or a fallback if empty
+        if(data.answer) {
+          appendMessage('ai', data.answer);
+        } else {
+          appendMessage('ai', "I'm sorry, I couldn't process that request right now.");
+        }
+        
+      } catch(e) {
+        removeTypingIndicator();
+        appendMessage('ai', "System Error: Unable to connect to the AI engine. Please try again later.");
+      } finally {
+        sendBtn.disabled = false;
+        inputField.focus();
+      }
+    }
+
+    // Event Listeners
+    sendBtn.addEventListener('click', handleSend);
+    
+    // Allow pressing "Enter" to send
+    inputField.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleSend();
+      }
+    });
+  });
+</script>

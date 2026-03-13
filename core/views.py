@@ -1,0 +1,1656 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from django.db.models import Q, Count, Avg
+from .forms import UserSignupForm, CarListingForm, CarForm, UpcomingArrivalForm
+from .models import Car, CarListing, Message, TestDrive, Buyer, Seller, CarListingImage, Showroom, UpcomingArrival, CarListingAsset, DealRating
+from django.contrib.auth import login as auth_login
+from django.contrib.auth import logout as auth_logout
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
+from django.utils.html import strip_tags
+from django.contrib.auth import get_user_model
+from .forms import UserLoginForm, InspectionForm
+from django.http import JsonResponse
+from django.core.mail import send_mail
+from django.conf import settings
+from django.urls import reverse
+from core.email_utils import send_email_html, send_email_html_async
+from django.db import transaction
+import os
+from django.core.cache import cache
+from .ai_utils import recommend_similar_listings, dealer_matches_for_buyer, image_condition_score, chatbot_query, price_fairness_info
+from django.utils import timezone
+from datetime import timedelta
+import random
+import razorpay
+
+User = get_user_model()
+
+# Razorpay Client Initialization
+RAZORPAY_KEY_ID = "rzp_test_SQeSwkEeAuFz4E"
+RAZORPAY_KEY_SECRET = "qxO9IL2TRTQutK6HWIdhXExR"
+razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
+
+
+def _rating_stats_for_user(user):
+    stats = DealRating.objects.filter(rated_user=user).aggregate(avg=Avg("score"), count=Count("rating_id"))
+    avg = stats.get("avg") or 0
+    count = stats.get("count") or 0
+    return {
+        "avg": round(float(avg), 2) if avg else 0,
+        "count": count,
+    }
+
+
+def _sync_seller_rating(user):
+    try:
+        seller = Seller.objects.get(user=user)
+    except Seller.DoesNotExist:
+        return
+    stats = _rating_stats_for_user(user)
+    seller.rating = stats["avg"]
+    seller.save(update_fields=["rating"])
+
+def _apply_ai_estimates_to_listings(listings):
+    groups = {}
+    for l in listings:
+        car = getattr(l, "car", None)
+        key = (getattr(car, "make", ""), getattr(car, "model", ""), getattr(car, "year", None))
+        try:
+            p = float(l.price)
+        except Exception:
+            p = None
+        if key not in groups:
+            groups[key] = {"sum": 0.0, "cnt": 0}
+        if p:
+            groups[key]["sum"] += p
+            groups[key]["cnt"] += 1
+    imported_brands = {"BMW", "Mercedes-Benz", "Audi", "Volkswagen", "Skoda", "Porsche", "Volvo", "Jaguar", "Land Rover"}
+    for l in listings:
+        car = getattr(l, "car", None)
+        make = getattr(car, "make", "") or ""
+        key = (getattr(car, "make", ""), getattr(car, "model", ""), getattr(car, "year", None))
+        try:
+            price_val = float(l.price)
+        except Exception:
+            price_val = 0.0
+        grp = groups.get(key, {"sum": 0.0, "cnt": 0})
+        market = (grp["sum"] / grp["cnt"]) if grp["cnt"] else price_val
+        tax_pct = 0.10 if price_val < 2000000 else (0.12 if price_val < 4000000 else 0.15)
+        insurance_pct = 0.025
+        duty_pct = 0.15 if make in imported_brands else 0.0
+        l.ai_market = round(market or 0.0, 0)
+        l.ai_tax = round(price_val * tax_pct, 0)
+        l.ai_ins = round(price_val * insurance_pct, 0)
+        l.ai_duty = round(price_val * duty_pct, 0)
+        try:
+            l.ai_total = round(price_val + l.ai_tax + l.ai_ins + l.ai_duty, 0)
+        except Exception:
+            l.ai_total = None
+        try:
+            diff = (price_val - (market or 0.0)) / (market or (price_val or 1.0))
+            if abs(diff) <= 0.05:
+                lbl = "Fair Price"
+            elif diff < -0.10:
+                lbl = "Good Deal"
+            elif diff > 0.10:
+                lbl = "Expensive"
+            else:
+                lbl = "Slightly Off"
+            l.ai_deal_label = lbl
+        except Exception:
+            l.ai_deal_label = None
+
+def _apply_ai_estimates_to_cars(cars):
+    imported_brands = {"BMW", "Mercedes-Benz", "Audi", "Volkswagen", "Skoda", "Porsche", "Volvo", "Jaguar", "Land Rover"}
+    for c in cars:
+        try:
+            prices = [float(lst.price) for lst in getattr(c, "listings").all() if getattr(lst, "price", None)]
+        except Exception:
+            prices = []
+        market = sum(prices) / len(prices) if prices else 0.0
+        tax_pct = 0.10 if market < 2000000 else (0.12 if market < 4000000 else 0.15)
+        insurance_pct = 0.025
+        duty_pct = 0.15 if getattr(c, "make", "") in imported_brands else 0.0
+        c.ai_market = round(market or 0.0, 0)
+        c.ai_tax = round(market * tax_pct, 0)
+        c.ai_ins = round(market * insurance_pct, 0)
+        c.ai_duty = round(market * duty_pct, 0)
+        try:
+            c.ai_total = round(c.ai_market + c.ai_tax + c.ai_ins + c.ai_duty, 0)
+        except Exception:
+            c.ai_total = None
+
+def CompareCarsView(request):
+    vin1 = (request.GET.get("vin1") or "").strip()
+    vin2 = (request.GET.get("vin2") or "").strip()
+    car1 = None
+    car2 = None
+    if vin1:
+        try:
+            car1 = Car.objects.get(vin=vin1)
+        except Car.DoesNotExist:
+            try:
+                # Fallback: if a listing id was supplied by mistake, resolve to car
+                lst = CarListing.objects.select_related("car").get(listing_id=vin1)
+                car1 = lst.car
+            except Exception:
+                car1 = None
+    if vin2:
+        try:
+            car2 = Car.objects.get(vin=vin2)
+        except Car.DoesNotExist:
+            try:
+                lst = CarListing.objects.select_related("car").get(listing_id=vin2)
+                car2 = lst.car
+            except Exception:
+                car2 = None
+    def _norm(s):
+        return (s or "").strip().lower()
+    FUEL_RANK = {"electric": 5, "ev": 5, "hybrid": 4, "petrol": 3, "gasoline": 3, "diesel": 2, "cng": 1}
+    TRANS_RANK = {
+        "automatic": 4,
+        "automatic (torque converter)": 4,
+        "dct": 4,
+        "dual clutch": 4,
+        "cvt": 3,
+        "amt": 2,
+        "manual": 1,
+    }
+    BODY_RANK = {"suv": 5, "sedan": 4, "hatchback": 3, "mpv": 3, "coupe": 2, "pickup": 3}
+    def _fuel_score(car):
+        if not car:
+            return 0
+        return FUEL_RANK.get(_norm(getattr(car, "fuel_type", None)), 0)
+    def _trans_score(car):
+        if not car:
+            return 0
+        t = _norm(getattr(car, "transmission", None))
+        if t.startswith("automatic"):
+            return 4
+        return TRANS_RANK.get(t, 0)
+    def _body_score(car):
+        if not car:
+            return 0
+        return BODY_RANK.get(_norm(getattr(car, "body_type", None)), 0)
+    def _year_score(car):
+        if not car:
+            return 0
+        try:
+            return int(getattr(car, "year", 0) or 0)
+        except Exception:
+            return 0
+    def _mileage_score(car):
+        if not car:
+            return 0
+        m = getattr(car, "mileage", None)
+        try:
+            return -int(m or 0)
+        except Exception:
+            return 0
+    dom = {
+        "fuel": 1 if _fuel_score(car1) > _fuel_score(car2) else (2 if _fuel_score(car2) > _fuel_score(car1) else 0),
+        "trans": 1 if _trans_score(car1) > _trans_score(car2) else (2 if _trans_score(car2) > _trans_score(car1) else 0),
+        "body": 1 if _body_score(car1) > _body_score(car2) else (2 if _body_score(car2) > _body_score(car1) else 0),
+        "year": 1 if _year_score(car1) > _year_score(car2) else (2 if _year_score(car2) > _year_score(car1) else 0),
+        "mileage": 1 if _mileage_score(car1) > _mileage_score(car2) else (2 if _mileage_score(car2) > _mileage_score(car1) else 0),
+    }
+    cars = Car.objects.all().prefetch_related("listings").order_by("make", "model", "year")
+    return render(request, "cars/compare.html", {"cars": cars, "car1": car1, "car2": car2, "vin1": vin1, "vin2": vin2, "dom": dom})
+def HomeView(request):
+    top_listings = CarListing.objects.select_related("car", "seller").prefetch_related("images").order_by("-created_at")[:8]
+    try:
+        _apply_ai_estimates_to_listings(top_listings)
+    except Exception:
+        pass
+    makes = list(Car.objects.values_list("make", flat=True).distinct())
+    logos = {
+        "BMW": "https://cdn-icons-png.flaticon.com/512/732/732221.png",
+        "Mercedes-Benz": "https://cdn-icons-png.flaticon.com/512/882/882731.png",
+        "Audi": "https://cdn-icons-png.flaticon.com/512/882/882702.png",
+        "Volkswagen": "https://cdn-icons-png.flaticon.com/512/882/882747.png",
+        "Maruti Suzuki": "https://cdn-icons-png.flaticon.com/512/882/882744.png",
+        "Hyundai": "https://cdn-icons-png.flaticon.com/512/882/882719.png",
+        "Kia": "https://cdn-icons-png.flaticon.com/512/882/882724.png",
+        "Toyota": "https://cdn-icons-png.flaticon.com/512/882/882735.png",
+        "Tata": "https://cdn-icons-png.flaticon.com/512/882/882743.png",
+        "Skoda": "https://cdn-icons-png.flaticon.com/512/882/882745.png",
+        "Honda": "https://cdn-icons-png.flaticon.com/512/882/882716.png",
+    }
+    domestic = {"Maruti Suzuki", "Hyundai", "Kia", "Tata", "Mahindra"}
+    def slugify_brand(s):
+        return (s or "").strip().lower().replace(" ", "-")
+    brands = []
+    for m in makes:
+        brands.append({
+            "name": m,
+            "slug": slugify_brand(m),
+            "logo": logos.get(m, "https://cdn-icons-png.flaticon.com/512/741/741407.png"),
+            "is_domestic": m in domestic,
+        })
+    ints = [b for b in brands if not b["is_domestic"]]
+    doms = [b for b in brands if b["is_domestic"]]
+    return render(request, "home/index.html", {"listings": top_listings, "brands_international": ints, "brands_domestic": doms})
+
+def CarsListView(request):
+    qs = Car.objects.all().prefetch_related("listings__images").order_by("-year", "make", "model")
+    fuel = request.GET.get("fuel") or request.GET.get("fuel_type") or ""
+    q = request.GET.get("q") or ""
+    brand = request.GET.get("brand") or ""
+    model = request.GET.get("model") or ""
+    body = request.GET.get("body") or request.GET.get("body_type") or ""
+    synonyms = {
+        "mercedes": "Mercedes-Benz",
+        "mercedies": "Mercedes-Benz",
+        "benz": "Mercedes-Benz",
+        "vw": "Volkswagen",
+        "volkswagon": "Volkswagen",
+        "maruti": "Maruti Suzuki",
+        "suzuki": "Maruti Suzuki",
+        "hyundai": "Hyundai",
+        "kia": "Kia",
+        "toyota": "Toyota",
+        "tata": "Tata",
+        "bmw": "BMW",
+        "skoda": "Skoda",
+        "honda": "Honda",
+        "audi": "Audi",
+    }
+    bnorm = (brand or "").strip().lower()
+    if bnorm in synonyms:
+        brand = synonyms[bnorm]
+    if fuel:
+        qs = qs.filter(fuel_type__iexact=fuel)
+    if q:
+        qs = qs.filter(Q(make__icontains=q) | Q(model__icontains=q) | Q(color__icontains=q))
+    if brand:
+        qs = qs.filter(make__icontains=brand)
+    if model:
+        qs = qs.filter(model__icontains=model)
+    if body:
+        qs = qs.filter(body_type__icontains=body)
+    try:
+        _apply_ai_estimates_to_cars(qs)
+    except Exception:
+        pass
+    return render(request, "cars/list.html", {"cars": qs, "fuel": fuel, "brand": brand, "model": model, "q": q, "body": body})
+
+def BrandView(request, brand_slug):
+    synonyms = {
+        "mercedes": "Mercedes-Benz",
+        "mercedes-benz": "Mercedes-Benz",
+        "benz": "Mercedes-Benz",
+        "vw": "Volkswagen",
+        "volkswagen": "Volkswagen",
+        "maruti": "Maruti Suzuki",
+        "maruti-suzuki": "Maruti Suzuki",
+    }
+    raw = (brand_slug or "").lower()
+    brand = synonyms.get(raw, raw.replace("-", " ").title())
+    qs = CarListing.objects.select_related("car", "seller").prefetch_related("images").filter(car__make__iexact=brand)
+    ec_min = 100000
+    ec_max = 2000000
+    md_max = 4000000
+    economy = qs.filter(price__gte=ec_min, price__lt=ec_max).order_by("price")[:24]
+    moderate = qs.filter(price__gte=ec_max, price__lt=md_max).order_by("price")[:24]
+    premium = qs.filter(price__gte=md_max).order_by("-price")[:24]
+    arrivals = qs.order_by("-created_at")[:24]
+    all_list = qs.order_by("-created_at")[:48]
+    models = list(Car.objects.filter(make__iexact=brand).values_list("model", flat=True).distinct()[:12])
+    logo = None
+    try:
+        _apply_ai_estimates_to_listings(economy)
+        _apply_ai_estimates_to_listings(moderate)
+        _apply_ai_estimates_to_listings(premium)
+        _apply_ai_estimates_to_listings(arrivals)
+        _apply_ai_estimates_to_listings(all_list)
+    except Exception:
+        pass
+    return render(request, "cars/brand.html", {"brand": brand, "logo": logo, "top_models": models, "premium": premium, "economy": economy, "moderate": moderate, "arrivals": arrivals, "listings": all_list})
+
+def AllCarsListView(request):
+    qs = CarListing.objects.select_related("car", "seller").prefetch_related("images").order_by("-created_at")
+    price_ranges = request.GET.getlist("price")
+    fuels = request.GET.getlist("fuel")
+    bodies = request.GET.getlist("body")
+    trans = request.GET.getlist("trans")
+    cats = request.GET.getlist("category")
+    brand = request.GET.get("brand") or ""
+    if brand:
+        qs = qs.filter(car__make__icontains=brand)
+    for r in price_ranges:
+        try:
+            if r.endswith("+"):
+                low = float(r[:-1])
+                qs = qs.filter(price__gte=low)
+            elif "-" in r:
+                a, b = r.split("-")
+                qs = qs.filter(price__gte=float(a), price__lte=float(b))
+        except Exception:
+            pass
+    if fuels:
+        qs = qs.filter(car__fuel_type__in=fuels)
+    if bodies:
+        qs = qs.filter(car__body_type__in=bodies)
+    if trans:
+        qs = qs.filter(car__transmission__in=trans)
+    if cats:
+        from django.db.models import Q as _Q
+        ec_min = 100000
+        ec_max = 2000000
+        md_max = 4000000
+        qcat = _Q()
+        for c in cats:
+            if c == "Economy":
+                qcat |= _Q(price__gte=ec_min, price__lt=ec_max)
+            elif c == "Moderate":
+                qcat |= _Q(price__gte=ec_max, price__lt=md_max)
+            elif c == "Premium":
+                qcat |= _Q(price__gte=md_max)
+        if qcat:
+            qs = qs.filter(qcat)
+    listings = qs.distinct()[:60]
+    try:
+        _apply_ai_estimates_to_listings(listings)
+    except Exception:
+        pass
+    price_options = ["0-500000", "500000-1500000", "1500000+"]
+    fuel_options = ["EV", "Petrol", "Diesel", "Hybrid"]
+    body_options = ["SUV", "Sedan", "Hatchback", "Luxury"]
+    trans_options = ["Manual", "Automatic", "AMT", "CVT", "DCT"]
+    category_options = ["Economy", "Moderate", "Premium"]
+    ctx = {
+        "listings": listings,
+        "brand": brand,
+        "price_options": price_options,
+        "fuel_options": fuel_options,
+        "body_options": body_options,
+        "trans_options": trans_options,
+        "category_options": category_options,
+        "price_selected": price_ranges,
+        "fuels_selected": fuels,
+        "bodies_selected": bodies,
+        "trans_selected": trans,
+        "cats_selected": cats,
+    }
+    return render(request, "cars/all.html", ctx)
+
+def ListingsListView(request):
+    qs = CarListing.objects.select_related("car", "seller").prefetch_related("images").order_by("-created_at")
+    q = request.GET.get("q") or ""
+    budget = request.GET.get("budget") or ""
+    fuel = request.GET.get("fuel") or ""
+    brand = request.GET.get("brand") or ""
+    model = request.GET.get("model") or ""
+    city = request.GET.get("city") or ""
+    if q:
+        qs = qs.filter(Q(car__make__icontains=q) | Q(car__model__icontains=q) | Q(description__icontains=q) | Q(seller__email__icontains=q))
+    if brand:
+        qs = qs.filter(car__make__icontains=brand)
+    if model:
+        qs = qs.filter(car__model__icontains=model)
+    if budget and "-" in budget:
+        parts = budget.split("-")
+        try:
+            low = float(parts[0])
+            high = float(parts[1])
+            qs = qs.filter(price__gte=low, price__lte=high)
+        except ValueError:
+            pass
+    if fuel:
+        qs = qs.filter(car__fuel_type__iexact=fuel)
+    listings = qs[:50]
+    try:
+        _apply_ai_estimates_to_listings(listings)
+    except Exception:
+        pass
+    try:
+        from .models import Showroom
+        showrooms = Showroom.objects.all()
+        dealer_matches = dealer_matches_for_buyer(city, listings, showrooms, top_k=5)
+    except Exception:
+        dealer_matches = []
+    return render(request, "listings/list.html", {"listings": listings, "q": q, "budget": budget, "fuel": fuel, "brand": brand, "model": model, "dealer_matches": dealer_matches})
+
+def ListingDetailView(request, listing_id):
+    listing = CarListing.objects.select_related("car", "seller").prefetch_related("images", "inspections").get(listing_id=listing_id)
+    try:
+        _apply_ai_estimates_to_listings([listing])
+    except Exception:
+        pass
+    try:
+        P = float(listing.price or 0.0)
+        months = int(request.GET.get("emi_months") or 48)
+        rate = float(request.GET.get("emi_rate") or 9.8)  # annual %
+        r = (rate / 12.0) / 100.0
+        if P > 0 and months > 0 and r > 0:
+            emi_val = (P * r * ((1 + r) ** months)) / (((1 + r) ** months) - 1)
+        else:
+            emi_val = 0.0
+        emi = {
+            "amount": round(emi_val, 0),
+            "months": months,
+            "rate": rate,
+        }
+    except Exception:
+        emi = {"amount": 0, "months": 48, "rate": 9.8}
+    try:
+        variants = list(CarListing.objects.select_related("car").filter(
+            car__make__iexact=getattr(listing.car, "make", ""),
+            car__model__iexact=getattr(listing.car, "model", "")
+        ).order_by("price")[:6])
+    except Exception:
+        variants = []
+    try:
+        cities = ["Bangalore","Mumbai","Pune","Hyderabad","Chennai","Ahmedabad","Lucknow","Jaipur","Patna","Chandigarh"]
+        base_total = getattr(listing, "ai_total", None)
+        if base_total is None:
+            try:
+                _apply_ai_estimates_to_listings([listing])
+                base_total = getattr(listing, "ai_total", None)
+            except Exception:
+                base_total = None
+        base_total = float(base_total or (listing.price or 0.0))
+        city_prices = [(c, base_total) for c in cities]
+    except Exception:
+        city_prices = []
+    try:
+        from .models import ActivityLog
+        ActivityLog.objects.create(user=request.user if request.user.is_authenticated else None, action="Viewed listing detail", path=request.path)
+    except Exception:
+        pass
+    is_buyer = request.user.is_authenticated and request.user.role == User.Role.BUYER
+    try:
+        inspection = listing.inspections.order_by("-inspection_date").first()
+    except Exception:
+        inspection = None
+    pano_exterior = None
+    pano_interior = None
+    model_3d_url = None
+    imgs = []
+    try:
+        imgs = list(listing.images.all())
+        try:
+            filtered = []
+            for im in imgs:
+                try:
+                    f = getattr(im, "image", None)
+                    if f and f.name and f.storage.exists(f.name):
+                        filtered.append(im)
+                except Exception:
+                    continue
+            imgs = filtered
+        except Exception:
+            pass
+        def pick(keys):
+            for im in imgs:
+                alt = (getattr(im, "alt", "") or "").lower()
+                name = (getattr(im, "image", None).name or "").lower()
+                for k in keys:
+                    if k in alt or k in name:
+                        return im.image.url
+            return None
+        pano_exterior = pick(["360", "exter", "outside", "pano", "equirect"])
+        pano_interior = pick(["360", "inter", "inside", "cabin", "dashboard", "pano", "equirect"])
+        try:
+            if not pano_exterior:
+                aext = listing.assets.filter(kind=CarListingAsset.Kind.PANORAMA_EXTERIOR).first()
+                if aext:
+                    pano_exterior = aext.asset.url
+            if not pano_interior:
+                aint = listing.assets.filter(kind=CarListingAsset.Kind.PANORAMA_INTERIOR).first()
+                if aint:
+                    pano_interior = aint.asset.url
+        except Exception:
+            pass
+        # Fallback: if nothing tagged as panorama, use first/second image so the 360 tab at least shows something
+        try:
+            if (not pano_exterior) and imgs:
+                pano_exterior = imgs[0].image.url
+            if (not pano_interior) and len(imgs) > 1:
+                pano_interior = imgs[1].image.url
+        except Exception:
+            pass
+        def frames(keys):
+            urls = []
+            for im in imgs:
+                alt = (getattr(im, "alt", "") or "").lower()
+                name = (getattr(im, "image", None).name or "").lower()
+                hit = True
+                for k in keys:
+                    if not (k in alt or k in name):
+                        hit = False
+                        break
+                if hit:
+                    urls.append(im.image.url)
+            urls.sort()
+            return urls
+        spin_ext = frames(["spin", "exter"])
+        spin_int = frames(["spin", "inter"])
+        try:
+            a = listing.assets.filter(kind=CarListingAsset.Kind.THREE_D).first()
+            if a:
+                model_3d_url = a.asset.url
+        except Exception:
+            model_3d_url = None
+    except Exception:
+        pano_exterior = None
+        pano_interior = None
+        model_3d_url = None
+    try:
+        candidates = CarListing.objects.select_related("car", "seller").prefetch_related("images").exclude(listing_id=listing.listing_id).order_by("-created_at")[:200]
+        similar_cars = recommend_similar_listings(listing, candidates, top_k=6)
+        if request.user.is_authenticated:
+            try:
+                sess_recs = session_aware_recs(request.user, listing, candidates, top_k=6)
+                # merge and de-duplicate preferring session-aware first
+                seen = set()
+                merged = []
+                for c in sess_recs + similar_cars:
+                    if getattr(c, "listing_id", None) not in seen:
+                        merged.append(c)
+                        seen.add(getattr(c, "listing_id", None))
+                similar_cars = merged[:6]
+            except Exception:
+                pass
+    except Exception:
+        similar_cars = []
+    try:
+        fairness = price_fairness_info(listing, candidates)
+    except Exception:
+        fairness = {"label": "Unknown", "median": None, "diff_pct": None}
+    try:
+        city = getattr(getattr(listing, "showroom", None), "city", "") or ""
+        showrooms_qs = Showroom.objects.filter(city__iexact=city)
+        dealer_matches = dealer_matches_for_buyer(city, candidates, showrooms_qs, top_k=5)
+    except Exception:
+        dealer_matches = []
+    return render(request, "listings/detail.html", {
+        "listing": listing,
+        "images": imgs,
+        "is_buyer": is_buyer,
+        "inspection": inspection,
+        "pano_exterior": pano_exterior,
+        "pano_interior": pano_interior,
+        "model_3d_url": model_3d_url,
+        "spin_ext": spin_ext,
+        "spin_int": spin_int,
+        "similar_cars": similar_cars,
+        "dealer_matches": dealer_matches,
+        "fairness": fairness,
+        "emi": emi,
+        "variants": variants,
+        "city_prices": city_prices,
+    })
+
+@login_required
+def ListingMessageView(request, listing_id):
+    listing = CarListing.objects.select_related("car", "seller").get(listing_id=listing_id)
+    content = strip_tags(request.POST.get("content") or "").strip()
+    if content:
+        Message.objects.create(sender=request.user, receiver=listing.seller, listing=listing, content=content)
+        return redirect("listing_detail", listing_id=listing.listing_id)
+    return redirect("listing_detail", listing_id=listing.listing_id)
+
+@login_required
+def PurchaseListingView(request, listing_id):
+    listing = get_object_or_404(CarListing, listing_id=listing_id)
+    if not (request.user.role == User.Role.BUYER):
+        return redirect("listing_detail", listing_id=listing.listing_id)
+    
+    return redirect(f"/booking/?listing_id={listing.listing_id}")
+def MessagesInboxView(request):
+    inbox = Message.objects.filter(receiver=request.user).select_related("sender").order_by("-sent_at") if request.user.is_authenticated else []
+    return render(request, "messages/inbox.html", {"messages": inbox})
+
+
+@login_required
+def ReplyToMessageView(request, message_id):
+    if request.method != "POST":
+        return redirect("messages")
+    message = get_object_or_404(Message.objects.select_related("sender", "listing"), message_id=message_id, receiver=request.user)
+    content = strip_tags(request.POST.get("content") or "").strip()
+    if content:
+        Message.objects.create(
+            sender=request.user,
+            receiver=message.sender,
+            listing=message.listing,
+            content=content,
+        )
+    return redirect(request.POST.get("next") or "messages")
+
+
+@login_required
+def AcceptDealView(request, message_id):
+    if request.method != "POST":
+        return redirect("messages")
+    message = get_object_or_404(Message.objects.select_related("sender", "listing__seller", "listing__car"), message_id=message_id, receiver=request.user)
+    listing = message.listing
+    if not listing:
+        return redirect(request.POST.get("next") or "messages")
+
+    if request.user == listing.seller:
+        buyer = message.sender
+        seller = request.user
+    else:
+        buyer = request.user
+        seller = listing.seller
+
+    if buyer == seller:
+        return redirect(request.POST.get("next") or "messages")
+
+    from .models import Transaction
+
+    transaction_obj, created = Transaction.objects.get_or_create(
+        listing=listing,
+        buyer=buyer,
+        seller=seller,
+        defaults={
+            "final_price": listing.price,
+            "status": Transaction.Status.PENDING,
+        },
+    )
+    
+    return redirect(f"/booking/?listing_id={listing.listing_id}")
+
+
+@login_required
+def RateUserView(request, user_id):
+    if request.method != "POST":
+        return redirect("messages")
+    rated_user = get_object_or_404(User, user_id=user_id)
+    if rated_user == request.user:
+        return redirect(request.POST.get("next") or "messages")
+
+    try:
+        score = int(request.POST.get("score") or 5)
+    except (TypeError, ValueError):
+        score = 5
+    score = max(1, min(5, score))
+    review = strip_tags(request.POST.get("review") or "").strip()
+
+    DealRating.objects.update_or_create(
+        rater=request.user,
+        rated_user=rated_user,
+        defaults={"score": score, "review": review},
+    )
+    _sync_seller_rating(rated_user)
+    return redirect(request.POST.get("next") or "messages")
+
+def TestDrivesView(request):
+    drives = []
+    if request.user.is_authenticated:
+        if request.user.is_staff:
+            drives = TestDrive.objects.select_related("listing__car", "buyer").order_by("-proposed_date")
+        else:
+            drives = TestDrive.objects.filter(buyer=request.user).select_related("listing__car", "buyer").order_by("-proposed_date")
+    return render(request, "testdrives/list.html", {"drives": drives})
+
+def SellStartView(request):
+    return render(request, "sell/start.html")
+
+def ChatbotView(request):
+    q = strip_tags(request.POST.get("q") or request.GET.get("q") or "")
+    listings = CarListing.objects.select_related("car").order_by("-created_at")[:300]
+    ans = chatbot_query(q, listings)
+    return JsonResponse({"answer": ans})
+
+def CitiesIndexView(request):
+    cities = [
+        {"name": "Ahmedabad", "state": "Gujarat"},
+        {"name": "Vadodara", "state": "Gujarat"},
+        {"name": "Surat", "state": "Gujarat"},
+        {"name": "Rajkot", "state": "Gujarat"},
+        {"name": "Mumbai", "state": "Maharashtra"},
+        {"name": "Pune", "state": "Maharashtra"},
+        {"name": "Nagpur", "state": "Maharashtra"},
+        {"name": "Nashik", "state": "Maharashtra"},
+        {"name": "Bengaluru", "state": "Karnataka"},
+        {"name": "Mysuru", "state": "Karnataka"},
+        {"name": "Chennai", "state": "Tamil Nadu"},
+        {"name": "Coimbatore", "state": "Tamil Nadu"},
+        {"name": "Hyderabad", "state": "Telangana"},
+        {"name": "Warangal", "state": "Telangana"},
+        {"name": "Delhi", "state": "Delhi"},
+        {"name": "Noida", "state": "Uttar Pradesh"},
+        {"name": "Gurugram", "state": "Haryana"},
+        {"name": "Kolkata", "state": "West Bengal"},
+        {"name": "Howrah", "state": "West Bengal"},
+        {"name": "Jaipur", "state": "Rajasthan"},
+        {"name": "Udaipur", "state": "Rajasthan"},
+        {"name": "Lucknow", "state": "Uttar Pradesh"},
+        {"name": "Kanpur", "state": "Uttar Pradesh"},
+        {"name": "Agra", "state": "Uttar Pradesh"},
+        {"name": "Bhopal", "state": "Madhya Pradesh"},
+        {"name": "Indore", "state": "Madhya Pradesh"},
+        {"name": "Patna", "state": "Bihar"},
+        {"name": "Ranchi", "state": "Jharkhand"},
+        {"name": "Bhubaneswar", "state": "Odisha"},
+        {"name": "Chandigarh", "state": "Chandigarh"},
+        {"name": "Dehradun", "state": "Uttarakhand"},
+        {"name": "Raipur", "state": "Chhattisgarh"},
+        {"name": "Guwahati", "state": "Assam"},
+        {"name": "Imphal", "state": "Manipur"},
+        {"name": "Shillong", "state": "Meghalaya"},
+        {"name": "Aizawl", "state": "Mizoram"},
+        {"name": "Itanagar", "state": "Arunachal Pradesh"},
+        {"name": "Kohima", "state": "Nagaland"},
+        {"name": "Srinagar", "state": "Jammu & Kashmir"},
+        {"name": "Jammu", "state": "Jammu & Kashmir"},
+        {"name": "Panaji", "state": "Goa"},
+        {"name": "Thiruvananthapuram", "state": "Kerala"},
+        {"name": "Kochi", "state": "Kerala"},
+        {"name": "Madurai", "state": "Tamil Nadu"},
+    ]
+    for c in cities:
+        c["slug"] = c["name"].lower().replace(" ", "-")
+    return render(request, "cities/index.html", {"cities": cities})
+
+def CityShowroomsView(request, city_slug):
+    city = city_slug.replace("-", " ")
+    brand = request.GET.get("brand") or ""
+    fuel = request.GET.get("fuel") or ""
+    budget = request.GET.get("budget") or ""
+    body = request.GET.get("body") or ""
+    trans = request.GET.get("trans") or ""
+    sort = request.GET.get("sort") or ""
+
+    sellers = Seller.objects.select_related("user").filter(Q(location__icontains=city) | Q(user__name__icontains=city))
+    try:
+        showrooms = list(Showroom.objects.filter(city__iexact=city).order_by("name"))
+    except Exception:
+        showrooms = []
+
+    # Fallback curated showrooms if DB has none
+    if not showrooms:
+        city_key = city.lower()
+        curated_map = {
+            "vadodara": [
+                {"name": "Maruti Suzuki Arena", "city": "Vadodara", "state": "Gujarat", "address": "Akota", "map_query": "Maruti Suzuki Arena Akota Vadodara"},
+                {"name": "Nexa Showroom", "city": "Vadodara", "state": "Gujarat", "address": "Alkapuri", "map_query": "Nexa Alkapuri Vadodara"},
+                {"name": "Hyundai Showroom", "city": "Vadodara", "state": "Gujarat", "address": "Old Padra Road", "map_query": "Hyundai Showroom Old Padra Road Vadodara"},
+            ],
+            "ahmedabad": [
+                {"name": "Audi Ahmedabad", "city": "Ahmedabad", "state": "Gujarat", "address": "SG Highway", "map_query": "Audi showroom SG Highway Ahmedabad"},
+                {"name": "Nexa Ahmedabad", "city": "Ahmedabad", "state": "Gujarat", "address": "CG Road", "map_query": "Nexa CG Road Ahmedabad"},
+                {"name": "Hyundai Ahmedabad", "city": "Ahmedabad", "state": "Gujarat", "address": "Satellite", "map_query": "Hyundai Showroom Satellite Ahmedabad"},
+            ],
+            "mumbai": [
+                {"name": "BMW Deutsche Motoren", "city": "Mumbai", "state": "Maharashtra", "address": "Worli", "map_query": "BMW showroom Worli Mumbai"},
+                {"name": "Toyota Lakozy", "city": "Mumbai", "state": "Maharashtra", "address": "Andheri", "map_query": "Toyota showroom Andheri Mumbai"},
+                {"name": "Audi Mumbai West", "city": "Mumbai", "state": "Maharashtra", "address": "Andheri West", "map_query": "Audi Mumbai West Andheri"},
+            ],
+            "delhi": [
+                {"name": "NEXA Connaught Place", "city": "Delhi", "state": "Delhi", "address": "Connaught Place", "map_query": "NEXA Connaught Place Delhi"},
+                {"name": "Hyundai Dwarka", "city": "Delhi", "state": "Delhi", "address": "Dwarka", "map_query": "Hyundai showroom Dwarka Delhi"},
+                {"name": "Mercedes-Benz T&T Motors", "city": "Delhi", "state": "Delhi", "address": "Mathura Road", "map_query": "Mercedes Benz T&T Motors Mathura Road Delhi"},
+            ],
+            "pune": [
+                {"name": "Toyota Pune", "city": "Pune", "state": "Maharashtra", "address": "Wakad", "map_query": "Toyota showroom Wakad Pune"},
+                {"name": "Nexa Pune", "city": "Pune", "state": "Maharashtra", "address": "Baner", "map_query": "Nexa showroom Baner Pune"},
+                {"name": "Hyundai Pune", "city": "Pune", "state": "Maharashtra", "address": "Kharadi", "map_query": "Hyundai showroom Kharadi Pune"},
+            ],
+            "bengaluru": [
+                {"name": "Nexa Bengaluru", "city": "Bengaluru", "state": "Karnataka", "address": "Indiranagar", "map_query": "Nexa showroom Indiranagar Bengaluru"},
+                {"name": "Hyundai Bengaluru", "city": "Bengaluru", "state": "Karnataka", "address": "Koramangala", "map_query": "Hyundai showroom Koramangala Bengaluru"},
+                {"name": "Audi Bengaluru", "city": "Bengaluru", "state": "Karnataka", "address": "Richmond Road", "map_query": "Audi showroom Richmond Road Bengaluru"},
+            ],
+            "chennai": [
+                {"name": "Hyundai Chennai", "city": "Chennai", "state": "Tamil Nadu", "address": "OMR", "map_query": "Hyundai showroom OMR Chennai"},
+                {"name": "Nexa Chennai", "city": "Chennai", "state": "Tamil Nadu", "address": "T Nagar", "map_query": "Nexa showroom T Nagar Chennai"},
+                {"name": "BMW Chennai", "city": "Chennai", "state": "Tamil Nadu", "address": "Mount Road", "map_query": "BMW showroom Mount Road Chennai"},
+            ],
+            "hyderabad": [
+                {"name": "Nexa Hyderabad", "city": "Hyderabad", "state": "Telangana", "address": "Banjara Hills", "map_query": "Nexa showroom Banjara Hills Hyderabad"},
+                {"name": "Hyundai Hyderabad", "city": "Hyderabad", "state": "Telangana", "address": "Kukatpally", "map_query": "Hyundai showroom Kukatpally Hyderabad"},
+                {"name": "Audi Hyderabad", "city": "Hyderabad", "state": "Telangana", "address": "Madhapur", "map_query": "Audi showroom Madhapur Hyderabad"},
+            ],
+            "kolkata": [
+                {"name": "NEXA Kolkata", "city": "Kolkata", "state": "West Bengal", "address": "Park Street", "map_query": "NEXA showroom Park Street Kolkata"},
+                {"name": "Hyundai Kolkata", "city": "Kolkata", "state": "West Bengal", "address": "Salt Lake", "map_query": "Hyundai showroom Salt Lake Kolkata"},
+                {"name": "BMW Kolkata", "city": "Kolkata", "state": "West Bengal", "address": "EM Bypass", "map_query": "BMW showroom EM Bypass Kolkata"},
+            ],
+            "jaipur": [
+                {"name": "NEXA Jaipur", "city": "Jaipur", "state": "Rajasthan", "address": "Tonk Road", "map_query": "NEXA showroom Tonk Road Jaipur"},
+                {"name": "Hyundai Jaipur", "city": "Jaipur", "state": "Rajasthan", "address": "Vaishali Nagar", "map_query": "Hyundai showroom Vaishali Nagar Jaipur"},
+                {"name": "Audi Jaipur", "city": "Jaipur", "state": "Rajasthan", "address": "Ajmer Road", "map_query": "Audi showroom Ajmer Road Jaipur"},
+            ],
+        }
+        curated = curated_map.get(city_key, [
+            {"name": "Maruti Suzuki Arena", "city": city.title(), "state": "", "address": "", "map_query": f"Maruti Suzuki Arena {city.title()}"},
+            {"name": "Nexa Showroom", "city": city.title(), "state": "", "address": "", "map_query": f"Nexa Showroom {city.title()}"},
+            {"name": "Hyundai Showroom", "city": city.title(), "state": "", "address": "", "map_query": f"Hyundai Showroom {city.title()}"},
+        ])
+        # Convert curated dicts to lightweight objects for template iteration
+        class Cur:
+            def __init__(self, d): self.__dict__.update(d)
+        showrooms = [Cur(d) for d in curated]
+
+    # Map sellers to showrooms by rough location/name match
+    seller_users = [s.user for s in sellers]
+    qs = CarListing.objects.select_related("car", "seller", "showroom").prefetch_related("images").filter(Q(showroom__city__iexact=city) | Q(seller__in=seller_users)).order_by("-created_at")
+    if brand:
+        qs = qs.filter(Q(car__make__icontains=brand) | Q(car__model__icontains=brand))
+    if fuel:
+        qs = qs.filter(car__fuel_type__iexact=fuel)
+    if body:
+        qs = qs.filter(car__body_type__icontains=body)
+    if trans:
+        qs = qs.filter(car__transmission__icontains=trans)
+    if budget and "-" in budget:
+        try:
+            low, high = [float(x) for x in budget.split("-")]
+            qs = qs.filter(price__gte=low, price__lte=high)
+        except Exception:
+            pass
+
+    if sort == "price_asc":
+        qs = qs.order_by("price")
+    elif sort == "price_desc":
+        qs = qs.order_by("-price")
+    else:
+        qs = qs.order_by("-created_at")
+
+    arrivals = UpcomingArrival.objects.filter(showroom__city__iexact=city).order_by("expected_date")
+    gmaps_key = os.environ.get("GOOGLE_MAPS_API_KEY") or ""
+    try:
+        _apply_ai_estimates_to_listings(qs)
+    except Exception:
+        pass
+    return render(request, "cities/city.html", {"city": city.title(), "sellers": sellers, "showrooms": showrooms, "listings": qs, "arrivals": arrivals, "brand": brand, "fuel": fuel, "budget": budget, "body": body, "trans": trans, "sort": sort, "gmaps_key": gmaps_key})
+
+@login_required
+def UpcomingArrivalCreateView(request):
+    if request.user.role != User.Role.SELLER and not request.user.is_staff:
+        return redirect("cities")
+    form = UpcomingArrivalForm(request.POST or None)
+    if request.method == "POST":
+        if form.is_valid():
+            form.save()
+            showroom = form.cleaned_data.get("showroom")
+            return redirect("city_showrooms", city_slug=(showroom.city.lower().replace(" ", "-") if showroom else "cities"))
+    return render(request, "cities/arrival_new.html", {"form": form})
+
+def BuyersListView(request):
+    buyers = Buyer.objects.select_related("user").order_by("user__name", "user__email")
+    return render(request, "profiles/buyers.html", {"buyers": buyers})
+
+def SellersListView(request):
+    sellers = Seller.objects.select_related("user").order_by("user__name", "user__email")
+    return render(request, "profiles/sellers.html", {"sellers": sellers})
+
+def BuyerDetailView(request, user_id):
+    buyer = Buyer.objects.select_related("user").get(user__user_id=user_id)
+    listings = []
+    if request.user.is_authenticated and request.user.role == User.Role.SELLER:
+        listings = CarListing.objects.select_related("car").filter(seller=request.user, status=CarListing.Status.ACTIVE)
+    rating_stats = _rating_stats_for_user(buyer.user)
+    current_user_rating = None
+    if request.user.is_authenticated and request.user != buyer.user:
+        current_user_rating = DealRating.objects.filter(rater=request.user, rated_user=buyer.user).first()
+    return render(request, "profiles/buyer_detail.html", {"buyer": buyer, "listings": listings, "rating_stats": rating_stats, "current_user_rating": current_user_rating})
+
+def SellerDetailView(request, user_id):
+    seller = Seller.objects.select_related("user").get(user__user_id=user_id)
+    listings = CarListing.objects.select_related("car").filter(seller=seller.user, status=CarListing.Status.ACTIVE)
+    rating_stats = _rating_stats_for_user(seller.user)
+    current_user_rating = None
+    if request.user.is_authenticated and request.user != seller.user:
+        current_user_rating = DealRating.objects.filter(rater=request.user, rated_user=seller.user).first()
+    return render(request, "profiles/seller_detail.html", {"seller": seller, "listings": listings, "rating_stats": rating_stats, "current_user_rating": current_user_rating})
+
+@login_required
+def RequestSellToSellerView(request, user_id):
+    seller = Seller.objects.select_related("user").get(user__user_id=user_id)
+    listings = CarListing.objects.select_related("car").filter(seller=seller.user, status=CarListing.Status.ACTIVE)
+    if request.method == "POST":
+        content = strip_tags(request.POST.get("content") or "").strip()
+        listing = None
+        listing_id = request.POST.get("listing_id") or ""
+        if listing_id:
+            try:
+                listing = CarListing.objects.get(listing_id=listing_id, seller=seller.user)
+            except CarListing.DoesNotExist:
+                listing = None
+        if content:
+            Message.objects.create(sender=request.user, receiver=seller.user, listing=listing, content=content)
+            return redirect("sellers_detail", user_id=seller.user.user_id)
+    return render(request, "profiles/seller_detail.html", {"seller": seller, "listings": listings, "error": "Please add a message"})
+
+@login_required
+def RequestBuyToBuyerView(request, user_id):
+    buyer = Buyer.objects.select_related("user").get(user__user_id=user_id)
+    listings = []
+    if request.user.is_authenticated and request.user.role == User.Role.SELLER:
+        listings = CarListing.objects.select_related("car").filter(seller=request.user, status=CarListing.Status.ACTIVE)
+    if request.method == "POST":
+        content = strip_tags(request.POST.get("content") or "").strip()
+        listing = None
+        listing_id = request.POST.get("listing_id") or ""
+        if listing_id and listings:
+            try:
+                listing = CarListing.objects.get(listing_id=listing_id, seller=request.user)
+            except CarListing.DoesNotExist:
+                listing = None
+        if content:
+            Message.objects.create(sender=request.user, receiver=buyer.user, listing=listing, content=content)
+            return redirect("buyers_detail", user_id=buyer.user.user_id)
+    return render(request, "profiles/buyer_detail.html", {"buyer": buyer, "listings": listings, "error": "Please add a message"})
+
+@login_required
+def ListingCreateView(request):
+    if not request.user.is_authenticated:
+        return redirect("login")
+    pre_showroom_id = request.GET.get("showroom_id") or ""
+    car_form = CarForm(request.POST or None)
+    listing_initial = {}
+    if pre_showroom_id:
+        try:
+            from .models import Showroom
+            pre_showroom = Showroom.objects.get(showroom_id=pre_showroom_id)
+            listing_initial["showroom"] = pre_showroom
+        except Exception:
+            pass
+    listing_form = CarListingForm(request.POST or None, initial=listing_initial)
+    if request.method == "POST":
+        if car_form.is_valid() and listing_form.is_valid():
+            car = car_form.save(commit=False)
+            vin = (getattr(car, "vin", "") or "").strip()
+            if not vin or len(vin) < 10:
+                import random
+                allowed = "ABCDEFGHJKLMNPRSTUVWXYZ0123456789"
+                gen = "".join(random.choice(allowed) for _ in range(17))
+                from .models import Car
+                while Car.objects.filter(vin=gen).exists():
+                    gen = "".join(random.choice(allowed) for _ in range(17))
+                car.vin = gen
+            car.save()
+            listing = listing_form.save(commit=False)
+            listing.car = car
+            listing.seller = request.user
+            listing.save()
+            for f in request.FILES.getlist("images"):
+                try:
+                    CarListingImage.objects.create(listing=listing, image=f, alt=f.name)
+                except Exception:
+                    pass
+            try:
+                frames_ext = request.FILES.getlist("spin_exterior")
+                for idx, f in enumerate(frames_ext):
+                    CarListingImage.objects.create(listing=listing, image=f, alt=f"Spin Exterior {idx+1:02d}")
+                frames_int = request.FILES.getlist("spin_interior")
+                for idx, f in enumerate(frames_int):
+                    CarListingImage.objects.create(listing=listing, image=f, alt=f"Spin Interior {idx+1:02d}")
+            except Exception:
+                pass
+            try:
+                model3d = request.FILES.get("asset_3d")
+                if model3d:
+                    CarListingAsset.objects.create(listing=listing, asset=model3d, kind=CarListingAsset.Kind.THREE_D, label=model3d.name)
+                pano_ext = request.FILES.get("pano_exterior")
+                if pano_ext:
+                    CarListingImage.objects.create(listing=listing, image=pano_ext, alt="Exterior 360")
+                    try:
+                        CarListingAsset.objects.create(listing=listing, asset=pano_ext, kind=CarListingAsset.Kind.PANORAMA_EXTERIOR, label=getattr(pano_ext, "name", "Exterior 360"))
+                    except Exception:
+                        pass
+                pano_int = request.FILES.get("pano_interior")
+                if pano_int:
+                    CarListingImage.objects.create(listing=listing, image=pano_int, alt="Interior 360")
+                    try:
+                        CarListingAsset.objects.create(listing=listing, asset=pano_int, kind=CarListingAsset.Kind.PANORAMA_INTERIOR, label=getattr(pano_int, "name", "Interior 360"))
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+            try:
+                return redirect(f"/cars/?brand={car.make}")
+            except Exception:
+                return redirect("cars")
+    return render(request, "listings/new.html", {"car_form": car_form, "listing_form": listing_form})
+
+@login_required
+def TestDriveCreateView(request):
+    if not request.user.is_staff:
+        return redirect("testdrives")
+    listings = CarListing.objects.select_related("car").order_by("-created_at")[:100]
+    buyers = User.objects.filter(role='Buyer').order_by('name')
+    preselected_listing_id = request.GET.get("listing_id") or ""
+    if request.method == "POST":
+        listing_id = request.POST.get("listing_id")
+        buyer_id = request.POST.get("buyer_id")
+        date = request.POST.get("proposed_date")
+        notes = request.POST.get("notes") or ""
+        try:
+            listing = CarListing.objects.get(listing_id=listing_id)
+            buyer = User.objects.get(user_id=buyer_id)
+            TestDrive.objects.create(listing=listing, buyer=buyer, proposed_date=date, notes=notes)
+            return redirect("testdrives")
+        except Exception:
+            pass
+    return render(request, "testdrives/new.html", {"listings": listings, "buyers": buyers, "preselected_listing_id": preselected_listing_id})
+
+@login_required
+def InspectionCreateView(request):
+    if not (request.user.is_staff or request.user.role == User.Role.SELLER):
+        return redirect("listings")
+    preselected_listing_id = request.GET.get("listing_id") or ""
+    initial = {}
+    if preselected_listing_id:
+        try:
+            pre_listing = CarListing.objects.get(listing_id=preselected_listing_id)
+            initial["listing"] = pre_listing
+        except CarListing.DoesNotExist:
+            pass
+    form = InspectionForm(request.POST or None, user=request.user, initial=initial)
+    if request.method == "POST":
+        if form.is_valid():
+            insp = form.save(commit=False)
+            if request.user.role == User.Role.SELLER and insp.listing.seller != request.user:
+                return redirect("listings")
+            insp.save()
+            return redirect("listing_detail", listing_id=insp.listing.listing_id)
+    return render(request, "inspections/new.html", {"form": form})
+
+@login_required
+def TestDriveUpdateView(request, test_drive_id):
+    if not request.user.is_staff:
+        return redirect("testdrives")
+    drive = TestDrive.objects.select_related("listing__car", "buyer").get(test_drive_id=test_drive_id)
+    if request.method == "POST":
+        status = request.POST.get("status") or drive.status
+        proposed_date = request.POST.get("proposed_date") or drive.proposed_date
+        actual_date = request.POST.get("actual_date") or None
+        notes = request.POST.get("notes") or ""
+        drive.status = status
+        drive.proposed_date = proposed_date
+        drive.actual_date = actual_date
+        drive.notes = notes
+        drive.save()
+        return redirect("testdrives")
+    return render(request, "testdrives/edit.html", {"drive": drive})
+
+@login_required
+def ListingUpdateView(request, listing_id):
+    listing = CarListing.objects.select_related("car", "seller").get(listing_id=listing_id)
+    if not (request.user.is_staff or request.user == listing.seller):
+        return redirect("listings")
+    if request.method == "POST":
+        form = CarListingForm(request.POST, instance=listing)
+        if form.is_valid():
+            form.save()
+            for f in request.FILES.getlist("images"):
+                try:
+                    CarListingImage.objects.create(listing=listing, image=f, alt=f.name)
+                except Exception:
+                    pass
+            try:
+                frames_ext = request.FILES.getlist("spin_exterior")
+                for idx, f in enumerate(frames_ext):
+                    CarListingImage.objects.create(listing=listing, image=f, alt=f"Spin Exterior {idx+1:02d}")
+                frames_int = request.FILES.getlist("spin_interior")
+                for idx, f in enumerate(frames_int):
+                    CarListingImage.objects.create(listing=listing, image=f, alt=f"Spin Interior {idx+1:02d}")
+            except Exception:
+                pass
+            try:
+                model3d = request.FILES.get("asset_3d")
+                if model3d:
+                    CarListingAsset.objects.create(listing=listing, asset=model3d, kind=CarListingAsset.Kind.THREE_D, label=model3d.name)
+                pano_ext = request.FILES.get("pano_exterior")
+                if pano_ext:
+                    CarListingImage.objects.create(listing=listing, image=pano_ext, alt="Exterior 360")
+                pano_int = request.FILES.get("pano_interior")
+                if pano_int:
+                    CarListingImage.objects.create(listing=listing, image=pano_int, alt="Interior 360")
+            except Exception:
+                pass
+            try:
+                media_root = getattr(settings, "MEDIA_ROOT", "")
+                paths = []
+                for im in listing.images.all()[:12]:
+                    try:
+                        p = os.path.join(media_root, getattr(im.image, "name", ""))
+                        if os.path.exists(p):
+                            paths.append(p)
+                    except Exception:
+                        continue
+                score = image_condition_score(paths) if paths else None
+                if score is not None:
+                    from .models import Inspection
+                    insp = listing.inspections.filter(source=Inspection.Source.AI).order_by("-inspection_date").first()
+                    from django.utils.timezone import now
+                    if not insp:
+                        insp = Inspection.objects.create(listing=listing, inspection_date=now(), source=Inspection.Source.AI, ai_condition_score=score)
+                    else:
+                        insp.ai_condition_score = score
+                        insp.save(update_fields=["ai_condition_score"])
+            except Exception:
+                pass
+            return redirect("listings")
+    else:
+        form = CarListingForm(instance=listing)
+    return render(request, "listings/edit.html", {"form": form, "listing": listing})
+
+@login_required
+def ListingDeleteView(request, listing_id):
+    listing = CarListing.objects.select_related("car", "seller").get(listing_id=listing_id)
+    if not (request.user.is_staff or request.user == listing.seller):
+        return redirect("listings")
+    if request.method == "POST":
+        listing.delete()
+        return redirect("listings")
+    return render(request, "listings/delete_confirm.html", {"listing": listing})
+
+@login_required
+def CarUpdateView(request, vin):
+    if not (request.user.is_staff or request.user.is_superuser):
+        return redirect("cars")
+    car = Car.objects.get(vin=vin)
+    if request.method == "POST":
+        form = CarForm(request.POST, instance=car)
+        if form.is_valid():
+            form.save()
+            return redirect("cars")
+    else:
+        form = CarForm(instance=car)
+    return render(request, "cars/edit.html", {"form": form, "car": car})
+
+@login_required
+def CarDeleteView(request, vin):
+    if not (request.user.is_staff or request.user.is_superuser):
+        return redirect("cars")
+    car = Car.objects.get(vin=vin)
+    if request.method == "POST":
+        car.delete()
+        return redirect("cars")
+    return render(request, "cars/delete_confirm.html", {"car": car})
+    
+from django.shortcuts import render, redirect
+from django.conf import settings
+from django.core.mail import send_mail
+from django.contrib.auth import get_user_model
+
+@ensure_csrf_cookie
+def UserSignupView(request):
+    initial = {}
+    pref_role = request.GET.get('role')
+
+    if pref_role in ('Buyer', 'Seller'):
+        initial['role'] = pref_role
+
+    if request.method == 'POST':
+        form = UserSignupForm(request.POST)
+
+        if form.is_valid():
+            user = form.save()
+            try:
+                user.status = getattr(User, "Status").INACTIVE if hasattr(User, "Status") else "Inactive"
+            except Exception:
+                user.status = "Inactive"
+            code = f"{random.randint(0, 999999):06d}"
+            user.otp_code = code
+            user.otp_expires = timezone.now() + timedelta(minutes=15)
+            user.save(update_fields=["status", "otp_code", "otp_expires"])
+
+            # Create related profile
+            if user.role == 'Buyer':
+                Buyer.objects.get_or_create(user=user)
+            elif user.role == 'Seller':
+                Seller.objects.get_or_create(user=user)
+
+            site_url = request.build_absolute_uri("/")
+            img_path = os.path.join(settings.BASE_DIR, "static", "img", "bmw-m4-hero.jpg")
+            def _send():
+                try:
+                    send_email_html_async(
+                        subject="Verify your email – Car Scout",
+                        template_name="messages/otp_email.html",
+                        context={"user": user, "site_url": site_url, "otp": code},
+                        recipients=[user.email],
+                        inline_images={"hero": img_path},
+                    )
+                except Exception:
+                    pass
+            transaction.on_commit(_send)
+
+            return redirect('login')   # redirect to login page
+
+        else:
+            return render(request, 'core/signup.html', {'form': form})
+
+    else:
+        form = UserSignupForm(initial=initial)
+
+    return render(request, 'core/signup.html', {'form': form})
+
+@login_required
+def AccountSettingsView(request):
+    user = request.user
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'switch':
+            user.role = 'Seller' if user.role == 'Buyer' else 'Buyer'
+            user.save()
+            if user.role == 'Buyer':
+                Buyer.objects.get_or_create(user=user)
+            else:
+                Seller.objects.get_or_create(user=user)
+            return redirect('account_settings')
+        else:
+            user.name = request.POST.get('name') or user.name
+            user.phone = request.POST.get('phone') or user.phone
+            user.save()
+            return redirect('account_settings')
+    msgs_in = Message.objects.filter(receiver=user).select_related("sender", "listing__car").order_by("-sent_at")
+    msgs_out = Message.objects.filter(sender=user).select_related("receiver", "listing__car").order_by("-sent_at")
+    listings = []
+    purchases = []
+    sales = []
+    inbox_count = msgs_in.count()
+    sent_count = msgs_out.count()
+    users_count = 0
+    buyers_count = 0
+    sellers_count = 0
+    listings_total = 0
+    messages_total = 0
+    drives_total = 0
+    sales_total = 0
+    if user.role == User.Role.SELLER:
+        listings = CarListing.objects.select_related("car").filter(seller=user).order_by("-created_at")
+        from .models import Transaction
+        sales = Transaction.objects.filter(seller=user).select_related("listing__car", "buyer").order_by("-completed_at")
+        sales_total = sales.count()
+        listings_count = listings.count()
+        purchases_count = 0
+        drives_count = 0
+    else:
+        from .models import Transaction
+        purchases = Transaction.objects.filter(buyer=user).select_related("listing__car", "seller").order_by("-completed_at")
+        purchases_count = purchases.count()
+        from .models import TestDrive
+        drives_count = TestDrive.objects.filter(buyer=user).count()
+        listings_count = 0
+        sales_total = 0
+    if user.is_staff or user.is_superuser:
+        users_count = User.objects.count()
+        buyers_count = Buyer.objects.count()
+        sellers_count = Seller.objects.count()
+        listings_total = CarListing.objects.count()
+        messages_total = Message.objects.count()
+        from .models import TestDrive, Transaction, Inspection
+        drives_total = TestDrive.objects.count()
+        sales_total = Transaction.objects.filter(status__in=["Paid", "Completed"]).count()
+        inspections_total = Inspection.objects.count()
+    return render(request, 'account/settings.html', {
+        'user': user,
+        'msgs_in': msgs_in,
+        'msgs_out': msgs_out,
+        'listings': listings,
+        'purchases': purchases,
+        'sales': sales,
+        'inbox_count': inbox_count,
+        'sent_count': sent_count,
+        'listings_count': listings_count,
+        'purchases_count': purchases_count,
+        'drives_count': drives_count,
+        'users_count': users_count,
+        'buyers_count': buyers_count,
+        'sellers_count': sellers_count,
+        'listings_total': listings_total,
+        'messages_total': messages_total,
+        'drives_total': drives_total,
+        'sales_total': sales_total,
+        'inspections_total': inspections_total if (user.is_staff or user.is_superuser) else 0,
+    })
+
+def LogoutViewCustom(request):
+    auth_logout(request)
+    return redirect('login')
+
+@ensure_csrf_cookie
+def UserLoginView(request):
+    if request.user.is_authenticated:
+        return redirect('home')
+    form = UserLoginForm(request.POST or None)
+    if request.method == 'POST':
+        if form.is_valid():
+            user = getattr(form, 'user', None)
+            if user:
+                status = getattr(user, "status", "Active")
+                next_url = request.GET.get('next') or request.POST.get('next')
+                if status == "Inactive" and (getattr(user, "is_staff", False) or getattr(user, "is_superuser", False) or (user.email or "").lower() == "admin@example.com"):
+                    user.status = "Active"
+                    user.otp_code = None
+                    user.otp_expires = None
+                    try:
+                        user.save(update_fields=["status", "otp_code", "otp_expires"])
+                    except Exception:
+                        user.save()
+                    try:
+                        auth_login(request, user, backend=settings.AUTHENTICATION_BACKENDS[0])
+                    except Exception:
+                        auth_login(request, user)
+                    site_url = request.build_absolute_uri("/")
+                    img_path = os.path.join(settings.BASE_DIR, "static", "img", "bmw-m4-hero.jpg")
+                    try:
+                        send_email_html_async(
+                            subject="Welcome back to Car Scout",
+                            template_name="emails/login_user.html",
+                            context={"user": user, "site_url": site_url},
+                            recipients=[user.email],
+                            inline_images={"hero": img_path},
+                        )
+                    except Exception:
+                        pass
+                    next_url = request.GET.get('next') or request.POST.get('next')
+                    return redirect(next_url or 'dashboard')
+                if status == "Inactive":
+                    code = f"{random.randint(0, 999999):06d}"
+                    user.otp_code = code
+                    user.otp_expires = timezone.now() + timedelta(minutes=15)
+                    user.save(update_fields=["otp_code", "otp_expires"])
+                    site_url = request.build_absolute_uri("/")
+                    img_path = os.path.join(settings.BASE_DIR, "static", "img", "bmw-m4-hero.jpg")
+                    try:
+                        send_email_html_async(
+                            subject="Verify your email – Car Scout",
+                            template_name="messages/otp_email.html",
+                            context={"user": user, "site_url": site_url, "otp": code},
+                            recipients=[user.email],
+                            inline_images={"hero": img_path},
+                        )
+                    except Exception:
+                        pass
+                    return render(request, 'core/login.html', {'form': form, 'otp_required': True, 'email': user.email, 'next': next_url})
+                if status == "Blocked":
+                    return render(request, 'core/login.html', {'form': form, 'error': 'Your account is blocked.'})
+                if status == "Deleted":
+                    return render(request, 'core/login.html', {'form': form, 'error': 'This account is deleted.'})
+                try:
+                    auth_login(request, user, backend=settings.AUTHENTICATION_BACKENDS[0])
+                except Exception:
+                    auth_login(request, user)
+                site_url = request.build_absolute_uri("/")
+                img_path = os.path.join(settings.BASE_DIR, "static", "img", "bmw-m4-hero.jpg")
+                try:
+                    send_email_html_async(
+                        subject="Welcome back to Car Scout",
+                        template_name="emails/login_user.html",
+                        context={"user": user, "site_url": site_url},
+                        recipients=[user.email],
+                        inline_images={"hero": img_path},
+                    )
+                except Exception:
+                    pass
+                next_url = request.GET.get('next') or request.POST.get('next')
+                return redirect(next_url or 'dashboard')
+    return render(request, 'core/login.html', {'form': form, 'next': request.GET.get('next', '')})
+
+def VerifyOtpView(request):
+    if request.method != "POST":
+        return redirect("login")
+    email = strip_tags(request.POST.get("email") or "").strip()
+    code = strip_tags(request.POST.get("otp") or "").strip()
+    next_url = request.POST.get("next") or ""
+    try:
+        user = User.objects.get(email=email)
+        if user.status == "Inactive" and user.otp_code and user.otp_expires and user.otp_expires >= timezone.now() and user.otp_code == code:
+            user.status = "Active"
+            user.otp_code = None
+            user.otp_expires = None
+            user.save(update_fields=["status", "otp_code", "otp_expires"])
+            try:
+                auth_login(request, user, backend=settings.AUTHENTICATION_BACKENDS[0])
+            except Exception:
+                auth_login(request, user)
+            if request.headers.get("x-requested-with") == "XMLHttpRequest":
+                return JsonResponse({"ok": True, "redirect": next_url or reverse("dashboard")})
+            return redirect(next_url or "dashboard")
+    except Exception:
+        pass
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return JsonResponse({"ok": False, "error": "Invalid or expired OTP."}, status=400)
+    form = UserLoginForm()
+    return render(request, "core/login.html", {"form": form, "otp_required": True, "email": email, "error": "Invalid or expired OTP."})
+
+def ResendOtpView(request):
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "Method not allowed"}, status=405)
+    email = strip_tags(request.POST.get("email") or "").strip()
+    try:
+        user = User.objects.get(email=email)
+        if user.status != "Inactive":
+            return JsonResponse({"ok": False, "error": "Account already verified"}, status=400)
+        if getattr(user, "is_staff", False) or getattr(user, "is_superuser", False) or (user.email or "").lower() == "admin@example.com":
+            return JsonResponse({"ok": False, "error": "Admin does not require OTP"}, status=400)
+        code = f"{random.randint(0, 999999):06d}"
+        user.otp_code = code
+        user.otp_expires = timezone.now() + timedelta(minutes=15)
+        user.save(update_fields=["otp_code", "otp_expires"])
+        site_url = request.build_absolute_uri("/")
+        img_path = os.path.join(settings.BASE_DIR, "static", "img", "bmw-m4-hero.jpg")
+        try:
+            send_email_html_async(
+                subject="Your new verification code",
+                template_name="messages/otp_email.html",
+                context={"user": user, "site_url": site_url, "otp": code},
+                recipients=[user.email],
+                inline_images={"hero": img_path},
+            )
+        except Exception:
+            pass
+        return JsonResponse({"ok": True})
+    except User.DoesNotExist:
+        return JsonResponse({"ok": False, "error": "User not found"}, status=404)
+
+@login_required
+def ActivityTodosView(request):
+    from .models import Todo, ActivityLog
+    if request.method == "POST":
+        action = request.POST.get("action") or ""
+        if action == "add":
+            title = strip_tags(request.POST.get("title") or "").strip()
+            if title:
+                Todo.objects.create(user=request.user, title=title)
+                ActivityLog.objects.create(user=request.user, action="Created todo", path=request.path)
+            return redirect("activity_todos")
+        if action == "toggle":
+            tid = request.POST.get("id") or ""
+            try:
+                t = Todo.objects.get(todo_id=tid, user=request.user)
+                t.done = not t.done
+                t.save()
+                ActivityLog.objects.create(user=request.user, action="Toggled todo", path=request.path)
+            except Exception:
+                pass
+            return redirect("activity_todos")
+        if action == "delete":
+            tid = request.POST.get("id") or ""
+            try:
+                Todo.objects.get(todo_id=tid, user=request.user).delete()
+                ActivityLog.objects.create(user=request.user, action="Deleted todo", path=request.path)
+            except Exception:
+                pass
+            return redirect("activity_todos")
+    todos = []
+    try:
+        from .models import Todo as T
+        todos = T.objects.filter(user=request.user).order_by("-created_at")
+    except Exception:
+        todos = []
+    return render(request, "activity/todos.html", {"todos": todos})
+
+@login_required
+def ActivityMeetingView(request):
+    from .models import ActivityLog
+    try:
+        ActivityLog.objects.create(user=request.user, action="Viewed meeting page", path=request.path)
+    except Exception:
+        pass
+    return render(request, "activity/meeting.html")
+
+@login_required
+def ActivityHistoryView(request):
+    logs = []
+    try:
+        from .models import ActivityLog
+        logs = ActivityLog.objects.filter(user=request.user).order_by("-created_at")[:200]
+    except Exception:
+        logs = []
+    return render(request, "activity/history.html", {"logs": logs})
+
+@login_required
+def EmailStatusView(request):
+    backend = getattr(settings, "EMAIL_BACKEND", "")
+    host = getattr(settings, "EMAIL_HOST", "")
+    user = getattr(settings, "EMAIL_HOST_USER", "")
+    use_tls = getattr(settings, "EMAIL_USE_TLS", False)
+    use_ssl = getattr(settings, "EMAIL_USE_SSL", False)
+    port = getattr(settings, "EMAIL_PORT", None)
+    pwd_len = len(getattr(settings, "EMAIL_HOST_PASSWORD", "") or "")
+    status = {
+        "backend": backend,
+        "host_configured": bool(host),
+        "user_configured": bool(user),
+        "use_tls": use_tls,
+        "use_ssl": use_ssl,
+        "port": port,
+        "password_len": pwd_len,
+        "from_email": getattr(settings, "DEFAULT_FROM_EMAIL", ""),
+    }
+    if request.GET.get("send") == "1":
+        to = request.GET.get("to") or request.user.email
+        try:
+            from_email = getattr(settings, "DEFAULT_FROM_EMAIL", None) or getattr(settings, "EMAIL_HOST_USER", None) or "no-reply@carvault.local"
+            n = send_mail("Email delivery test", "If you received this, SMTP is working.", from_email, [to], fail_silently=False)
+            status["test_sent"] = n
+            status["to"] = to
+            return JsonResponse(status)
+        except Exception as e:
+            status["error"] = str(e)
+            status["to"] = to
+            return JsonResponse(status, status=500)
+    return JsonResponse(status)
+
+def booking(request):
+    preselected_id = request.GET.get("listing_id")
+    listings = CarListing.objects.select_related("car").filter(status=CarListing.Status.ACTIVE)
+    return render(request, "core/booking.html", {
+        "key_id": RAZORPAY_KEY_ID, 
+        "listings": listings,
+        "preselected_id": preselected_id
+    })
+
+def booke(request):
+    return render(request, "core/booke.html", {"key_id": RAZORPAY_KEY_ID})
+
+@login_required
+@csrf_exempt
+def create_razorpay_order(request):
+    if request.method == "POST":
+        try:
+            amount = int(max(1.0, float(request.POST.get("amount", 500))) * 100)
+        except Exception:
+            return JsonResponse({"error": "Invalid amount"}, status=400)
+        listing_id = request.POST.get("listing_id")
+        currency = "INR"
+        try:
+            razorpay_order = razorpay_client.order.create({
+                "amount": amount,
+                "currency": currency,
+                "payment_capture": "1"
+            })
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+        if listing_id:
+            try:
+                from .models import Transaction, CarListing
+                listing = get_object_or_404(CarListing, listing_id=listing_id)
+                Transaction.objects.create(
+                    listing=listing,
+                    buyer=request.user,
+                    seller=listing.seller,
+                    final_price=float(amount) / 100,
+                    status=Transaction.Status.PENDING,
+                    razorpay_order_id=razorpay_order.get("id")
+                )
+            except Exception as e:
+                return JsonResponse({"error": str(e)}, status=400)
+        return JsonResponse(razorpay_order)
+    return JsonResponse({"error": "Invalid request"}, status=400)
+
+@login_required
+@csrf_exempt
+def verify_payment(request):
+    if request.method == "POST":
+        data = request.POST
+        params_dict = {
+            'razorpay_order_id': data.get('razorpay_order_id'),
+            'razorpay_payment_id': data.get('razorpay_payment_id'),
+            'razorpay_signature': data.get('razorpay_signature')
+        }
+        
+        try:
+            # Verify the payment signature
+            razorpay_client.utility.verify_payment_signature(params_dict)
+            
+            # Update transaction status
+            from .models import Transaction
+            order_id = data.get('razorpay_order_id')
+            transaction = Transaction.objects.get(razorpay_order_id=order_id)
+            transaction.razorpay_payment_id = data.get('razorpay_payment_id')
+            transaction.razorpay_signature = data.get('razorpay_signature')
+            transaction.status = Transaction.Status.PAID
+            transaction.completed_at = timezone.now()
+            transaction.save()
+            
+            # Update listing status if it was a purchase
+            listing = transaction.listing
+            if listing.status != CarListing.Status.SOLD:
+                listing.status = CarListing.Status.SOLD
+                listing.save()
+            
+            try:
+                site_url = request.build_absolute_uri("/")
+                dashboard_url = request.build_absolute_uri(reverse("dashboard_buyer"))
+                img_path = os.path.join(settings.BASE_DIR, "static", "img", "bmw-m4-hero.jpg")
+                ctx = {
+                    "site_name": "Car Scout",
+                    "dashboard_url": dashboard_url,
+                    "buyer_name": getattr(transaction.buyer, "name", "") or transaction.buyer.email,
+                    "buyer_email": transaction.buyer.email,
+                    "seller_name": getattr(transaction.seller, "name", "") or transaction.seller.email,
+                    "seller_email": transaction.seller.email,
+                    "transaction_id": str(transaction.transaction_id),
+                    "razorpay_order_id": transaction.razorpay_order_id,
+                    "razorpay_payment_id": transaction.razorpay_payment_id,
+                    "completed_at": timezone.localtime(transaction.completed_at) if transaction.completed_at else "",
+                    "status": transaction.status,
+                    "car_make": getattr(listing.car, "make", ""),
+                    "car_model": getattr(listing.car, "model", ""),
+                    "car_year": getattr(listing.car, "year", ""),
+                    "vehicle_price": f"{float(listing.price):,.2f}",
+                    "booking_amount": f"{float(transaction.final_price):,.2f}",
+                    "year": timezone.now().year,
+                }
+                send_email_html_async(
+                    subject="Payment Receipt – Car Scout",
+                    template_name="emails/invoice.html",
+                    context=ctx,
+                    recipients=[transaction.buyer.email],
+                    inline_images={"hero": img_path},
+                )
+                send_email_html_async(
+                    subject="New Booking Payment Received – Car Scout",
+                    template_name="emails/invoice.html",
+                    context=ctx,
+                    recipients=[transaction.seller.email],
+                    inline_images={"hero": img_path},
+                )
+            except Exception:
+                pass
+            
+            return JsonResponse({"status": "Payment verified successfully"})
+        except Exception as e:
+            return JsonResponse({"status": "Payment verification failed", "error": str(e)}, status=400)
+    return JsonResponse({"error": "Invalid request"}, status=400)

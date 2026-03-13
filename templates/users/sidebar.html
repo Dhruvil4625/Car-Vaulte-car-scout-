@@ -1,0 +1,154 @@
+<style>
+  /* --- Premium Sidebar Styling --- */
+  .cv-side {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    box-shadow: var(--shadow-sm);
+    position: sticky;
+    top: 90px;
+    padding: 15px 12px;
+    max-height: calc(100vh - 110px);
+    overflow: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .cv-side .list-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px; /* Soft spacing between navigation pills */
+  }
+
+  .cv-side .list-group-item {
+    padding: 12px 16px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border: none;
+    border-radius: 10px !important; /* Overrides Bootstrap's square edges */
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    background: transparent;
+  }
+
+  /* Fixed width for icons guarantees perfectly aligned text */
+  .cv-side .list-group-item i {
+    width: 26px;
+    font-size: 1.1rem;
+    transition: color 0.3s ease;
+  }
+
+  /* Hover State */
+  .cv-side .list-group-item:not(.active):not(.section-label):hover {
+    background: var(--bg-subtle);
+    color: var(--text-main);
+    transform: translateX(4px);
+  }
+
+  .cv-side .list-group-item:not(.active):hover i {
+    color: var(--primary);
+  }
+
+  /* Active State */
+  .cv-side .list-group-item.active {
+    background: var(--primary);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(225, 29, 72, 0.3);
+    z-index: 2; /* Keeps shadow above other elements */
+  }
+
+  .cv-side .list-group-item.active i {
+    color: #ffffff;
+  }
+
+  /* Section Header Styling */
+  .cv-side .section-label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 20px 16px 8px; /* Extra top padding to separate sections */
+    background: transparent;
+    border: none;
+    pointer-events: none; /* Prevents hovering/clicking the label */
+  }
+</style>
+
+{% load i18n %}
+<div class="cv-side">
+  {% with cur=request.resolver_match.url_name %}
+  
+  {% if request.user.role == 'Seller' %}
+    <div class="list-group">
+      <a href="{% url 'dashboard_seller' %}" class="list-group-item list-group-item-action {% if cur == 'dashboard_seller' %}active{% endif %}">
+        <i class="fa-solid fa-gauge-high"></i> {% trans "Dashboard" %}
+      </a>
+      <a href="{% url 'listing_new' %}" class="list-group-item list-group-item-action {% if cur == 'listing_new' %}active{% endif %}">
+        <i class="fa-solid fa-plus-circle"></i> {% trans "Create Listing" %}
+      </a>
+      <a href="{% url 'testdrives' %}" class="list-group-item list-group-item-action {% if cur == 'testdrives' %}active{% endif %}">
+        <i class="fa-solid fa-steering-wheel"></i> {% trans "Test Drives" %}
+      </a>
+      <a href="{% url 'messages' %}" class="list-group-item list-group-item-action {% if cur == 'messages' %}active{% endif %}">
+        <i class="fa-solid fa-inbox"></i> {% trans "Messages" %}
+      </a>
+      <a href="{% url 'account_settings' %}" class="list-group-item list-group-item-action {% if cur == 'account_settings' %}active{% endif %}">
+        <i class="fa-solid fa-user-gear"></i> {% trans "Profile Settings" %}
+      </a>
+      <a href="{% url 'account_settings' %}#chatbot" class="list-group-item list-group-item-action">
+        <i class="fa-solid fa-robot"></i> {% trans "Chatbot" %}
+      </a>
+      
+      <div class="list-group-item section-label">{% trans "Activity Center" %}</div>
+      
+      <a href="{% url 'activity_todos' %}" class="list-group-item list-group-item-action {% if cur == 'activity_todos' %}active{% endif %}">
+        <i class="fa-solid fa-list-check"></i> {% trans "To‑Do List" %}
+      </a>
+      <a href="{% url 'activity_meeting' %}" class="list-group-item list-group-item-action {% if cur == 'activity_meeting' %}active{% endif %}">
+        <i class="fa-solid fa-calendar-plus"></i> {% trans "Book a Meeting" %}
+      </a>
+      <a href="{% url 'activity_history' %}" class="list-group-item list-group-item-action {% if cur == 'activity_history' %}active{% endif %}">
+        <i class="fa-solid fa-clock-rotate-left"></i> {% trans "Action History" %}
+      </a>
+    </div>
+
+  {% else %}
+    <div class="list-group">
+      <a href="{% url 'dashboard_buyer' %}" class="list-group-item list-group-item-action {% if cur == 'dashboard_buyer' %}active{% endif %}">
+        <i class="fa-solid fa-gauge-high"></i> {% trans "Dashboard" %}
+      </a>
+      <a href="{% url 'cars' %}" class="list-group-item list-group-item-action {% if cur == 'cars' %}active{% endif %}">
+        <i class="fa-solid fa-car"></i> {% trans "Browse Cars" %}
+      </a>
+      <a href="{% url 'testdrives' %}" class="list-group-item list-group-item-action {% if cur == 'testdrives' %}active{% endif %}">
+        <i class="fa-solid fa-steering-wheel"></i> {% trans "Test Drives" %}
+      </a>
+      <a href="{% url 'messages' %}" class="list-group-item list-group-item-action {% if cur == 'messages' %}active{% endif %}">
+        <i class="fa-solid fa-inbox"></i> {% trans "Messages" %}
+      </a>
+      <a href="{% url 'account_settings' %}" class="list-group-item list-group-item-action {% if cur == 'account_settings' %}active{% endif %}">
+        <i class="fa-solid fa-user-gear"></i> {% trans "Profile Settings" %}
+      </a>
+      <a href="{% url 'account_settings' %}#chatbot" class="list-group-item list-group-item-action">
+        <i class="fa-solid fa-robot"></i> {% trans "Chatbot" %}
+      </a>
+      
+      <div class="list-group-item section-label">{% trans "Activity Center" %}</div>
+      
+      <a href="{% url 'activity_todos' %}" class="list-group-item list-group-item-action {% if cur == 'activity_todos' %}active{% endif %}">
+        <i class="fa-solid fa-list-check"></i> {% trans "To‑Do List" %}
+      </a>
+      <a href="{% url 'activity_meeting' %}" class="list-group-item list-group-item-action {% if cur == 'activity_meeting' %}active{% endif %}">
+        <i class="fa-solid fa-calendar-plus"></i> {% trans "Book a Meeting" %}
+      </a>
+      <a href="{% url 'activity_history' %}" class="list-group-item list-group-item-action {% if cur == 'activity_history' %}active{% endif %}">
+        <i class="fa-solid fa-clock-rotate-left"></i> {% trans "Action History" %}
+      </a>
+    </div>
+  {% endif %}
+  
+  {% endwith %}
+</div>    

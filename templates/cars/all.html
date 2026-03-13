@@ -1,0 +1,543 @@
+{% extends 'base.html' %}
+{% load currency %}{% load static %}
+{% block title %}All Cars | Car Scout{% endblock %}
+
+{% block content %}
+<style>
+  /* --- Ultra-Smooth Cinematic Pan --- */
+  @keyframes cinematicPan {
+    0% { transform: scale(1.0) translateX(0); }
+    50% { transform: scale(1.05) translateX(-1%); }
+    100% { transform: scale(1.0) translateX(0); }
+  }
+
+  /* --- Inventory Hero Section --- */
+  .inventory-hero {
+    position: relative;
+    padding: 80px 0 100px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+  }
+
+  .inventory-hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    /* High-performance aggressive stance background */
+    background: url('https://images.unsplash.com/photo-1580273916550-e323be2ae537?q=80&w=1920&auto=format&fit=crop') center/cover no-repeat;
+    z-index: 1;
+    animation: cinematicPan 60s ease-in-out infinite;
+    will-change: transform;
+  }
+
+  .inventory-hero::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, rgba(2, 6, 23, 0.85) 0%, rgba(2, 6, 23, 0.98) 100%);
+    z-index: 2;
+  }
+
+  .inventory-hero .container {
+    position: relative;
+    z-index: 3;
+    text-align: center;
+  }
+
+  .inventory-hero h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  }
+
+  .inventory-hero h1 span { color: #e11d48; }
+
+  .inventory-hero p {
+    color: #cbd5e1;
+    font-size: 1.15rem;
+    margin: 0;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+
+  /* --- Layout & Spacing --- */
+  .inventory-wrapper {
+    margin-top: -60px;
+    position: relative;
+    z-index: 10;
+    padding-bottom: 80px;
+  }
+
+  /* --- Premium Filter Sidebar --- */
+  .filter-sidebar {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.04);
+    padding: 25px;
+    position: sticky;
+    top: 100px;
+  }
+
+  .filter-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f1f5f9;
+  }
+
+  .filter-header h5 {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .filter-header i {
+    color: #e11d48;
+  }
+
+  .filter-group {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px dashed #e2e8f0;
+  }
+
+  .filter-group:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 0;
+  }
+
+  .filter-group h6 {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #0f172a;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+
+  /* Search Input */
+  .filter-group .form-control {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #0f172a;
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: none;
+  }
+
+  .filter-group .form-control:focus {
+    background-color: #fff;
+    border-color: #e11d48;
+    box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.1);
+  }
+
+  /* Custom Checkboxes */
+  .custom-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #475569;
+    cursor: pointer;
+    margin-bottom: 8px;
+    transition: color 0.2s ease;
+  }
+
+  .custom-checkbox-label:hover {
+    color: #0f172a;
+  }
+
+  .custom-checkbox-label input[type="checkbox"] {
+    accent-color: #e11d48;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+  }
+
+  /* --- Modern Listing Cards --- */
+  .modern-card {
+    background: #ffffff;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    height: 100%;
+  }
+
+  .modern-card:hover {
+    box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+    transform: translateY(-5px);
+    border-color: rgba(225, 29, 72, 0.3);
+  }
+
+  .card-img-wrapper {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+    background: #0f172a;
+  }
+  .ai-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    color: #0f172a;
+  }
+  .ai-badge.good { background:#ecfdf5; color:#065f46; border-color:#bbf7d0; }
+  .ai-badge.fair { background:#eff6ff; color:#1e3a8a; border-color:#bfdbfe; }
+  .ai-badge.exp { background:#fef2f2; color:#991b1b; border-color:#fecaca; }
+  .ai-overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.94);
+    backdrop-filter: blur(6px);
+    border-top: 1px solid #e2e8f0;
+    transform: translateY(8px);
+    opacity: 0;
+    transition: all .25s ease;
+  }
+  .modern-card:hover .ai-overlay {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  .ai-title {
+    font-size: .8rem;
+    font-weight: 800;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+  }
+  .ai-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 0;
+    font-size: .75rem;
+  }
+  .ai-label {
+    width: 60px;
+    color: #475569;
+    font-weight: 700;
+  }
+  .ai-bar {
+    flex: 1;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+  }
+  .ai-fill { height: 100%; background: #0f172a; border-radius: 8px; width: 0%; transition: width .4s ease; }
+  .ai-val { min-width: 80px; text-align: right; font-weight: 800; color: #0f172a; }
+
+  .card-img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+  }
+
+  .modern-card:hover .card-img-wrapper img {
+    transform: scale(1.08);
+  }
+
+  .modern-card-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+
+  .car-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+
+  .car-meta-row {
+    font-size: 0.85rem;
+    color: #64748b;
+    font-weight: 600;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .car-price {
+    font-size: 1.35rem;
+    font-weight: 900;
+    color: #e11d48;
+    margin-top: auto;
+    padding-top: 15px;
+    border-top: 1px dashed #e2e8f0;
+  }
+  .ai-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .ai-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #0f172a;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-weight: 700;
+  }
+  .ai-item i {
+    color: #64748b;
+    margin-right: 6px;
+  }
+  .ai-item span {
+    color: #0f172a;
+    font-weight: 800;
+  }
+
+  /* --- Empty State --- */
+  .empty-state {
+    grid-column: 1 / -1;
+    background: #ffffff;
+    border: 2px dashed #cbd5e1;
+    border-radius: 16px;
+    padding: 80px 20px;
+    text-align: center;
+    color: #64748b;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+  }
+
+  .empty-state i {
+    color: #e2e8f0;
+  }
+</style>
+
+<section class="inventory-hero reveal">
+  <div class="container">
+    <h1>Browse <span>Inventory</span></h1>
+    <p>Discover high-performance vehicles and daily drivers tailored to your needs.</p>
+  </div>
+</section>
+
+<section class="container inventory-wrapper">
+  <div class="row g-4">
+    
+    <aside class="col-lg-3 d-none d-lg-block">
+      <form id="filterForm" class="filter-sidebar reveal" style="transition-delay: 0.1s;" method="get">
+        
+        <div class="filter-header">
+          <h5><i class="fa-solid fa-sliders me-2"></i> Filters</h5>
+          <a href="{% url 'cars' %}" class="text-muted" style="font-size: 0.8rem; text-decoration: none; font-weight: 600;"><i class="fa-solid fa-rotate-right me-1"></i> Reset</a>
+        </div>
+
+        <div class="filter-group">
+          <h6>Brand Search</h6>
+          <input type="text" name="brand" class="form-control" placeholder="e.g. BMW, Nissan..." value="{{ brand }}">
+        </div>
+
+        <div class="filter-group">
+          <h6>Price Range</h6>
+          {% for p in price_options %}
+          <label class="custom-checkbox-label">
+            <input type="checkbox" name="price" value="{{ p }}" {% if p in price_selected %}checked{% endif %}>
+            {% if p == '0-500000' %}Under ₹5 Lakh
+            {% elif p == '500000-1500000' %}₹5 Lakh – ₹15 Lakh
+            {% elif p == '1500000+' %}Above ₹15 Lakh
+            {% else %}{{ p }}{% endif %}
+          </label>
+          {% endfor %}
+        </div>
+
+        <div class="filter-group">
+          <h6>Fuel Type</h6>
+          {% for f in fuel_options %}
+          <label class="custom-checkbox-label">
+            <input type="checkbox" name="fuel" value="{{ f }}" {% if f in fuels_selected %}checked{% endif %}> {{ f }}
+          </label>
+          {% endfor %}
+        </div>
+
+        <div class="filter-group">
+          <h6>Body Style</h6>
+          {% for b in body_options %}
+          <label class="custom-checkbox-label">
+            <input type="checkbox" name="body" value="{{ b }}" {% if b in bodies_selected %}checked{% endif %}> {{ b }}
+          </label>
+          {% endfor %}
+        </div>
+
+        <div class="filter-group">
+          <h6>Transmission</h6>
+          {% for t in trans_options %}
+          <label class="custom-checkbox-label">
+            <input type="checkbox" name="trans" value="{{ t }}" {% if t in trans_selected %}checked{% endif %}> {{ t }}
+          </label>
+          {% endfor %}
+        </div>
+
+        <div class="filter-group">
+          <h6>Category</h6>
+          {% for c in category_options %}
+          <label class="custom-checkbox-label">
+            <input type="checkbox" name="category" value="{{ c }}" {% if c in cats_selected %}checked{% endif %}> {{ c }}
+          </label>
+          {% endfor %}
+        </div>
+
+      </form>
+    </aside>
+
+    <div class="col-lg-9">
+      <div id="results" class="row g-4">
+        {% for l in listings %}
+        <div class="col-md-6 col-xl-4">
+          <a href="{% url 'listing_detail' l.listing_id %}" class="modern-card reveal" style="transition-delay: 0.{{ forloop.counter0|add:2 }}s;">
+            <div class="card-img-wrapper">
+              {% if l.images.all %}
+                <img loading="lazy" src="{{ l.images.all.0.image.url }}" alt="{{ l.car.make }} {{ l.car.model }}">
+              {% else %}
+                <img loading="lazy" src="{% static 'img/placeholder.svg' %}" alt="Placeholder">
+              {% endif %}
+              {% if l.ai_deal_label %}
+              <div class="ai-badge {% if l.ai_deal_label == 'Good Deal' %}good{% elif l.ai_deal_label == 'Fair Price' %}fair{% elif l.ai_deal_label == 'Expensive' %}exp{% endif %}">
+                {{ l.ai_deal_label }}
+              </div>
+              {% endif %}
+              <div class="ai-overlay">
+                <div class="ai-title"><i class="fa-solid fa-chart-line"></i> AI Insights</div>
+                <div class="ai-overview">
+                  {% if l.car.expert_overview %}
+                    {{ l.car.expert_overview|striptags|truncatechars:120 }}
+                  {% elif l.description %}
+                    {{ l.description|striptags|truncatechars:120 }}
+                  {% else %}
+                    Compact, city-friendly design with practical space and efficiency.
+                  {% endif %}
+                </div>
+                <div class="ai-graph ai-bars"
+                     data-market="{{ l.ai_market|default:0 }}"
+                     data-tax="{{ l.ai_tax|default:0 }}"
+                     data-ins="{{ l.ai_ins|default:0 }}"
+                     data-duty="{{ l.ai_duty|default:0 }}">
+                  <div class="ai-row bar-market">
+                    <div class="ai-label">Market</div>
+                    <div class="ai-bar"><div class="ai-fill"></div></div>
+                    <div class="ai-val">{{ l.ai_market|inr }}</div>
+                  </div>
+                  <div class="ai-row bar-tax">
+                    <div class="ai-label">Tax</div>
+                    <div class="ai-bar"><div class="ai-fill" style="background:#e11d48;"></div></div>
+                    <div class="ai-val">{{ l.ai_tax|inr }}</div>
+                  </div>
+                  <div class="ai-row bar-ins">
+                    <div class="ai-label">Ins</div>
+                    <div class="ai-bar"><div class="ai-fill" style="background:#22c55e;"></div></div>
+                    <div class="ai-val">{{ l.ai_ins|inr }}</div>
+                  </div>
+                  <div class="ai-row bar-duty">
+                    <div class="ai-label">Duty</div>
+                    <div class="ai-bar"><div class="ai-fill" style="background:#3b82f6;"></div></div>
+                    <div class="ai-val">{{ l.ai_duty|inr }}</div>
+                  </div>
+                  <div class="ai-row">
+                    <div class="ai-label">Total</div>
+                    <div class="ai-bar"><div class="ai-fill" style="background:#64748b;width:100%"></div></div>
+                    <div class="ai-val">{{ l.ai_total|inr }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="modern-card-body">
+              <div class="car-title">{{ l.car.make }} {{ l.car.model }}</div>
+              <div class="car-meta-row">
+                <span><i class="fa-regular fa-calendar me-1"></i> {{ l.car.year }}</span> • 
+                <span><i class="fa-solid fa-gas-pump me-1"></i> {{ l.car.fuel_type|default:'—' }}</span> • 
+                <span><i class="fa-solid fa-gears me-1"></i> {{ l.car.transmission|default:'—' }}</span>
+              </div>
+              <div class="car-price">{{ l.price|inr }}</div>
+            </div>
+          </a>
+        </div>
+        {% empty %}
+        <div class="empty-state reveal" style="transition-delay: 0.2s;">
+          <i class="fa-solid fa-car-burst fs-1 mb-4 d-block" style="font-size: 4rem;"></i>
+          <h3 class="text-dark fw-bold mb-3">No Vehicles Found</h3>
+          <p class="mb-0 fs-5">We couldn't find any cars matching your specific filter criteria. Try adjusting your search.</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<script>
+  // Auto-submit form when a checkbox or input changes
+  document.addEventListener('DOMContentLoaded', () => {
+    const filterForm = document.getElementById('filterForm');
+    if(filterForm){
+      filterForm.addEventListener('change', () => {
+        // Add a slight delay to allow the user to see the box checked before page reloads
+        setTimeout(() => {
+          filterForm.submit();
+        }, 150);
+      });
+    }
+    document.querySelectorAll('.ai-bars').forEach(el => {
+      const m = Number(el.dataset.market || 0);
+      const t = Number(el.dataset.tax || 0);
+      const i = Number(el.dataset.ins || 0);
+      const d = Number(el.dataset.duty || 0);
+      const max = Math.max(m, t, i, d, 1);
+      const setW = (cls, val) => {
+        const row = el.querySelector(cls + ' .ai-fill');
+        if (row) row.style.width = Math.min(100, Math.round((val / max) * 100)) + '%';
+      };
+      setW('.bar-market', m);
+      setW('.bar-tax', t);
+      setW('.bar-ins', i);
+      setW('.bar-duty', d);
+    });
+  });
+</script>
+
+{% endblock %}

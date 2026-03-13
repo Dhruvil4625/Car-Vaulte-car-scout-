@@ -1,0 +1,393 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Compare Cars | Car Scout{% endblock %}
+
+{% block content %}
+<style>
+  /* --- Ultra-Smooth Cinematic Pan --- */
+  @keyframes cinematicPan {
+    0% { transform: scale(1.0) translateX(0); }
+    50% { transform: scale(1.05) translateX(-1%); }
+    100% { transform: scale(1.0) translateX(0); }
+  }
+
+  /* --- Premium Hero Section --- */
+  .compare-hero {
+    position: relative;
+    padding: 80px 0 100px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+  }
+
+  .compare-hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    /* High-end side-by-side car image */
+    background: url('https://images.unsplash.com/photo-1552519507-da3b142c6e3d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    z-index: 1;
+    animation: cinematicPan 60s ease-in-out infinite;
+    will-change: transform;
+  }
+
+  .compare-hero::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, rgba(2, 6, 23, 0.85) 0%, rgba(2, 6, 23, 0.98) 100%);
+    z-index: 2;
+  }
+
+  .compare-hero .container {
+    position: relative;
+    z-index: 3;
+    text-align: center;
+  }
+
+  .compare-hero h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  }
+
+  .compare-hero h1 span { color: #e11d48; }
+
+  .compare-hero p {
+    color: #cbd5e1;
+    font-size: 1.15rem;
+    margin: 0;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+
+  /* --- Glassmorphism Form Wrapper --- */
+  .compare-wrapper {
+    margin-top: -60px;
+    position: relative;
+    z-index: 10;
+    padding-bottom: 80px;
+  }
+
+  .premium-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.08);
+    padding: 40px;
+    margin-bottom: 30px;
+  }
+
+  /* --- Form Inputs --- */
+  .compare-form label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .form-select-custom {
+    background-color: #f8fafc;
+    border: 2px solid #e2e8f0;
+    color: #0f172a;
+    border-radius: 12px;
+    padding: 16px 20px;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: none;
+    width: 100%;
+    cursor: pointer;
+  }
+
+  .form-select-custom:focus {
+    background-color: #fff;
+    border-color: #e11d48;
+    box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.1);
+    outline: none;
+  }
+
+  .vs-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background: #0f172a;
+    color: #fff;
+    border-radius: 50%;
+    font-weight: 900;
+    font-size: 1.2rem;
+    border: 4px solid #ffffff;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 2;
+  }
+
+  .btn-compare {
+    background-color: #e11d48;
+    color: #fff;
+    font-weight: 800;
+    padding: 16px 40px;
+    border-radius: 12px;
+    border: none;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 15px rgba(225, 29, 72, 0.3);
+    width: 100%;
+  }
+
+  .btn-compare:hover {
+    background-color: #be123c;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(225, 29, 72, 0.4);
+    color: #fff;
+  }
+
+  /* --- Advanced Comparison Table --- */
+  .table-responsive-custom {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+  }
+
+  .vs-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #ffffff;
+  }
+
+  .vs-table th {
+    background: #f8fafc;
+    padding: 25px 20px;
+    text-align: center;
+    border-bottom: 2px solid #e2e8f0;
+    width: 40%;
+  }
+
+  .vs-table th:first-child {
+    width: 20%;
+    background: #ffffff;
+    border-right: 1px solid #e2e8f0;
+  }
+
+  .car-title-main {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #0f172a;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+  }
+
+  .car-year-badge {
+    display: inline-block;
+    background: #e11d48;
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+
+  .vs-table td {
+    padding: 20px;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: center;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #334155;
+    vertical-align: middle;
+  }
+
+  .vs-table tr:hover td {
+    background-color: #f8fafc;
+  }
+
+  .vs-table td:first-child {
+    text-align: left;
+    font-weight: 800;
+    color: #0f172a;
+    background: #f8fafc;
+    border-right: 1px solid #e2e8f0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.85rem;
+  }
+  .winner-cell {
+    background: #ecfdf5 !important;
+    color: #065f46 !important;
+    border-left: 3px solid #10b981;
+    font-weight: 900;
+  }
+  .winner-year {
+    background: #10b981;
+  }
+
+  .vs-table tr:hover td:first-child {
+    background-color: #f1f5f9;
+  }
+
+  .spec-icon {
+    color: #e11d48;
+    width: 24px;
+    text-align: center;
+    margin-right: 8px;
+    font-size: 1.1rem;
+  }
+
+  .empty-state {
+    padding: 60px 20px;
+    text-align: center;
+    color: #94a3b8;
+  }
+  
+  .empty-state i {
+    font-size: 4rem;
+    color: #e2e8f0;
+    margin-bottom: 20px;
+  }
+</style>
+
+<section class="compare-hero reveal">
+  <div class="container">
+    <h1>Head-to-Head <span>Matchup</span></h1>
+    <p>Select two vehicles to analyze their core specifications.</p>
+  </div>
+</section>
+
+<section class="container compare-wrapper">
+  
+  <div class="premium-card reveal" style="transition-delay: 0.1s;">
+    <form method="get" class="compare-form">
+      
+      <div class="row align-items-center mb-4">
+        <div class="col-md-5 text-md-end mb-4 mb-md-0">
+          <label>Challenger (Car A)</label>
+          <select name="vin1" class="form-select-custom text-md-end" required>
+            <option value="">-- Select a vehicle --</option>
+            {% for c in cars %}
+              {% if c.vin %}
+                <option value="{{ c.vin }}" {% if vin1 == c.vin %}selected{% endif %}>{{ c.make }} {{ c.model }} ({{ c.year }})</option>
+              {% elif c.listings.all %}
+                <option value="{{ c.listings.all.0.listing_id }}" {% if vin1 == c.listings.all.0.listing_id %}selected{% endif %}>{{ c.make }} {{ c.model }} ({{ c.year }})</option>
+              {% else %}
+                <option value="" disabled>{{ c.make }} {{ c.model }} ({{ c.year }})</option>
+              {% endif %}
+            {% endfor %}
+          </select>
+        </div>
+        
+        <div class="col-md-2 text-center d-none d-md-block">
+          <div class="vs-badge">VS</div>
+        </div>
+        
+        <div class="col-md-5">
+          <label>Opponent (Car B)</label>
+          <select name="vin2" class="form-select-custom" required>
+            <option value="">-- Select a vehicle --</option>
+            {% for c in cars %}
+              {% if c.vin %}
+                <option value="{{ c.vin }}" {% if vin2 == c.vin %}selected{% endif %}>{{ c.make }} {{ c.model }} ({{ c.year }})</option>
+              {% elif c.listings.all %}
+                <option value="{{ c.listings.all.0.listing_id }}" {% if vin2 == c.listings.all.0.listing_id %}selected{% endif %}>{{ c.make }} {{ c.model }} ({{ c.year }})</option>
+              {% else %}
+                <option value="" disabled>{{ c.make }} {{ c.model }} ({{ c.year }})</option>
+              {% endif %}
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-8 mx-auto">
+          <button type="submit" class="btn-compare">
+            <i class="fa-solid fa-bolt me-2"></i> Run Comparison
+          </button>
+        </div>
+      </div>
+
+    </form>
+  </div>
+
+  {% if car1 or car2 %}
+  <div class="premium-card reveal" style="transition-delay: 0.2s; padding: 0;">
+    <div class="table-responsive-custom">
+      <table class="vs-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>
+              {% if car1 %}
+                <div class="car-title-main">{{ car1.make }} {{ car1.model }}</div>
+                <div class="car-year-badge {% if dom.year == 1 %}winner-year{% endif %}">{{ car1.year }}</div>
+              {% else %}
+                <span class="text-muted">Not Selected</span>
+              {% endif %}
+            </th>
+            <th>
+              {% if car2 %}
+                <div class="car-title-main">{{ car2.make }} {{ car2.model }}</div>
+                <div class="car-year-badge {% if dom.year == 2 %}winner-year{% endif %}">{{ car2.year }}</div>
+              {% else %}
+                <span class="text-muted">Not Selected</span>
+              {% endif %}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><i class="fa-solid fa-palette spec-icon"></i> Exterior Color</td>
+            <td>{% if car1 %}{{ car1.color|default:'—' }}{% else %}—{% endif %}</td>
+            <td>{% if car2 %}{{ car2.color|default:'—' }}{% else %}—{% endif %}</td>
+          </tr>
+          <tr>
+            <td><i class="fa-solid fa-gas-pump spec-icon"></i> Fuel Type</td>
+            <td class="{% if dom.fuel == 1 %}winner-cell{% endif %}">{% if car1 %}{{ car1.fuel_type|default:'—' }}{% else %}—{% endif %}</td>
+            <td class="{% if dom.fuel == 2 %}winner-cell{% endif %}">{% if car2 %}{{ car2.fuel_type|default:'—' }}{% else %}—{% endif %}</td>
+          </tr>
+          <tr>
+            <td><i class="fa-solid fa-gears spec-icon"></i> Transmission</td>
+            <td class="{% if dom.trans == 1 %}winner-cell{% endif %}">{% if car1 %}{{ car1.transmission|default:'—' }}{% else %}—{% endif %}</td>
+            <td class="{% if dom.trans == 2 %}winner-cell{% endif %}">{% if car2 %}{{ car2.transmission|default:'—' }}{% else %}—{% endif %}</td>
+          </tr>
+          <tr>
+            <td><i class="fa-solid fa-car-side spec-icon"></i> Body Style</td>
+            <td class="{% if dom.body == 1 %}winner-cell{% endif %}">{% if car1 %}{{ car1.body_type|default:'—' }}{% else %}—{% endif %}</td>
+            <td class="{% if dom.body == 2 %}winner-cell{% endif %}">{% if car2 %}{{ car2.body_type|default:'—' }}{% else %}—{% endif %}</td>
+          </tr>
+          <tr>
+            <td><i class="fa-solid fa-gauge-high spec-icon"></i> Mileage</td>
+            <td class="{% if dom.mileage == 1 %}winner-cell{% endif %}">{% if car1 and car1.mileage %}{{ car1.mileage }} km{% else %}—{% endif %}</td>
+            <td class="{% if dom.mileage == 2 %}winner-cell{% endif %}">{% if car2 and car2.mileage %}{{ car2.mileage }} km{% else %}—{% endif %}</td>
+          </tr>
+          <tr>
+            <td><i class="fa-solid fa-barcode spec-icon text-muted"></i> VIN Number</td>
+            <td style="font-family: monospace; font-size: 0.95rem;">{% if car1 %}{{ car1.vin }}{% else %}—{% endif %}</td>
+            <td style="font-family: monospace; font-size: 0.95rem;">{% if car2 %}{{ car2.vin }}{% else %}—{% endif %}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="premium-card reveal" style="transition-delay: 0.2s;">
+    <div class="empty-state">
+      <i class="fa-solid fa-scale-balanced"></i>
+      <h3 class="fw-bold" style="color: #0f172a;">Awaiting Combatants</h3>
+      <p>Select two vehicles from the dropdowns above to initiate the comparison matrix.</p>
+    </div>
+  </div>
+  {% endif %}
+
+</section>
+{% endblock %}

@@ -1,0 +1,63 @@
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f1f5f9; padding: 40px 20px; width: 100%; height: 100%;">
+  <tr>
+    <td align="center" valign="top">
+      
+      <table width="600" cellpadding="0" cellspacing="0" border="0" align="center" style="background-color:#ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; box-shadow: 0 20px 40px rgba(0,0,0,0.08); margin: 0 auto;">
+        
+        <tr>
+          <td align="center" style="background-color: #0f172a; padding: 0;">
+            <img src="cid:hero" alt="Car Scout Premium Vehicle" width="600" style="display:block; width: 100%; max-width: 600px; height: auto; border: none; margin: 0; padding: 0;">
+          </td>
+        </tr>
+
+        <tr>
+          <td align="center" style="background-color: #0f172a; padding: 35px 30px 45px;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Welcome Back</h1>
+            <p style="color: #94a3b8; font-size: 15px; margin: 10px 0 0 0; font-weight: 500;">Your high-performance dashboard awaits.</p>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding: 40px 40px 20px;">
+            <p style="margin: 0 0 15px 0; color: #0f172a; font-size: 17px; line-height: 26px; font-weight: 600;">
+              Hi {{ user.name|default:user.email }},
+            </p>
+            <p style="margin: 0 0 25px 0; color: #475569; font-size: 16px; line-height: 26px;">
+              You have successfully logged into your Car Scout account. You are currently browsing the platform as a <strong style="color: #e11d48; text-transform: uppercase;">{{ user.role }}</strong>.
+            </p>
+
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+              <tr>
+                <td style="padding: 20px; color: #334155; font-size: 15px; line-height: 24px;">
+                  Ready to get started? Head over to your personal hub to manage your active listings, view secure messages, and track your test drives.
+                </td>
+              </tr>
+            </table>
+
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 40px; margin-bottom: 20px;">
+              <tr>
+                <td align="center">
+                  <a href="{{ site_url }}" style="display: inline-block; background-color: #e11d48; color: #ffffff; font-size: 16px; font-weight: 700; text-decoration: none; padding: 18px 40px; border-radius: 10px; text-transform: uppercase; letter-spacing: 1px;">Open My Dashboard</a>
+                </td>
+              </tr>
+            </table>
+            
+          </td>
+        </tr>
+
+        <tr>
+          <td align="center" style="background-color: #f8fafc; padding: 30px 40px; border-top: 1px solid #e2e8f0;">
+            <p style="margin: 0; color: #64748b; font-size: 13px; line-height: 18px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">
+              © 2026 Car Scout
+            </p>
+            <p style="margin: 10px 0 0 0; color: #94a3b8; font-size: 12px; line-height: 18px;">
+              If you did not authorize this login, please <a href="#" style="color: #e11d48; text-decoration: underline;">secure your account</a> immediately to protect your data.
+            </p>
+          </td>
+        </tr>
+        
+      </table>
+
+    </td>
+  </tr>
+</table>

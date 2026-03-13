@@ -1,0 +1,367 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Quick Pay | Car Vault{% endblock %}
+
+{% block content %}
+<style>
+    /* --- Hero Section --- */
+    .booking-hero {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        padding: 80px 0 60px;
+        color: white;
+        text-align: center;
+        margin-bottom: -50px;
+    }
+    .booking-hero h1 {
+        font-weight: 800;
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+    }
+    .booking-hero span { color: #ef4444; }
+    
+    /* --- Card Layout --- */
+    .booking-card-wrapper {
+        max-width: 600px;
+        margin: 0 auto 80px;
+        position: relative;
+        z-index: 10;
+    }
+    .booking-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+        padding: 40px;
+        border: 1px solid #e2e8f0;
+    }
+    .section-label {
+        font-weight: 800;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .section-label i { color: #ef4444; }
+
+    /* --- Amount Input Styling --- */
+    .amount-wrapper {
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 15px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    .amount-wrapper:focus-within {
+        border-color: #ef4444;
+        background: white;
+        box-shadow: 0 10px 25px rgba(239, 68, 68, 0.1);
+    }
+    .amount-input-group {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        font-size: 2.5rem;
+        font-weight: 900;
+        color: #0f172a;
+    }
+    .amount-input-group input {
+        border: none;
+        background: transparent;
+        font-size: 3rem;
+        font-weight: 900;
+        color: #0f172a;
+        width: 150px;
+        text-align: center;
+        padding: 0;
+    }
+    .amount-input-group input:focus { outline: none; }
+    
+    /* --- Button --- */
+    .btn-pay-now {
+        background: #ef4444;
+        color: white;
+        border: none;
+        padding: 16px 30px;
+        border-radius: 12px;
+        font-weight: 800;
+        font-size: 1.1rem;
+        width: 100%;
+        margin-top: 30px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+    }
+    .btn-pay-now:hover {
+        background: #dc2626;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+    }
+
+    /* --- Developer Terminal --- */
+    .debug-terminal {
+        background: #0f172a;
+        color: #10b981;
+        font-family: 'Courier New', Courier, monospace;
+        padding: 20px;
+        border-radius: 15px;
+        margin-top: 30px;
+        font-size: 0.85rem;
+        border: 1px solid #1e293b;
+        box-shadow: inset 0 4px 10px rgba(0,0,0,0.5);
+        max-height: 250px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-break: break-all;
+    }
+    .debug-terminal::-webkit-scrollbar { width: 8px; }
+    .debug-terminal::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    .debug-header {
+        color: #64748b;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+        border-bottom: 1px dashed #334155;
+        padding-bottom: 5px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    /* --- Custom Popup Modal Styles --- */
+    .custom-modal-overlay {
+        position: fixed;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(15, 23, 42, 0.7);
+        backdrop-filter: blur(5px);
+        z-index: 9999;
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0; visibility: hidden; transition: all 0.3s ease;
+    }
+    .custom-modal-overlay.active { opacity: 1; visibility: visible; }
+    .custom-modal-box {
+        background: white; border-radius: 20px; padding: 40px 30px;
+        width: 90%; max-width: 400px; text-align: center;
+        transform: translateY(20px) scale(0.95);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        border: 1px solid #e2e8f0;
+    }
+    .custom-modal-overlay.active .custom-modal-box { transform: translateY(0) scale(1); }
+    .custom-modal-icon {
+        width: 80px; height: 80px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 20px; font-size: 2.5rem;
+    }
+    .icon-success { background: #dcfce7; color: #10b981; }
+    .icon-error { background: #fee2e2; color: #ef4444; }
+    .custom-modal-box h3 { font-weight: 800; color: #0f172a; margin-bottom: 10px; font-size: 1.5rem; }
+    .custom-modal-box p { color: #64748b; margin-bottom: 25px; line-height: 1.6; font-size: 0.95rem; }
+    .custom-modal-btn {
+        width: 100%; border: none; padding: 14px; border-radius: 10px;
+        font-weight: 800; color: white; transition: all 0.3s ease;
+        text-transform: uppercase; letter-spacing: 1px;
+    }
+    .btn-success-theme { background: #10b981; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+    .btn-success-theme:hover { background: #059669; transform: translateY(-2px); }
+    .btn-error-theme { background: #ef4444; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); }
+    .btn-error-theme:hover { background: #dc2626; transform: translateY(-2px); }
+</style>
+
+<section class="booking-hero">
+    <div class="container">
+        <h1>Quick <span>Pay</span></h1>
+        <p>Developer test environment for Razorpay gateway integration.</p>
+    </div>
+</section>
+
+<div class="container booking-card-wrapper">
+    <div class="booking-card">
+        <form id="quickPayForm">
+            {% csrf_token %}
+            
+            <div class="section-label justify-content-center mb-3">
+                <i class="fa-solid fa-coins"></i> Payment Amount
+            </div>
+            
+            <div class="amount-wrapper">
+                <div class="amount-input-group">
+                    <span>₹</span>
+                    <input type="number" id="amountInput" value="500" min="1" step="1">
+                </div>
+            </div>
+
+            <button id="rzp-button1" type="button" class="btn-pay-now">
+                <i class="fa-solid fa-shield-halved"></i> Launch Checkout
+            </button>
+        </form>
+
+        <div class="debug-terminal" id="debugTerminal">
+            <div class="debug-header">
+                <span><i class="fa-solid fa-terminal me-2"></i> Console Output</span>
+                <span id="terminalStatus" class="text-success">Ready</span>
+            </div>
+            <span id="debug">System initialized. Waiting for transaction...</span>
+        </div>
+    </div>
+</div>
+
+<div id="customModalOverlay" class="custom-modal-overlay">
+    <div class="custom-modal-box">
+        <div id="customModalIcon" class="custom-modal-icon"></div>
+        <h3 id="customModalTitle">Title</h3>
+        <p id="customModalMessage">Message content</p>
+        <button type="button" id="customModalBtn" class="custom-modal-btn">OK</button>
+    </div>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    // --- Custom Alert Logic ---
+    let modalRedirectUrl = null;
+    const modalOverlay = document.getElementById('customModalOverlay');
+    const modalBtn = document.getElementById('customModalBtn');
+
+    function showCustomAlert(type, title, message, redirectUrl = null) {
+        modalRedirectUrl = redirectUrl;
+        document.getElementById('customModalTitle').innerText = title;
+        document.getElementById('customModalMessage').innerText = message;
+        
+        const iconDiv = document.getElementById('customModalIcon');
+        
+        if (type === 'success') {
+            iconDiv.className = 'custom-modal-icon icon-success';
+            iconDiv.innerHTML = '<i class="fa-solid fa-check"></i>';
+            modalBtn.className = 'custom-modal-btn btn-success-theme';
+            modalBtn.innerText = 'Continue';
+        } else {
+            iconDiv.className = 'custom-modal-icon icon-error';
+            iconDiv.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+            modalBtn.className = 'custom-modal-btn btn-error-theme';
+            modalBtn.innerText = 'Dismiss';
+        }
+        
+        modalOverlay.classList.add('active');
+    }
+
+    modalBtn.addEventListener('click', () => {
+        modalOverlay.classList.remove('active');
+        if (modalRedirectUrl) {
+            window.location.href = modalRedirectUrl;
+        }
+    });
+
+    // --- Razorpay Payment Logic ---
+    document.getElementById('rzp-button1').onclick = async function(e) {
+        e.preventDefault();
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const amountEl = document.getElementById('amountInput');
+        const amt = Math.max(1, parseInt(amountEl.value || '500', 10));
+        
+        const debug = document.getElementById('debug');
+        const status = document.getElementById('terminalStatus');
+        
+        debug.textContent = '> Initializing order creation for ₹' + amt + '...\n';
+        status.textContent = 'Processing...';
+        status.className = 'text-warning';
+
+        try {
+            const response = await fetch("{% url 'create_razorpay_order' %}", {
+                method: "POST",
+                headers: { "X-CSRFToken": csrftoken, "Content-Type": "application/x-www-form-urlencoded" },
+                body: "amount=" + encodeURIComponent(amt)
+            });
+            
+            const ct = response.headers.get('content-type') || '';
+            if (!response.ok) {
+                if (response.status === 403 || response.status === 401) {
+                    showCustomAlert('error', 'Authentication Required', 'Please login first to proceed with the test payment.', "{% url 'login' %}?next={{ request.path|urlencode }}");
+                    return;
+                }
+                if (ct.includes('application/json')) {
+                    const errJson = await response.json().catch(() => ({}));
+                    const msg = errJson && errJson.error ? errJson.error : ('Server error ' + response.status);
+                    throw new Error(msg);
+                } else {
+                    const txt = await response.text();
+                    throw new Error((txt || '').slice(0,200) || ('Server error ' + response.status));
+                }
+            }
+            if (!ct.includes('application/json')) throw new Error("Unexpected response type");
+            
+            const orderData = await response.json();
+            debug.textContent += '> Order Created Successfully.\n> Order ID: ' + orderData.id + '\n> Awaiting user payment via SDK...\n';
+
+            var options = {
+                "key": "{{ key_id }}",
+                "amount": orderData.amount,
+                "currency": orderData.currency,
+                "name": "Car Vault Dev",
+                "description": "Quick Payment Test",
+                "order_id": orderData.id,
+                "handler": async function (res) {
+                    debug.textContent += '\n> Payment captured successfully.\n> Verifying signature with backend...\n';
+                    
+                    const formData = new FormData();
+                    formData.append('razorpay_payment_id', res.razorpay_payment_id);
+                    formData.append('razorpay_order_id', res.razorpay_order_id);
+                    formData.append('razorpay_signature', res.razorpay_signature);
+                    
+                    const verifyResponse = await fetch("{% url 'verify_payment' %}", {
+                        method: "POST",
+                        headers: { "X-CSRFToken": csrftoken },
+                        body: formData
+                    });
+                    
+                    const verifyData = await verifyResponse.json();
+                    debug.textContent += '> Server Response: ' + JSON.stringify(verifyData, null, 2);
+                    
+                    if (verifyData.status === "Payment verified successfully") {
+                        status.textContent = 'Success';
+                        status.className = 'text-success';
+                        showCustomAlert('success', 'Test Payment Successful!', 'The transaction signature was verified securely by the server.', "{% url 'dashboard_buyer' %}");
+                    } else {
+                        status.textContent = 'Verification Failed';
+                        status.className = 'text-danger';
+                        showCustomAlert('error', 'Verification Failed', 'The payment went through, but backend signature verification failed.');
+                    }
+                },
+                "prefill": {
+                    "name": "{{ user.name|default:'Dev Tester' }}",
+                    "email": "{{ user.email|default:'test@carvault.local' }}"
+                },
+                "theme": { "color": "#ef4444" },
+                "modal": { 
+                    "ondismiss": function(){ 
+                        debug.textContent += '\n> User dismissed the checkout modal.'; 
+                        status.textContent = 'Aborted';
+                        status.className = 'text-danger';
+                    } 
+                }
+            };
+            
+            if (typeof Razorpay === 'undefined') {
+                showCustomAlert('error', 'SDK Error', 'Payment SDK failed to load. Please check your internet connection or disable ad-blockers.');
+                return;
+            }
+            
+            var rzp1 = new Razorpay(options);
+            rzp1.open();
+            
+        } catch (err) {
+            debug.textContent += '\n> FATAL ERROR: ' + (err && err.message ? err.message : String(err));
+            status.textContent = 'Error';
+            status.className = 'text-danger';
+            showCustomAlert('error', 'Transaction Error', err.message);
+        }
+    };
+</script>
+{% endblock %}

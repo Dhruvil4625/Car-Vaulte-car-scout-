@@ -1,0 +1,717 @@
+{% extends 'base.html' %}
+{% load currency %}{% load static %}
+{% block title %}{{ brand }} Cars | Car Scout{% endblock %}
+
+{% block content %}
+<style>
+  /* --- Ultra-Smooth Cinematic Pan --- */
+  @keyframes cinematicPan {
+    0% { transform: scale(1.0) translateX(0); }
+    50% { transform: scale(1.05) translateX(-1%); }
+    100% { transform: scale(1.0) translateX(0); }
+  }
+
+  /* --- Brand Hero Section --- */
+  .brand-hero {
+    position: relative;
+    padding: 80px 0 110px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+    background: #0f172a;
+    text-align: center;
+  }
+
+  .brand-hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    /* Abstract dark automotive background */
+    background: url('https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?q=80&w=1920&auto=format&fit=crop') center/cover no-repeat;
+    z-index: 1;
+    animation: cinematicPan 60s ease-in-out infinite;
+    will-change: transform;
+    opacity: 0.4;
+  }
+
+  .brand-hero::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(15, 23, 42, 0.98) 100%);
+    z-index: 2;
+  }
+
+  .brand-hero .container {
+    position: relative;
+    z-index: 3;
+  }
+
+  .main-brand-badge {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+    border: 3px solid rgba(255,255,255,0.2);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    padding: 12px;
+  }
+
+  .main-brand-badge img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .brand-hero h1 {
+    font-weight: 900;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #ffffff;
+    font-size: 2.8rem;
+    text-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  }
+
+  .brand-hero p {
+    color: #cbd5e1;
+    margin: 10px 0 0;
+    font-size: 1.1rem;
+    font-weight: 500;
+  }
+
+  /* --- Explore Brands Carousel --- */
+  .brand-carousel-wrapper {
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 25px 0;
+    margin-bottom: 30px;
+  }
+
+  .brand-carousel-title {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 800;
+    color: #64748b;
+    margin-bottom: 15px;
+    padding: 0 20px;
+  }
+
+  .brand-carousel {
+    display: flex;
+    gap: 15px;
+    overflow-x: auto;
+    padding: 10px 20px 20px 20px;
+    scrollbar-width: none; /* Firefox */
+  }
+  
+  .brand-carousel::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
+
+  .brand-item {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    gap: 8px;
+    width: 80px;
+  }
+
+  .brand-icon {
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+    transition: all 0.3s ease;
+  }
+
+  .brand-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .brand-item:hover .brand-icon {
+    border-color: #e11d48;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(225,29,72,0.15);
+  }
+
+  .brand-name {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: center;
+    transition: color 0.3s ease;
+  }
+
+  .brand-item:hover .brand-name {
+    color: #0f172a;
+  }
+
+  /* --- UI Elements --- */
+  .section-card {
+    padding: 25px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    margin-top: -50px;
+    position: relative;
+    z-index: 10;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+    margin-bottom: 30px;
+  }
+
+  .chips {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .chips-label {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #0f172a;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-right: 5px;
+  }
+
+  .chip {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 30px;
+    padding: 8px 16px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #475569;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  .chip:hover {
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+  }
+
+  /* Segmented Controls */
+  .seg-tabs {
+    background: #f1f5f9;
+    padding: 6px;
+    border-radius: 12px;
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .seg-tabs .btn {
+    border: none;
+    border-radius: 8px;
+    font-weight: 800;
+    color: #64748b;
+    padding: 12px 24px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+  }
+
+  .seg-tabs .btn.active, .seg-tabs .btn:hover {
+    background: #ffffff;
+    color: #0f172a;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  }
+
+  /* --- Car Grid --- */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+    margin-bottom: 60px;
+  }
+
+  .modern-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.4s ease;
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    height: 100%;
+  }
+
+  .modern-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+    border-color: rgba(225,29,72,0.3);
+  }
+
+  .card-img {
+    height: 200px;
+    background: #0f172a;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+  }
+
+  .modern-card:hover .card-img img {
+    transform: scale(1.08);
+  }
+  
+ .ai-overlay {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.94);
+    backdrop-filter: blur(6px);
+    border-top: 1px solid #e2e8f0;
+    transform: translateY(8px);
+    opacity: 0;
+    transition: all .25s ease;
+  }
+  .modern-card:hover .ai-overlay { transform: translateY(0); opacity: 1; }
+  .ai-title { font-size: .8rem; font-weight: 800; color: #0f172a; display:flex; align-items:center; gap:6px; margin-bottom:6px; text-transform: uppercase; letter-spacing:.3px; }
+  .ai-row { display:flex; align-items:center; gap:8px; margin:4px 0; font-size:.75rem; }
+  .ai-label { width:60px; color:#475569; font-weight:700; }
+  .ai-bar { flex:1; height:8px; background:#e2e8f0; border-radius:8px; overflow:hidden; }
+  .ai-fill { height:100%; width:0%; border-radius:8px; background:#0f172a; transition: width .4s ease; }
+  .ai-val { min-width:80px; text-align:right; font-weight:800; color:#0f172a; }
+  .ai-badge { position:absolute; top:10px; left:10px; padding:6px 10px; border-radius:999px; font-size:.7rem; font-weight:900; text-transform:uppercase; letter-spacing:.5px; background:#fff; border:1px solid #e2e8f0; color:#0f172a; }
+  .ai-badge.good { background:#ecfdf5; color:#065f46; border-color:#bbf7d0; }
+  .ai-badge.fair { background:#eff6ff; color:#1e3a8a; border-color:#bfdbfe; }
+  .ai-badge.exp  { background:#fef2f2; color:#991b1b; border-color:#fecaca; }
+
+  .card-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+
+  .card-title {
+    font-weight: 800;
+    color: #0f172a;
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+
+  .card-meta {
+    color: #64748b;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 15px;
+  }
+
+  .card-price {
+    color: #e11d48;
+    font-weight: 900;
+    font-size: 1.3rem;
+    margin-top: auto;
+    padding-top: 15px;
+    border-top: 1px dashed #e2e8f0;
+  }
+
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    background: #ffffff;
+    border: 2px dashed #cbd5e1;
+    border-radius: 16px;
+    color: #64748b;
+  }
+</style>
+
+<section class="brand-hero reveal">
+  <div class="container">
+    <div class="main-brand-badge">
+      {% if logo %}
+        <img src="{{ logo }}" alt="{{ brand }}">
+      {% else %}
+        <img src="https://cdn-icons-png.flaticon.com/512/741/741407.png" alt="{{ brand }}">
+      {% endif %}
+    </div>
+    <h1>{{ brand }}</h1>
+    <p>Top models and curated selections from the {{ brand }} inventory.</p>
+  </div>
+</section>
+
+<div class="brand-carousel-wrapper reveal" style="transition-delay: 0.1s;">
+  <div class="container">
+    <div class="brand-carousel-title">Explore Other Brands</div>
+    <div class="brand-carousel">
+      
+      <a href="?brand=Maruti" class="brand-item"><div class="brand-icon"><img src="https://freepngimg.com/save/172214-logo-suzuki-maruti-free-photo/1920x1080" alt="Maruti"></div><span class="brand-name">Maruti</span></a>
+      <a href="?brand=Tata" class="brand-item"><div class="brand-icon"><img src="data:image/png;base64,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" alt="Tata"></div><span class="brand-name">Tata</span></a>
+      <a href="?brand=Hyundai" class="brand-item"><div class="brand-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT9YFtDCBk6sNzkRo_Uqw2Kp-pe-iVduvR80w&s" alt="Hyundai"></div><span class="brand-name">Hyundai</span></a>
+      <a href="?brand=Mahindra" class="brand-item"><div class="brand-icon"><img src="https://images.seeklogo.com/logo-png/61/1/mahindra-auto-logo-png_seeklogo-613492.png" alt="Mahindra"></div><span class="brand-name">Mahindra</span></a>
+      <a href="?brand=Toyota" class="brand-item"><div class="brand-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRfV0rVNz-kjE3fZ0AfSowXgs1Z47BuSP7ZOQ&s" alt="Toyota"></div><span class="brand-name">Toyota</span></a>
+      <a href="?brand=Kia" class="brand-item"><div class="brand-icon"><img src="https://www.shutterstock.com/image-vector/kia-art-symbol-south-korean-260nw-2269894917.jpg" alt="Kia"></div><span class="brand-name">Kia</span></a>
+      <a href="?brand=Honda" class="brand-item"><div class="brand-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQRGEvuGxRNkRzpSmbMENugVAYFGFMwvv6AtA&s" alt="Honda"></div><span class="brand-name">Honda</span></a>
+      <a href="?brand=MG" class="brand-item"><div class="brand-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRCzAnCHXSNrcq4cHWwl3Jie4J-G0zL5C9-Pg&s" alt="MG"></div><span class="brand-name">MG Motor</span></a>
+      <a href="?brand=Renault" class="brand-item"><div class="brand-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQECSojF5qaIy-dbeX6pnMhBn8Qkdvdg6jbzA&s" alt="Renault"></div><span class="brand-name">Renault</span></a>
+      <a href="?brand=Nissan" class="brand-item"><div class="brand-icon"><img src="https://download.logo.wine/logo/Nissan_Motor_India_Private_Limited/Nissan_Motor_India_Private_Limited-Logo.wine.png" alt="Nissan"></div><span class="brand-name">Nissan</span></a>
+      <a href="?brand=Skoda" class="brand-item"><div class="brand-icon"><img src="https://i.pinimg.com/736x/7d/32/9d/7d329d8a52f3a2d6e5fa7cde481635dc.jpg" alt="Skoda"></div><span class="brand-name">Skoda</span></a>
+      <a href="?brand=Volkswagen" class="brand-item"><div class="brand-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5qpBsAsX57wm_4D1NL5wfhlq9znwqDDfW7w&s" alt="Volkswagen"></div><span class="brand-name">Volkswagen</span></a>
+      <a href="?brand=Citroen" class="brand-item"><div class="brand-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTYBwWB9nfqbPlvQkLVICpXMpDsjrej8Ho6yQ&s" alt="Citroen"></div><span class="brand-name">Citroen</span></a>
+      
+      <a href="?brand=Audi" class="brand-item"><div class="brand-icon"><img src="https://image.similarpng.com/file/similarpng/very-thumbnail/2020/09/Audi-logo-icon-on-transparent-background-PNG.png" alt="Audi"></div><span class="brand-name">Audi</span></a>
+      <a href="?brand=BMW" class="brand-item"><div class="brand-icon"><img src="https://download.logo.wine/logo/BMW_India/BMW_India-Logo.wine.png" alt="BMW"></div><span class="brand-name">BMW</span></a>
+      <a href="?brand=Mercedes-Benz" class="brand-item"><div class="brand-icon"><img src="https://pngimg.com/d/mercedes_logos_PNG16.png" alt="Mercedes"></div><span class="brand-name">Mercedes</span></a>
+      <a href="?brand=Volvo" class="brand-item"><div class="brand-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSbDN61Xv08mPRezpUtrdUBUORV9_yKQunmPw&s" alt="Volvo"></div><span class="brand-name">Volvo</span></a>
+      <a href="?brand=Land Rover" class="brand-item"><div class="brand-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR5oZiNvN91naxjbYXZr5fAjc6iCbao1iegeQ&s" alt="Land Rover"></div><span class="brand-name">Land Rover</span></a>
+      
+      <a href="?brand=Ferrari" class="brand-item"><div class="brand-icon"><img src="https://images.seeklogo.com/logo-png/5/1/ferrari-logo-png_seeklogo-53764.png" alt="Ferrari"></div><span class="brand-name">Ferrari</span></a>
+      <a href="?brand=Lamborghini" class="brand-item"><div class="brand-icon"><img src="https://download.logo.wine/logo/Lamborghini/Lamborghini-Logo.wine.png" alt="Lamborghini"></div><span class="brand-name">Lamborghini</span></a>
+      <a href="?brand=Porsche" class="brand-item"><div class="brand-icon"><img src="https://images.seeklogo.com/logo-png/16/1/porsche-logo-png_seeklogo-168544.png" alt="Porsche"></div><span class="brand-name">Porsche</span></a>
+      <a href="?brand=Aston Martin" class="brand-item"><div class="brand-icon"><img src="https://pngimg.com/d/aston_martin_PNG35.png" alt="Aston Martin"></div><span class="brand-name">Aston</span></a>
+      <a href="?brand=Mclaren" class="brand-item"><div class="brand-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSO_tLzaDh5AOxieWcPp2a5RyzYoCKRlil0rg&s" alt="Mclaren"></div><span class="brand-name">Mclaren</span></a>
+      <a href="?brand=Rolls-Royce" class="brand-item"><div class="brand-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSMw4VxhP98ST8RAfyc3RtGHROvS56ZEXir7w&s" alt="Rolls-Royce"></div><span class="brand-name">Rolls-Royce</span></a>
+      <a href="?brand=Bentley" class="brand-item"><div class="brand-icon"><img src="https://pngimg.com/d/bentley_PNG21.png" alt="Bentley"></div><span class="brand-name">Bentley</span></a>
+      
+      <a href="?brand=Jeep" class="brand-item"><div class="brand-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTlD2EDzLJVjbuvb6Z72bOrOPRBiTp2A6xghA&s" alt="Jeep"></div><span class="brand-name">Jeep</span></a>
+      <a href="?brand=Isuzu" class="brand-item"><div class="brand-icon"><img src="https://images.seeklogo.com/logo-png/7/1/isuzu-logo-png_seeklogo-73978.png" alt="Isuzu"></div><span class="brand-name">Isuzu</span></a>
+      <a href="?brand=Force" class="brand-item"><div class="brand-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5SxJegQ-fasGjsM58GRm4EOIqfi7x0uRJDQ&s" alt="Force"></div><span class="brand-name">Force</span></a>
+
+    </div>
+  </div>
+</div>
+
+<section class="container" style="position:relative; z-index:5;">
+  
+  <div class="section-card reveal" style="transition-delay: 0.15s;">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+      
+      {% if top_models %}
+      <div class="chips">
+        <span class="chips-label"><i class="fa-solid fa-fire text-danger me-1"></i> Top Models:</span>
+        {% for m in top_models %}
+          <span class="chip">{{ m }}</span>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="chips">
+        <span class="chips-label"><i class="fa-solid fa-car text-danger me-1"></i> Filter By Class:</span>
+      </div>
+      {% endif %}
+
+      <div class="seg-tabs">
+        <button class="btn active" data-t="all">All</button>
+        <button class="btn" data-t="economy">Economy</button>
+        <button class="btn" data-t="moderate">Moderate</button>
+        <button class="btn" data-t="premium">Premium</button>
+        <button class="btn" data-t="arrivals">New Arrivals</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="wrap-all" class="grid">
+    {% for l in listings %}
+    <a href="{% url 'listing_detail' l.listing_id %}" class="modern-card reveal" style="transition-delay: 0.{{ forloop.counter0|add:2 }}s;">
+      <div class="card-img">
+        {% if l.images.all %}
+          <img src="{{ l.images.all.0.image.url }}" alt="{{ l.car.make }} {{ l.car.model }}">
+        {% else %}
+          <img src="{% static 'img/placeholder.svg' %}" alt="Car">
+        {% endif %}
+        {% if l.ai_deal_label %}
+        <div class="ai-badge {% if l.ai_deal_label == 'Good Deal' %}good{% elif l.ai_deal_label == 'Fair Price' %}fair{% elif l.ai_deal_label == 'Expensive' %}exp{% endif %}">
+          {{ l.ai_deal_label }}
+        </div>
+        {% endif %}
+        <div class="ai-overlay">
+          <div class="ai-title"><i class="fa-solid fa-chart-line"></i> AI Insights</div>
+          <div class="ai-overview">
+            {% if l.car.expert_overview %}
+              {{ l.car.expert_overview|striptags|truncatechars:120 }}
+            {% elif l.description %}
+              {{ l.description|striptags|truncatechars:120 }}
+            {% else %}
+              Compact, city-friendly design with practical space and efficiency.
+            {% endif %}
+          </div>
+          <div class="ai-bars"
+               data-market="{{ l.ai_market|default:0 }}"
+               data-tax="{{ l.ai_tax|default:0 }}"
+               data-ins="{{ l.ai_ins|default:0 }}"
+               data-duty="{{ l.ai_duty|default:0 }}">
+            <div class="ai-row bar-market">
+              <div class="ai-label">Market</div>
+              <div class="ai-bar"><div class="ai-fill"></div></div>
+              <div class="ai-val">{{ l.ai_market|inr }}</div>
+            </div>
+            <div class="ai-row bar-tax">
+              <div class="ai-label">Tax</div>
+              <div class="ai-bar"><div class="ai-fill" style="background:#e11d48;"></div></div>
+              <div class="ai-val">{{ l.ai_tax|inr }}</div>
+            </div>
+            <div class="ai-row bar-ins">
+              <div class="ai-label">Ins</div>
+              <div class="ai-bar"><div class="ai-fill" style="background:#22c55e;"></div></div>
+              <div class="ai-val">{{ l.ai_ins|inr }}</div>
+            </div>
+            <div class="ai-row bar-duty">
+              <div class="ai-label">Duty</div>
+              <div class="ai-bar"><div class="ai-fill" style="background:#3b82f6;"></div></div>
+              <div class="ai-val">{{ l.ai_duty|inr }}</div>
+            </div>
+            <div class="ai-row">
+              <div class="ai-label">Total</div>
+              <div class="ai-bar"><div class="ai-fill" style="background:#64748b;width:100%"></div></div>
+              <div class="ai-val">{{ l.ai_total|inr }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-title">{{ l.car.make }} {{ l.car.model }}</div>
+        <div class="card-meta">
+          <span><i class="fa-regular fa-calendar me-1"></i> {{ l.car.year }}</span> • 
+          <span><i class="fa-solid fa-gas-pump me-1"></i> {{ l.car.fuel_type|default:'—' }}</span> • 
+          <span><i class="fa-solid fa-gears me-1"></i> {{ l.car.transmission|default:'—' }}</span>
+        </div>
+        <div class="card-price">{{ l.price|inr }}</div>
+      </div>
+    </a>
+    {% empty %}
+      <div class="empty-state reveal">
+        <i class="fa-solid fa-car-burst fs-1 mb-3 d-block"></i>
+        <h4 class="fw-bold text-dark">No Inventory</h4>
+        <p class="mb-0">There are currently no vehicles available for {{ brand }}.</p>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div id="wrap-economy" class="grid" style="display:none">
+    {% for l in economy %}
+    <a href="{% url 'listing_detail' l.listing_id %}" class="modern-card">
+      <div class="card-img">
+        {% if l.images.all %}<img src="{{ l.images.all.0.image.url }}" alt="{{ l.car.make }} {{ l.car.model }}">{% else %}<img src="{% static 'img/placeholder.svg' %}" alt="Car">{% endif %}
+        {% if l.ai_deal_label %}
+        <div class="ai-badge {% if l.ai_deal_label == 'Good Deal' %}good{% elif l.ai_deal_label == 'Fair Price' %}fair{% elif l.ai_deal_label == 'Expensive' %}exp{% endif %}">
+          {{ l.ai_deal_label }}
+        </div>
+        {% endif %}
+        <div class="ai-overlay">
+          <div class="ai-title"><i class="fa-solid fa-chart-line"></i> AI Insights</div>
+          <div class="ai-overview">
+            {% if l.car.expert_overview %}
+              {{ l.car.expert_overview|striptags|truncatechars:120 }}
+            {% elif l.description %}
+              {{ l.description|striptags|truncatechars:120 }}
+            {% else %}
+              Compact, city-friendly design with practical space and efficiency.
+            {% endif %}
+          </div>
+          <div class="ai-bars" data-market="{{ l.ai_market|default:0 }}" data-tax="{{ l.ai_tax|default:0 }}" data-ins="{{ l.ai_ins|default:0 }}" data-duty="{{ l.ai_duty|default:0 }}">
+            <div class="ai-row bar-market"><div class="ai-label">Market</div><div class="ai-bar"><div class="ai-fill"></div></div><div class="ai-val">{{ l.ai_market|inr }}</div></div>
+            <div class="ai-row bar-tax"><div class="ai-label">Tax</div><div class="ai-bar"><div class="ai-fill" style="background:#e11d48;"></div></div><div class="ai-val">{{ l.ai_tax|inr }}</div></div>
+            <div class="ai-row bar-ins"><div class="ai-label">Ins</div><div class="ai-bar"><div class="ai-fill" style="background:#22c55e;"></div></div><div class="ai-val">{{ l.ai_ins|inr }}</div></div>
+            <div class="ai-row bar-duty"><div class="ai-label">Duty</div><div class="ai-bar"><div class="ai-fill" style="background:#3b82f6;"></div></div><div class="ai-val">{{ l.ai_duty|inr }}</div></div>
+            <div class="ai-row"><div class="ai-label">Total</div><div class="ai-bar"><div class="ai-fill" style="background:#64748b;width:100%"></div></div><div class="ai-val">{{ l.ai_total|inr }}</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-title">{{ l.car.make }} {{ l.car.model }}</div>
+        <div class="card-meta"><i class="fa-regular fa-calendar me-1"></i> {{ l.car.year }}</div>
+        <div class="card-price">{{ l.price|inr }}</div>
+      </div>
+    </a>
+    {% empty %}
+      <div class="empty-state">
+        <i class="fa-solid fa-wallet fs-1 mb-3 d-block"></i>
+        <h4 class="fw-bold text-dark">No Economy Models</h4>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div id="wrap-moderate" class="grid" style="display:none">
+    {% for l in moderate %}
+    <a href="{% url 'listing_detail' l.listing_id %}" class="modern-card">
+      <div class="card-img">
+        {% if l.images.all %}<img src="{{ l.images.all.0.image.url }}" alt="{{ l.car.make }} {{ l.car.model }}">{% else %}<img src="{% static 'img/placeholder.svg' %}" alt="Car">{% endif %}
+        {% if l.ai_deal_label %}
+        <div class="ai-badge {% if l.ai_deal_label == 'Good Deal' %}good{% elif l.ai_deal_label == 'Fair Price' %}fair{% elif l.ai_deal_label == 'Expensive' %}exp{% endif %}">
+          {{ l.ai_deal_label }}
+        </div>
+        {% endif %}
+        <div class="ai-overlay">
+          <div class="ai-title"><i class="fa-solid fa-chart-line"></i> AI Insights</div>
+          <div class="ai-overview">
+            {% if l.car.expert_overview %}
+              {{ l.car.expert_overview|striptags|truncatechars:120 }}
+            {% elif l.description %}
+              {{ l.description|striptags|truncatechars:120 }}
+            {% else %}
+              Compact, city-friendly design with practical space and efficiency.
+            {% endif %}
+          </div>
+          <div class="ai-bars" data-market="{{ l.ai_market|default:0 }}" data-tax="{{ l.ai_tax|default:0 }}" data-ins="{{ l.ai_ins|default:0 }}" data-duty="{{ l.ai_duty|default:0 }}">
+            <div class="ai-row bar-market"><div class="ai-label">Market</div><div class="ai-bar"><div class="ai-fill"></div></div><div class="ai-val">{{ l.ai_market|inr }}</div></div>
+            <div class="ai-row bar-tax"><div class="ai-label">Tax</div><div class="ai-bar"><div class="ai-fill" style="background:#e11d48;"></div></div><div class="ai-val">{{ l.ai_tax|inr }}</div></div>
+            <div class="ai-row bar-ins"><div class="ai-label">Ins</div><div class="ai-bar"><div class="ai-fill" style="background:#22c55e;"></div></div><div class="ai-val">{{ l.ai_ins|inr }}</div></div>
+            <div class="ai-row bar-duty"><div class="ai-label">Duty</div><div class="ai-bar"><div class="ai-fill" style="background:#3b82f6;"></div></div><div class="ai-val">{{ l.ai_duty|inr }}</div></div>
+            <div class="ai-row"><div class="ai-label">Total</div><div class="ai-bar"><div class="ai-fill" style="background:#64748b;width:100%"></div></div><div class="ai-val">{{ l.ai_total|inr }}</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-title">{{ l.car.make }} {{ l.car.model }}</div>
+        <div class="card-meta"><i class="fa-regular fa-calendar me-1"></i> {{ l.car.year }}</div>
+        <div class="card-price">{{ l.price|inr }}</div>
+      </div>
+    </a>
+    {% empty %}
+      <div class="empty-state">
+        <i class="fa-solid fa-car-side fs-1 mb-3 d-block"></i>
+        <h4 class="fw-bold text-dark">No Moderate Models</h4>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div id="wrap-premium" class="grid" style="display:none">
+    {% for l in premium %}
+    <a href="{% url 'listing_detail' l.listing_id %}" class="modern-card">
+      <div class="card-img">
+        {% if l.images.all %}<img src="{{ l.images.all.0.image.url }}" alt="{{ l.car.make }} {{ l.car.model }}">{% else %}<img src="{% static 'img/placeholder.svg' %}" alt="Car">{% endif %}
+        {% if l.ai_deal_label %}
+        <div class="ai-badge {% if l.ai_deal_label == 'Good Deal' %}good{% elif l.ai_deal_label == 'Fair Price' %}fair{% elif l.ai_deal_label == 'Expensive' %}exp{% endif %}">
+          {{ l.ai_deal_label }}
+        </div>
+        {% endif %}
+        <div class="ai-overlay">
+          <div class="ai-title"><i class="fa-solid fa-chart-line"></i> AI Insights</div>
+          <div class="ai-overview">
+            {% if l.car.expert_overview %}
+              {{ l.car.expert_overview|striptags|truncatechars:120 }}
+            {% elif l.description %}
+              {{ l.description|striptags|truncatechars:120 }}
+            {% else %}
+              Compact, city-friendly design with practical space and efficiency.
+            {% endif %}
+          </div>
+          <div class="ai-bars" data-market="{{ l.ai_market|default:0 }}" data-tax="{{ l.ai_tax|default:0 }}" data-ins="{{ l.ai_ins|default:0 }}" data-duty="{{ l.ai_duty|default:0 }}">
+            <div class="ai-row bar-market"><div class="ai-label">Market</div><div class="ai-bar"><div class="ai-fill"></div></div><div class="ai-val">{{ l.ai_market|inr }}</div></div>
+            <div class="ai-row bar-tax"><div class="ai-label">Tax</div><div class="ai-bar"><div class="ai-fill" style="background:#e11d48;"></div></div><div class="ai-val">{{ l.ai_tax|inr }}</div></div>
+            <div class="ai-row bar-ins"><div class="ai-label">Ins</div><div class="ai-bar"><div class="ai-fill" style="background:#22c55e;"></div></div><div class="ai-val">{{ l.ai_ins|inr }}</div></div>
+            <div class="ai-row bar-duty"><div class="ai-label">Duty</div><div class="ai-bar"><div class="ai-fill" style="background:#3b82f6;"></div></div><div class="ai-val">{{ l.ai_duty|inr }}</div></div>
+            <div class="ai-row"><div class="ai-label">Total</div><div class="ai-bar"><div class="ai-fill" style="background:#64748b;width:100%"></div></div><div class="ai-val">{{ l.ai_total|inr }}</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-title">{{ l.car.make }} {{ l.car.model }}</div>
+        <div class="card-meta"><i class="fa-regular fa-calendar me-1"></i> {{ l.car.year }}</div>
+        <div class="card-price">{{ l.price|inr }}</div>
+      </div>
+    </a>
+    {% empty %}
+      <div class="empty-state">
+        <i class="fa-solid fa-gem fs-1 mb-3 d-block"></i>
+        <h4 class="fw-bold text-dark">No Premium Models</h4>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div id="wrap-arrivals" class="grid" style="display:none">
+    {% for l in arrivals %}
+    <a href="{% url 'listing_detail' l.listing_id %}" class="modern-card">
+      <div class="card-img">
+        {% if l.images.all %}<img src="{{ l.images.all.0.image.url }}" alt="{{ l.car.make }} {{ l.car.model }}">{% else %}<img src="{% static 'img/placeholder.svg' %}" alt="Car">{% endif %}
+        {% if l.ai_deal_label %}
+        <div class="ai-badge {% if l.ai_deal_label == 'Good Deal' %}good{% elif l.ai_deal_label == 'Fair Price' %}fair{% elif l.ai_deal_label == 'Expensive' %}exp{% endif %}">
+          {{ l.ai_deal_label }}
+        </div>
+        {% endif %}
+        <div class="ai-overlay">
+          <div class="ai-title"><i class="fa-solid fa-chart-line"></i> AI Insights</div>
+          <div class="ai-bars" data-market="{{ l.ai_market|default:0 }}" data-tax="{{ l.ai_tax|default:0 }}" data-ins="{{ l.ai_ins|default:0 }}" data-duty="{{ l.ai_duty|default:0 }}">
+            <div class="ai-row bar-market"><div class="ai-label">Market</div><div class="ai-bar"><div class="ai-fill"></div></div><div class="ai-val">{{ l.ai_market|inr }}</div></div>
+            <div class="ai-row bar-tax"><div class="ai-label">Tax</div><div class="ai-bar"><div class="ai-fill" style="background:#e11d48;"></div></div><div class="ai-val">{{ l.ai_tax|inr }}</div></div>
+            <div class="ai-row bar-ins"><div class="ai-label">Ins</div><div class="ai-bar"><div class="ai-fill" style="background:#22c55e;"></div></div><div class="ai-val">{{ l.ai_ins|inr }}</div></div>
+            <div class="ai-row bar-duty"><div class="ai-label">Duty</div><div class="ai-bar"><div class="ai-fill" style="background:#3b82f6;"></div></div><div class="ai-val">{{ l.ai_duty|inr }}</div></div>
+            <div class="ai-row"><div class="ai-label">Total</div><div class="ai-bar"><div class="ai-fill" style="background:#64748b;width:100%"></div></div><div class="ai-val">{{ l.ai_total|inr }}</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-title">{{ l.car.make }} {{ l.car.model }}</div>
+        <div class="card-meta"><i class="fa-regular fa-calendar me-1"></i> {{ l.car.year }}</div>
+        <div class="card-price">{{ l.price|inr }}</div>
+      </div>
+    </a>
+    {% empty %}
+      <div class="empty-state">
+        <i class="fa-solid fa-clock-rotate-left fs-1 mb-3 d-block"></i>
+        <h4 class="fw-bold text-dark">No New Arrivals</h4>
+      </div>
+    {% endfor %}
+  </div>
+
+</section>
+
+<script>
+  // Tab Switching Logic
+  document.querySelectorAll('.seg-tabs .btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      // Remove active from all tabs
+      document.querySelectorAll('.seg-tabs .btn').forEach(x => x.classList.remove('active'));
+      // Add active to clicked tab
+      e.target.classList.add('active');
+      
+      const targetId = e.target.getAttribute('data-t');
+      const grids = ['all', 'economy', 'moderate', 'premium', 'arrivals'];
+      
+      grids.forEach(k => {
+        const el = document.getElementById('wrap-' + k);
+        if (el) {
+          el.style.display = (k === targetId) ? 'grid' : 'none';
+        }
+      });
+    });
+  });
+  (function(){
+    document.querySelectorAll('.ai-bars').forEach(el => {
+      const m = Number(el.dataset.market || 0);
+      const t = Number(el.dataset.tax || 0);
+      const i = Number(el.dataset.ins || 0);
+      const d = Number(el.dataset.duty || 0);
+      const max = Math.max(m, t, i, d, 1);
+      const setW = (cls, val) => {
+        const bar = el.querySelector(cls + ' .ai-fill');
+        if (bar) bar.style.width = Math.min(100, Math.round((val / max) * 100)) + '%';
+      };
+      setW('.bar-market', m);
+      setW('.bar-tax', t);
+      setW('.bar-ins', i);
+      setW('.bar-duty', d);
+    });
+  })();
+</script>
+{% endblock %}

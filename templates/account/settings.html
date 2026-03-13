@@ -1,0 +1,657 @@
+{% extends 'base.html' %}
+{% load currency %}
+{% block title %}Account Settings | Car Scout{% endblock %}
+
+{% block content %}
+<style>
+  /* --- Ultra-Smooth Cinematic Pan --- */
+  @keyframes cinematicPan {
+    0% { transform: scale(1.0) translateX(0); }
+    50% { transform: scale(1.05) translateX(-1%); }
+    100% { transform: scale(1.0) translateX(0); }
+  }
+
+  /* --- Dashboard Hero Section --- */
+  .dashboard-hero {
+    position: relative;
+    padding: 70px 0 90px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+    margin-bottom: -40px; /* Pulls content up to overlap */
+  }
+
+  .dashboard-hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: url('https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    z-index: 1;
+    animation: cinematicPan 60s ease-in-out infinite;
+    will-change: transform;
+  }
+
+  .dashboard-hero::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, rgba(2, 6, 23, 0.85) 0%, rgba(2, 6, 23, 0.98) 100%);
+    z-index: 2;
+  }
+
+  .dashboard-hero .container {
+    position: relative;
+    z-index: 3;
+    text-align: center;
+  }
+
+  .dashboard-hero h1 {
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  }
+
+  .dashboard-hero h1 span { color: #e11d48; }
+
+  .dashboard-hero p {
+    color: #cbd5e1;
+    font-size: 1.15rem;
+    margin: 0;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+
+  /* --- Premium Dashboard Cards --- */
+  .dash-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.04);
+    height: 100%;
+    transition: all 0.3s ease;
+    overflow: hidden;
+    position: relative;
+    z-index: 10; /* Ensures it sits above hero */
+  }
+
+  .dash-card:hover {
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    border-color: rgba(225, 29, 72, 0.2);
+  }
+
+  .dash-header {
+    padding: 25px 30px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background-color: #ffffff;
+  }
+
+  .dash-icon {
+    width: 50px;
+    height: 50px;
+    background: #f8fafc;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    font-size: 1.3rem;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+  }
+
+  /* Custom Image Styling inside Dash Icon */
+  .dash-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 8px; /* Adds breathing room so the image doesn't touch the borders */
+  }
+
+  /* Icon Color Variants */
+  .icon-red { background: #fff1f2; color: #e11d48; border-color: #ffe4e6; }
+  .icon-blue { background: #eff6ff; color: #3b82f6; border-color: #dbeafe; }
+  .icon-green { background: #f0fdf4; color: #10b981; border-color: #dcfce3; }
+
+  .dash-header h5 {
+    margin: 0;
+    font-weight: 800;
+    color: #0f172a;
+    font-size: 1.25rem;
+    letter-spacing: 0.5px;
+  }
+
+  .dash-body {
+    padding: 30px;
+  }
+
+  /* --- Summary Metric Blocks --- */
+  .metric-block {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .metric-block:hover {
+    background: #ffffff;
+    border-color: #e11d48;
+    box-shadow: 0 4px 15px rgba(225, 29, 72, 0.05);
+  }
+
+  .metric-label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+  }
+
+  .metric-value {
+    font-size: 2rem;
+    font-weight: 900;
+    color: #0f172a;
+    line-height: 1;
+  }
+
+  /* --- Form Styling --- */
+  .dash-form label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  .dash-form .form-control {
+    background-color: #f8fafc;
+    border: 2px solid #e2e8f0;
+    color: #0f172a;
+    border-radius: 10px;
+    padding: 14px 20px;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: none;
+  }
+
+  .dash-form .form-control:focus {
+    background-color: #fff;
+    border-color: #e11d48;
+    box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.1);
+    outline: none;
+  }
+
+  /* --- Buttons & Badges --- */
+  .btn-primary-custom {
+    background-color: #e11d48;
+    color: #fff;
+    font-weight: 800;
+    padding: 16px 25px;
+    border-radius: 10px;
+    border: none;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.95rem;
+    box-shadow: 0 4px 15px rgba(225, 29, 72, 0.2);
+  }
+
+  .btn-primary-custom:hover {
+    background-color: #be123c;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(225, 29, 72, 0.3);
+  }
+
+  .btn-outline-custom {
+    border: 2px solid #cbd5e1;
+    color: #0f172a;
+    background: transparent;
+    font-weight: 800;
+    padding: 12px 20px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.85rem;
+    text-decoration: none;
+  }
+
+  .btn-outline-custom:hover {
+    border-color: #0f172a;
+    color: #ffffff;
+    background: #0f172a;
+  }
+
+  .role-badge {
+    display: inline-block;
+    background: #f1f5f9;
+    color: #0f172a;
+    border: 1px solid #e2e8f0;
+    padding: 8px 20px;
+    border-radius: 30px;
+    font-weight: 800;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+  }
+
+  /* --- Custom List Groups (For Messages/Sales) --- */
+  .custom-list-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .custom-list-item {
+    display: block;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+  }
+
+  .custom-list-item:hover {
+    background: #fff;
+    border-color: rgba(225, 29, 72, 0.3);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+    transform: translateX(4px);
+  }
+
+  .list-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .list-item-title {
+    font-weight: 800;
+    color: #0f172a;
+    font-size: 1.1rem;
+  }
+
+  .list-item-time {
+    font-size: 0.85rem;
+    color: #64748b;
+    font-weight: 600;
+  }
+
+  .list-item-meta {
+    font-size: 0.85rem;
+    color: #0f172a; 
+    font-weight: 700;
+    margin-bottom: 12px;
+    background: #e2e8f0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 6px;
+  }
+
+  .list-item-content {
+    font-size: 1rem;
+    color: #475569;
+    line-height: 1.6;
+    font-style: italic;
+  }
+
+  .price-highlight {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: #10b981;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #64748b;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 2px dashed #cbd5e1;
+  }
+  
+  .empty-state i {
+    font-size: 2.5rem;
+    color: #e2e8f0;
+    margin-bottom: 15px;
+    display: block;
+  }
+</style>
+
+<section class="dashboard-hero reveal">
+  <div class="container">
+    <h1>Account <span>Settings</span></h1>
+    <p>Manage your profile, preferences, and overview your platform activity.</p>
+  </div>
+</section>
+
+<section class="container mb-5">
+  <div class="row g-4">
+    
+    <aside class="col-lg-3 d-none d-lg-block">
+      {% if user.is_staff or user.is_superuser %}
+        {% include 'admin/sidebar.html' %}
+      {% else %}
+        {% include 'users/sidebar.html' %}
+      {% endif %}
+    </aside>
+
+    <div class="col-lg-9">
+      
+      <div class="row g-4 mb-4" id="chatbot">
+        <div class="col-12">
+          <div class="dash-card reveal" style="transition-delay: 0.1s;">
+            <div class="dash-header">
+              <div class="dash-icon"><img src="data:image/jpeg;base64,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" alt="Ask AI Icon"></div>
+              <h5>Ask Car Scout Assistant</h5>
+            </div>
+            <div class="dash-body p-0">
+              {% include 'partials/chatbot.html' %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4 mb-4">
+        {% if user.is_staff %}
+        <div class="col-12">
+          <div class="dash-card reveal" style="transition-delay: 0.15s;">
+            <div class="dash-header d-flex justify-content-between align-items-center">
+              <div class="d-flex align-items-center gap-3">
+                <div class="dash-icon icon-red"><img src="data:image/png;base64,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" alt="Admin Analytics Icon"></div>
+              </div>
+              <a href="{% url 'dashboard_admin' %}" class="btn-outline-custom">Full Dashboard</a>
+            </div>
+            <div class="dash-body">
+              <div class="row g-3">
+                <div class="col-6 col-md-3"><div class="metric-block"><div class="metric-label">Users</div><div class="metric-value">{{ users_count }}</div></div></div>
+                <div class="col-6 col-md-3"><div class="metric-block"><div class="metric-label">Listings</div><div class="metric-value">{{ listings_total }}</div></div></div>
+                <div class="col-6 col-md-3"><div class="metric-block"><div class="metric-label">Messages</div><div class="metric-value">{{ messages_total }}</div></div></div>
+                <div class="col-6 col-md-3"><div class="metric-block"><div class="metric-label">Inspections</div><div class="metric-value">{{ inspections_total }}</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {% elif user.role == 'Seller' %}
+        <div class="col-12">
+          <div class="dash-card reveal" style="transition-delay: 0.15s;">
+            <div class="dash-header d-flex justify-content-between align-items-center">
+              <div class="d-flex align-items-center gap-3">
+                <div class="dash-icon icon-blue"><i class="fa-solid fa-store"></i></div>
+                <h5>Seller Summary</h5>
+              </div>
+              <a href="{% url 'dashboard_seller' %}" class="btn-outline-custom">Full Dashboard</a>
+            </div>
+            <div class="dash-body">
+              <div class="row g-3">
+                <div class="col-6 col-md-3"><div class="metric-block"><div class="metric-label">Active Listings</div><div class="metric-value">{{ listings_count }}</div></div></div>
+                <div class="col-6 col-md-3"><div class="metric-block"><div class="metric-label">Sales Made</div><div class="metric-value">{{ sales_total }}</div></div></div>
+                <div class="col-6 col-md-3"><div class="metric-block"><div class="metric-label">Inbox</div><div class="metric-value">{{ inbox_count }}</div></div></div>
+                <div class="col-6 col-md-3"><div class="metric-block"><div class="metric-label">Sent Msgs</div><div class="metric-value">{{ sent_count }}</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {% else %}
+        <div class="col-12">
+          <div class="dash-card reveal" style="transition-delay: 0.15s;">
+            <div class="dash-header d-flex justify-content-between align-items-center">
+              <div class="d-flex align-items-center gap-3">
+                <div class="dash-icon icon-green"><i class="fa-solid fa-cart-shopping"></i></div>
+                <h5>Buyer Summary</h5>
+              </div>
+              <a href="{% url 'dashboard_buyer' %}" class="btn-outline-custom">Full Dashboard</a>
+            </div>
+            <div class="dash-body">
+              <div class="row g-3">
+                <div class="col-6 col-md-3"><div class="metric-block"><div class="metric-label">Purchases</div><div class="metric-value">{{ purchases_count }}</div></div></div>
+                <div class="col-6 col-md-3"><div class="metric-block"><div class="metric-label">Test Drives</div><div class="metric-value">{{ drives_count }}</div></div></div>
+                <div class="col-6 col-md-3"><div class="metric-block"><div class="metric-label">Inbox</div><div class="metric-value">{{ inbox_count }}</div></div></div>
+                <div class="col-6 col-md-3"><div class="metric-block"><div class="metric-label">Sent Msgs</div><div class="metric-value">{{ sent_count }}</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      
+      <div class="row g-4 mb-4">
+        
+        <div class="col-12 col-md-6">
+          <div class="dash-card reveal" style="transition-delay: 0.2s;">
+            <div class="dash-header">
+              <div class="dash-icon"><img src="data:image/png;base64,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" alt="Personal Profile Icon"></div>
+              <h5>Personal Profile</h5>
+            </div>
+            <div class="dash-body">
+              <form method="post" class="dash-form">
+                {% csrf_token %}
+                <div class="mb-3">
+                  <label class="form-label" for="id_name">Full Name</label>
+                  <input class="form-control" type="text" id="id_name" name="name" value="{{ user.name }}">
+                </div>
+                <div class="mb-4">
+                  <label class="form-label" for="id_phone">Phone Number</label>
+                  <input class="form-control" type="text" id="id_phone" name="phone" value="{{ user.phone }}">
+                </div>
+                <button type="submit" class="btn-primary-custom w-100"><i class="fa-solid fa-floppy-disk me-2"></i> Save Profile</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-6">
+          <div class="dash-card reveal" style="transition-delay: 0.25s;">
+            <div class="dash-header">
+              <div class="dash-icon"><img src="data:image/png;base64,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" alt="Account Role Icon"></div>
+              <h5>Account Role</h5>
+            </div>
+            <div class="dash-body text-center py-4">
+              <p class="text-muted mb-2 fw-bold text-uppercase" style="font-size: 0.8rem; letter-spacing: 1px;">Current Operating Mode</p>
+              <div class="role-badge"><i class="fa-solid fa-user-shield me-2 text-danger"></i> {{ user.role }}</div>
+              
+              <form method="post" class="mt-2">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="switch">
+                <button type="submit" class="btn-outline-custom w-100">
+                  <i class="fa-solid fa-arrow-right-arrow-left me-2"></i> Switch to {% if user.role == 'Buyer' %}Seller Mode{% else %}Buyer Mode{% endif %}
+                </button>
+              </form>
+              <p class="mt-4 text-muted" style="font-size: 0.85rem;"><i class="fa-solid fa-circle-info me-1"></i> Switching roles will automatically reconfigure your dashboard view.</p>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+
+      <div class="row g-4 mb-4">
+        
+        <div class="col-12 col-lg-6">
+          <div class="dash-card reveal" style="transition-delay: 0.3s;">
+            <div class="dash-header">
+              <div class="dash-icon"><img src="https://static.vecteezy.com/system/resources/thumbnails/069/732/485/small/3d-email-notification-icon-yellow-envelope-with-red-alert-badge-showing-number-one-isolated-on-transparent-background-free-png.png" alt="Recent Inbox Icon"></div>
+              <h5>Recent Inbox</h5>
+            </div>
+            <div class="dash-body">
+              <div class="custom-list-group">
+                {% for m in msgs_in|slice:":3" %}
+                  <a href="#" class="custom-list-item">
+                    <div class="list-item-header">
+                      <span class="list-item-title">{{ m.sender.email }}</span>
+                      <span class="list-item-time"><i class="fa-regular fa-clock me-1"></i> {{ m.sent_at }}</span>
+                    </div>
+                    {% if m.listing %}
+                    <div class="list-item-meta">
+                      <i class="fa-solid fa-car text-danger"></i> {{ m.listing.car.make }} {{ m.listing.car.model }} &nbsp;|&nbsp; {{ m.listing.price|inr }}
+                    </div>
+                    {% endif %}
+                    <div class="list-item-content text-truncate">"{{ m.content }}"</div>
+                  </a>
+                {% empty %}
+                  <div class="empty-state">
+                    <i class="fa-regular fa-envelope-open"></i>
+                    <p class="mb-0 fw-bold">Your inbox is clear.</p>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+          <div class="dash-card reveal" style="transition-delay: 0.35s;">
+            <div class="dash-header">
+              <div class="dash-icon"><img src="https://cdn-icons-png.flaticon.com/512/2343/2343641.png" alt="Recently Sent Icon"></div>
+              <h5>Recently Sent</h5>
+            </div>
+            <div class="dash-body">
+              <div class="custom-list-group">
+                {% for m in msgs_out|slice:":3" %}
+                  <a href="#" class="custom-list-item">
+                    <div class="list-item-header">
+                      <span class="list-item-title">To: {{ m.receiver.email }}</span>
+                      <span class="list-item-time"><i class="fa-regular fa-clock me-1"></i> {{ m.sent_at }}</span>
+                    </div>
+                    {% if m.listing %}
+                    <div class="list-item-meta">
+                      <i class="fa-solid fa-car text-danger"></i> {{ m.listing.car.make }} {{ m.listing.car.model }} &nbsp;|&nbsp; {{ m.listing.price|inr }}
+                    </div>
+                    {% endif %}
+                    <div class="list-item-content text-truncate">"{{ m.content }}"</div>
+                  </a>
+                {% empty %}
+                  <div class="empty-state">
+                    <i class="fa-regular fa-paper-plane"></i>
+                    <p class="mb-0 fw-bold">No sent messages yet.</p>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+
+      {% if user.role == 'Seller' %}
+      <div class="row g-4">
+        
+        <div class="col-12 col-lg-6">
+          <div class="dash-card reveal" style="transition-delay: 0.4s;">
+            <div class="dash-header">
+              <div class="dash-icon"><i class="fa-solid fa-tags"></i></div>
+              <h5>Top Active Listings</h5>
+            </div>
+            <div class="dash-body">
+              <div class="custom-list-group">
+                {% for l in listings|slice:":3" %}
+                  <a href="{% url 'listing_detail' l.listing_id %}" class="custom-list-item d-flex justify-content-between align-items-center">
+                    <div>
+                      <div class="list-item-title">{{ l.car.make }} {{ l.car.model }}</div>
+                      <div class="text-muted mt-1" style="font-size: 0.85rem;"><i class="fa-regular fa-calendar me-1"></i> {{ l.car.year }} &nbsp;|&nbsp; <strong class="text-dark">{{ l.status }}</strong></div>
+                    </div>
+                    <div class="price-highlight text-danger">{{ l.price|inr }}</div>
+                  </a>
+                {% empty %}
+                  <div class="empty-state">
+                    <i class="fa-solid fa-car-burst"></i>
+                    <p class="mb-0 fw-bold">No active listings.</p>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+          <div class="dash-card reveal" style="transition-delay: 0.45s;">
+            <div class="dash-header">
+              <div class="dash-icon"><i class="fa-solid fa-handshake"></i></div>
+              <h5>Recent Sales</h5>
+            </div>
+            <div class="dash-body">
+              <div class="custom-list-group">
+                {% for t in sales|slice:":3" %}
+                  <div class="custom-list-item">
+                    <div class="list-item-header">
+                      <span class="list-item-title">{{ t.listing.car.make }} {{ t.listing.car.model }}</span>
+                      <span class="price-highlight">{{ t.final_price|inr }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center text-muted mt-2" style="font-size: 0.85rem;">
+                      <span><i class="fa-solid fa-user me-1"></i> {{ t.buyer.email }}</span>
+                      <span class="badge bg-success px-2 py-1">{{ t.status }}</span>
+                    </div>
+                  </div>
+                {% empty %}
+                  <div class="empty-state">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <p class="mb-0 fw-bold">No sales recorded yet.</p>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+      
+      {% else %}
+      <div class="row g-4">
+        <div class="col-12">
+          <div class="dash-card reveal" style="transition-delay: 0.4s;">
+            <div class="dash-header">
+              <div class="dash-icon"><img src="https://cdn-icons-png.freepik.com/256/6012/6012349.png?semt=ais_white_label" alt="Recent Purchases Icon"></div>
+              <h5>Recent Purchases</h5>
+            </div>
+            <div class="dash-body">
+              <div class="custom-list-group">
+                {% for t in purchases|slice:":3" %}
+                  <a href="{% url 'listing_detail' t.listing.listing_id %}" class="custom-list-item">
+                    <div class="list-item-header">
+                      <span class="list-item-title">{{ t.listing.car.make }} {{ t.listing.car.model }} ({{ t.listing.car.year }})</span>
+                      <span class="price-highlight">{{ t.final_price|inr }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center text-muted mt-2" style="font-size: 0.85rem;">
+                      <span><i class="fa-solid fa-store me-1 text-danger"></i> {{ t.seller.email }}</span>
+                      <span class="badge bg-dark px-3 py-1 text-uppercase" style="letter-spacing: 0.5px;">{{ t.status }}</span>
+                    </div>
+                  </a>
+                {% empty %}
+                  <div class="empty-state">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                    <p class="mb-0 fw-bold">You haven't made any purchases yet.</p>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</section>
+
+{% endblock %}

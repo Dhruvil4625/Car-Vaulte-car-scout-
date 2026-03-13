@@ -1,0 +1,958 @@
+{% extends 'base.html' %}
+{% load currency %}{% load static %}{% load images %}
+{% block title %}Home | Car Scout{% endblock %}
+
+{% block content %}
+<style>
+  /* --- Scroll Reveal Animations --- */
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* --- Premium Hero Section --- */
+  .premium-hero {
+    position: relative;
+    height: 75vh;
+    min-height: 550px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: linear-gradient(180deg, rgba(2, 6, 23, 0.6) 0%, rgba(2, 6, 23, 0.95) 100%), 
+                url('https://images.unsplash.com/photo-1580273916550-e323be2ae537?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    padding-bottom: 90px; 
+  }
+
+  .premium-hero h1 {
+    font-size: 4rem;
+    font-weight: 900;
+    color: #ffffff;
+    letter-spacing: -1px;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+  }
+
+  .premium-hero h1 span {
+    color: #e11d48; /* Signature Crimson Red */
+  }
+
+  .premium-hero p {
+    font-size: 1.25rem;
+    color: #cbd5e1;
+    font-weight: 500;
+    max-width: 650px;
+    margin: 0 auto;
+    letter-spacing: 0.5px;
+  }
+
+  /* --- Pulsing Button Animation --- */
+  @keyframes pulse-red {
+    0% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(225, 29, 72, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); }
+  }
+  .btn-pulse {
+    animation: pulse-red 2s infinite;
+  }
+
+  /* --- Floating Search Widget --- */
+  .search-widget-container {
+    max-width: 1100px;
+    margin: -90px auto 50px; 
+    position: relative;
+    z-index: 10;
+    padding: 0 20px;
+  }
+
+  .search-widget {
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .search-tabs {
+    display: flex;
+    gap: 15px;
+    padding: 15px 25px 5px;
+    border-bottom: 2px solid #f1f5f9;
+  }
+
+  .search-tab {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    font-weight: 800;
+    font-size: 1.05rem;
+    padding: 10px 20px;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .search-tab:hover {
+    color: #0f172a;
+  }
+
+  .search-tab.active {
+    color: #e11d48;
+  }
+
+  .search-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: #e11d48;
+    border-radius: 3px 3px 0 0;
+  }
+
+  .search-form-inner {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 25px;
+    gap: 15px;
+    align-items: flex-end;
+  }
+
+  .search-field {
+    flex: 1;
+    min-width: 180px;
+  }
+
+  .search-field label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+  }
+
+  .search-field .form-select {
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px 15px;
+    font-size: 0.95rem;
+    color: #0f172a;
+    background-color: #f8fafc;
+    box-shadow: none;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .search-field .form-select:focus {
+    background-color: #fff;
+    border-color: #e11d48;
+    box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.1);
+  }
+
+  .search-btn {
+    background-color: #e11d48;
+    color: white;
+    border: none;
+    padding: 14px 35px;
+    border-radius: 10px;
+    font-weight: 800;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    height: 52px; 
+    box-shadow: 0 4px 15px rgba(225, 29, 72, 0.3);
+  }
+
+  .search-btn:hover {
+    background-color: #be123c;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(225, 29, 72, 0.4);
+  }
+
+  /* --- Section Headers --- */
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 35px;
+  }
+
+  .section-title {
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: #0f172a;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .section-title span {
+    color: #e11d48;
+  }
+
+  .view-all-link {
+    color: #0f172a;
+    font-weight: 800;
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: color 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .view-all-link:hover {
+    color: #e11d48;
+  }
+
+  .view-all-link i {
+    transition: transform 0.3s ease;
+  }
+
+  .view-all-link:hover i {
+    transform: translateX(5px);
+  }
+
+  /* --- PERFECTLY ALIGNED BRAND GRID --- */
+  .brand-category-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 10px;
+  }
+
+  .brand-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 15px;
+    margin-bottom: 40px;
+  }
+
+  .brand-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px 10px;
+    text-align: center;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+  }
+
+  .brand-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.06);
+    border-color: rgba(225,29,72,0.3);
+  }
+
+  .brand-logo {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    transition: all 0.3s ease;
+  }
+
+  .brand-card:hover .brand-logo {
+    border-color: #e11d48;
+    background: #ffffff;
+  }
+
+  .brand-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; 
+    mix-blend-mode: multiply; 
+    transition: transform 0.3s ease;
+  }
+  
+  .brand-card:hover .brand-logo img {
+    transform: scale(1.15);
+  }
+
+  .brand-name {
+    font-weight: 800;
+    color: #0f172a;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* --- Premium Browse by Category Cards --- */
+  .category-grid {
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    padding-bottom: 20px;
+    scrollbar-width: none; 
+  }
+  
+  .category-grid::-webkit-scrollbar {
+    display: none; 
+  }
+  
+  .category-card {
+    flex: 1;
+    min-width: 180px;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 25px 15px;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+  }
+
+  .category-card:hover {
+    border-color: #e11d48;
+    box-shadow: 0 15px 30px rgba(225, 29, 72, 0.1);
+    transform: translateY(-8px);
+  }
+
+  .category-icon {
+    height: 80px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .category-icon img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    mix-blend-mode: multiply; 
+  }
+
+  .category-card:hover .category-icon img {
+    transform: scale(1.15) translateX(5px);
+  }
+
+  .category-name {
+    font-weight: 800;
+    color: #0f172a;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* --- Modern Listing Cards --- */
+  .modern-card {
+    background: #ffffff;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .modern-card:hover {
+    box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+    transform: translateY(-6px);
+    border-color: rgba(225, 29, 72, 0.3);
+  }
+
+  .card-img-wrapper {
+    position: relative;
+    height: 220px;
+    overflow: hidden;
+    background: #0f172a;
+  }
+
+  .card-img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+  }
+
+  .modern-card:hover .card-img-wrapper img {
+    transform: scale(1.08);
+  }
+
+  .card-badge {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: #0f172a;
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 0.75rem;
+    padding: 6px 14px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    z-index: 2;
+  }
+
+  /* --- Upgraded Glass AI Overlay --- */
+  .ai-overlay { 
+    position: absolute; 
+    left: 0; right: 0; bottom: 0; 
+    padding: 12px 15px; 
+    background: rgba(255, 255, 255, 0.85); 
+    backdrop-filter: blur(10px); 
+    border-top: 1px solid rgba(255, 255, 255, 0.5); 
+    transform: translateY(100%); 
+    opacity: 0; 
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
+  }
+  .modern-card:hover .ai-overlay { 
+    transform: translateY(0); 
+    opacity: 1; 
+  }
+  .ai-title { 
+    font-size: 0.85rem; 
+    font-weight: 800; 
+    color: #0f172a; 
+    display: flex; 
+    align-items: center; 
+    gap: 6px; 
+    margin-bottom: 8px; 
+    text-transform: uppercase; 
+    letter-spacing: 0.5px; 
+  }
+  .ai-overview {
+    font-size: 0.8rem;
+    color: #334155;
+    margin-bottom: 10px;
+    line-height: 1.4;
+    font-weight: 500;
+  }
+  .ai-row { display:flex; align-items:center; gap:8px; margin:4px 0; font-size:.75rem; }
+  .ai-label { width:60px; color: #0f172a; font-weight: 800; }
+  .ai-bar { flex:1; height:6px; background: rgba(15, 23, 42, 0.1); border-radius:8px; overflow:hidden; }
+  .ai-fill { height:100%; width:0%; border-radius:8px; background: linear-gradient(90deg, #0f172a, #334155); transition: width 0.8s ease; }
+  .ai-val { min-width:80px; text-align:right; font-weight:800; color:#0f172a; }
+  
+  .ai-badge { position:absolute; top:10px; right:10px; padding:6px 10px; border-radius:999px; font-size:.7rem; font-weight:900; text-transform:uppercase; letter-spacing:.5px; background:#fff; border:1px solid #e2e8f0; color:#0f172a; z-index: 2;}
+  .ai-badge.good { background:#ecfdf5; color:#065f46; border-color:#bbf7d0; box-shadow: 0 2px 10px rgba(6, 95, 70, 0.15); }
+  .ai-badge.fair { background:#eff6ff; color:#1e3a8a; border-color:#bfdbfe; box-shadow: 0 2px 10px rgba(30, 58, 138, 0.15); }
+  .ai-badge.exp  { background:#fef2f2; color:#991b1b; border-color:#fecaca; box-shadow: 0 2px 10px rgba(153, 27, 27, 0.15); }
+
+  .modern-card-body {
+    padding: 25px 20px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+
+  .card-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 12px;
+    line-height: 1.3;
+  }
+
+  .car-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .meta-item i {
+    color: #94a3b8;
+  }
+
+  .price-box {
+    margin-top: auto;
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 12px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+  }
+
+  .modern-card:hover .price-box {
+    background: #ffffff;
+    border-color: #fca5a5;
+    box-shadow: 0 4px 15px rgba(225, 29, 72, 0.08);
+  }
+
+  .price-label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .car-price {
+    font-size: 1.45rem;
+    font-weight: 900;
+    color: #e11d48;
+    margin: 0;
+    letter-spacing: -0.5px;
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .btn-view {
+    flex: 1;
+    background: transparent;
+    border: 2px solid #cbd5e1;
+    color: #0f172a;
+    font-weight: 800;
+    padding: 10px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .btn-view:hover {
+    background: #0f172a;
+    border-color: #0f172a;
+    color: #ffffff;
+  }
+
+  .admin-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    border-top: 1px dashed #e2e8f0;
+    padding-top: 15px;
+  }
+</style>
+
+<section class="premium-hero reveal">
+  <div class="container px-4">
+    <h1>Find Your <span>Dream Car</span> Today</h1>
+    <p>Discover the largest collection of new and premium used vehicles tailored perfectly to your lifestyle and budget.</p>
+    <div class="mt-4 d-flex gap-3 justify-content-center">
+      <a href="{% url 'all_cars' %}" class="btn px-4 py-2" style="background:#0f172a; color:#fff; border-radius:10px; font-weight:800; text-transform:uppercase; letter-spacing:1px;">
+        <i class="fa-solid fa-list me-2"></i> Browse All
+      </a>
+      <a href="{% url 'booking' %}" class="btn btn-pulse px-4 py-2" style="background:#e11d48; color:#fff; border-radius:10px; font-weight:800; text-transform:uppercase; letter-spacing:1px;">
+        <i class="fa-regular fa-calendar-check me-2"></i> Book Now
+      </a>
+    </div>
+  </div>
+</section>
+
+<div class="search-widget-container">
+  <div class="search-widget reveal" style="transition-delay: 0.1s;">
+    
+    <div class="search-tabs" role="tablist">
+      <button class="search-tab active" data-tab="new">New Cars</button>
+      <button class="search-tab" data-tab="used">Used Cars</button>
+    </div>
+    
+    <form id="homeSearchForm" action="{% url 'cars' %}" method="get" class="search-form-inner">
+      <input type="hidden" name="type" value="new">
+      
+      <div class="search-field">
+        <label>Brand</label>
+        <select class="form-select" name="brand">
+          <option value="">All Brands</option>
+          <option value="Maruti Suzuki">Maruti Suzuki</option>
+          <option value="Hyundai">Hyundai</option>
+          <option value="Tata">Tata</option>
+          <option value="Mahindra">Mahindra</option>
+          <option value="Toyota">Toyota</option>
+          <option value="BMW">BMW</option>
+          <option value="Mercedes-Benz">Mercedes-Benz</option>
+        </select>
+      </div>
+
+      <div class="search-field">
+        <label>Budget</label>
+        <select class="form-select" name="budget">
+          <option value="">Any Budget</option>
+          <option value="0-500000">Under ₹ 5 Lakh</option>
+          <option value="500000-1000000">₹ 5 - 10 Lakh</option>
+          <option value="1000000-1500000">₹ 10 - 15 Lakh</option>
+          <option value="1500000-2500000">₹ 15 - 25 Lakh</option>
+          <option value="2500000-5000000">₹ 25 - 50 Lakh</option>
+          <option value="5000000-999000000">Above ₹ 50 Lakh</option>
+        </select>
+      </div>
+
+      <div class="search-field">
+        <label>Fuel Type</label>
+        <select class="form-select" name="fuel">
+          <option value="">All Types</option>
+          <option value="Petrol">Petrol</option>
+          <option value="Diesel">Diesel</option>
+          <option value="Electric">EV</option>
+          <option value="CNG">CNG</option>
+        </select>
+      </div>
+
+      <div class="search-field" style="flex: 0 0 auto;">
+        <button type="submit" class="search-btn w-100">
+          <i class="fa-solid fa-magnifying-glass me-2"></i> Search Cars
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<section class="container mb-5">
+  <div class="section-header reveal">
+    <h2 class="section-title">Explore <span>Brands</span></h2>
+    <a href="{% url 'all_cars' %}" class="view-all-link">All Cars <i class="fa-solid fa-arrow-right"></i></a>
+  </div>
+
+  <h3 class="brand-category-title reveal"><i class="fa-solid fa-car-side text-danger me-2"></i> Popular & Commuter</h3>
+  <div class="brand-grid">
+    <a href="{% url 'cars' %}?brand=Maruti" class="brand-card reveal" style="transition-delay: 0.05s;">
+      <div class="brand-logo"><img src="https://freepngimg.com/save/172214-logo-suzuki-maruti-free-photo/1920x1080" alt="Maruti"></div><div class="brand-name">Maruti</div>
+    </a>
+    <a href="{% url 'cars' %}?brand=Tata" class="brand-card reveal" style="transition-delay: 0.1s;">
+      <div class="brand-logo"><img src="data:image/png;base64,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" alt="Tata"></div><div class="brand-name">Tata</div>
+    </a>
+    <a href="{% url 'cars' %}?brand=Hyundai" class="brand-card reveal" style="transition-delay: 0.15s;">
+      <div class="brand-logo"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT9YFtDCBk6sNzkRo_Uqw2Kp-pe-iVduvR80w&s" alt="Hyundai"></div><div class="brand-name">Hyundai</div>
+    </a>
+    <a href="{% url 'cars' %}?brand=Mahindra" class="brand-card reveal" style="transition-delay: 0.2s;">
+      <div class="brand-logo"><img src="https://images.seeklogo.com/logo-png/61/1/mahindra-auto-logo-png_seeklogo-613492.png" alt="Mahindra"></div><div class="brand-name">Mahindra</div>
+    </a>
+    <a href="{% url 'cars' %}?brand=Toyota" class="brand-card reveal" style="transition-delay: 0.25s;">
+      <div class="brand-logo"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRfV0rVNz-kjE3fZ0AfSowXgs1Z47BuSP7ZOQ&s" alt="Toyota"></div><div class="brand-name">Toyota</div>
+    </a>
+    <a href="{% url 'cars' %}?brand=Kia" class="brand-card reveal" style="transition-delay: 0.3s;">
+      <div class="brand-logo"><img src="https://www.shutterstock.com/image-vector/kia-art-symbol-south-korean-260nw-2269894917.jpg" alt="Kia"></div><div class="brand-name">Kia</div>
+    </a>
+    <a href="{% url 'cars' %}?brand=Honda" class="brand-card reveal" style="transition-delay: 0.35s;">
+      <div class="brand-logo"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQRGEvuGxRNkRzpSmbMENugVAYFGFMwvv6AtA&s" alt="Honda"></div><div class="brand-name">Honda</div>
+    </a>
+    <a href="{% url 'cars' %}?brand=MG" class="brand-card reveal" style="transition-delay: 0.4s;">
+      <div class="brand-logo"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRCzAnCHXSNrcq4cHWwl3Jie4J-G0zL5C9-Pg&s" alt="MG Motor"></div><div class="brand-name">MG Motor</div>
+    </a>
+    <a href="{% url 'cars' %}?brand=Renault" class="brand-card reveal" style="transition-delay: 0.45s;">
+      <div class="brand-logo"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQECSojF5qaIy-dbeX6pnMhBn8Qkdvdg6jbzA&s" alt="Renault"></div><div class="brand-name">Renault</div>
+    </a>
+    <a href="{% url 'cars' %}?brand=Nissan" class="brand-card reveal" style="transition-delay: 0.5s;">
+      <div class="brand-logo"><img src="https://download.logo.wine/logo/Nissan_Motor_India_Private_Limited/Nissan_Motor_India_Private_Limited-Logo.wine.png" alt="Nissan"></div><div class="brand-name">Nissan</div>
+    </a>
+    <a href="{% url 'cars' %}?brand=Skoda" class="brand-card reveal" style="transition-delay: 0.55s;">
+      <div class="brand-logo"><img src="https://i.pinimg.com/736x/7d/32/9d/7d329d8a52f3a2d6e5fa7cde481635dc.jpg" alt="Skoda"></div><div class="brand-name">Skoda</div>
+    </a>
+    <a href="{% url 'cars' %}?brand=Volkswagen" class="brand-card reveal" style="transition-delay: 0.6s;">
+      <div class="brand-logo"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5qpBsAsX57wm_4D1NL5wfhlq9znwqDDfW7w&s" alt="Volkswagen"></div><div class="brand-name">Volkswagen</div>
+    </a>
+  </div>
+
+  <h3 class="brand-category-title reveal"><i class="fa-solid fa-gem text-danger me-2"></i> Luxury & Premium</h3>
+  <div class="brand-grid">
+    <a href="{% url 'cars' %}?brand=Audi" class="brand-card reveal" style="transition-delay: 0.05s;">
+      <div class="brand-logo"><img src="https://image.similarpng.com/file/similarpng/very-thumbnail/2020/09/Audi-logo-icon-on-transparent-background-PNG.png" alt="Audi"></div><div class="brand-name">Audi</div>
+    </a>
+    <a href="{% url 'cars' %}?brand=BMW" class="brand-card reveal" style="transition-delay: 0.1s;">
+      <div class="brand-logo"><img src="https://download.logo.wine/logo/BMW_India/BMW_India-Logo.wine.png" alt="BMW"></div><div class="brand-name">BMW</div>
+    </a>
+    <a href="{% url 'cars' %}?brand=Mercedes-Benz" class="brand-card reveal" style="transition-delay: 0.15s;">
+      <div class="brand-logo"><img src="https://pngimg.com/d/mercedes_logos_PNG16.png" alt="Mercedes"></div><div class="brand-name">Mercedes</div>
+    </a>
+    <a href="{% url 'cars' %}?brand=Volvo" class="brand-card reveal" style="transition-delay: 0.2s;">
+      <div class="brand-logo"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSbDN61Xv08mPRezpUtrdUBUORV9_yKQunmPw&s" alt="Volvo"></div><div class="brand-name">Volvo</div>
+    </a>
+    <a href="{% url 'cars' %}?brand=Land Rover" class="brand-card reveal" style="transition-delay: 0.25s;">
+      <div class="brand-logo"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR5oZiNvN91naxjbYXZr5fAjc6iCbao1iegeQ&s" alt="Land Rover"></div><div class="brand-name">Land Rover</div>
+    </a>
+    <a href="{% url 'cars' %}?brand=Jeep" class="brand-card reveal" style="transition-delay: 0.3s;">
+      <div class="brand-logo"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTlD2EDzLJVjbuvb6Z72bOrOPRBiTp2A6xghA&s" alt="Jeep"></div><div class="brand-name">Jeep</div>
+    </a>
+  </div>
+
+  <h3 class="brand-category-title reveal"><i class="fa-solid fa-flag-checkered text-danger me-2"></i> Exotics & Supercars</h3>
+  <div class="brand-grid">
+    <a href="{% url 'cars' %}?brand=Ferrari" class="brand-card reveal" style="transition-delay: 0.05s;">
+      <div class="brand-logo"><img src="https://images.seeklogo.com/logo-png/5/1/ferrari-logo-png_seeklogo-53764.png" alt="Ferrari"></div><div class="brand-name">Ferrari</div>
+    </a>
+    <a href="{% url 'cars' %}?brand=Lamborghini" class="brand-card reveal" style="transition-delay: 0.1s;">
+      <div class="brand-logo"><img src="https://download.logo.wine/logo/Lamborghini/Lamborghini-Logo.wine.png" alt="Lamborghini"></div><div class="brand-name">Lamborghini</div>
+    </a>
+    <a href="{% url 'cars' %}?brand=Porsche" class="brand-card reveal" style="transition-delay: 0.15s;">
+      <div class="brand-logo"><img src="https://images.seeklogo.com/logo-png/16/1/porsche-logo-png_seeklogo-168544.png" alt="Porsche"></div><div class="brand-name">Porsche</div>
+    </a>
+    <a href="{% url 'cars' %}?brand=Aston Martin" class="brand-card reveal" style="transition-delay: 0.2s;">
+      <div class="brand-logo"><img src="https://pngimg.com/d/aston_martin_PNG35.png" alt="Aston Martin"></div><div class="brand-name">Aston Martin</div>
+    </a>
+    <a href="{% url 'cars' %}?brand=Mclaren" class="brand-card reveal" style="transition-delay: 0.25s;">
+      <div class="brand-logo"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSO_tLzaDh5AOxieWcPp2a5RyzYoCKRlil0rg&s" alt="Mclaren"></div><div class="brand-name">Mclaren</div>
+    </a>
+    <a href="{% url 'cars' %}?brand=Rolls-Royce" class="brand-card reveal" style="transition-delay: 0.3s;">
+      <div class="brand-logo"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSMw4VxhP98ST8RAfyc3RtGHROvS56ZEXir7w&s" alt="Rolls-Royce"></div><div class="brand-name">Rolls-Royce</div>
+    </a>
+    <a href="{% url 'cars' %}?brand=Bentley" class="brand-card reveal" style="transition-delay: 0.35s;">
+      <div class="brand-logo"><img src="https://pngimg.com/d/bentley_PNG21.png" alt="Bentley"></div><div class="brand-name">Bentley</div>
+    </a>
+  </div>
+</section>
+
+<section class="container mb-5">
+  <div class="section-header reveal">
+    <h2 class="section-title">Browse by <span>Body Type</span></h2>
+  </div>
+  
+  <div class="category-grid">
+    <div class="category-card reveal" data-type="body" data-value="SUV" style="transition-delay: 0.1s;">
+      <div class="category-icon">
+        <img src="https://www.shutterstock.com/image-illustration/3d-suv-isolated-on-background-600nw-2612787159.jpg" alt="SUV">
+      </div>
+      <div class="category-name">SUV</div>
+    </div>
+    
+    <div class="category-card reveal" data-type="body" data-value="Sedan" style="transition-delay: 0.2s;">
+      <div class="category-icon">
+        <img src="https://png.pngtree.com/png-vector/20240914/ourmid/pngtree-bmw-car-standard-png-image_12904906.png" alt="Sedan">
+      </div>
+      <div class="category-name">Sedan</div>
+    </div>
+    
+    <div class="category-card reveal" data-type="body" data-value="Hatchback" style="transition-delay: 0.3s;">
+      <div class="category-icon">
+        <img src="https://www.hyundai.com/content/dam/hyundai/in/en/data/find-a-car/i20-n-line/Highlights/pc/i20-n-linethumbnail-pc.png" alt="Hatchback">
+      </div>
+      <div class="category-name">Hatchback</div>
+    </div>
+    
+    <div class="category-card reveal" data-type="fuel" data-value="Electric" style="transition-delay: 0.4s;">
+      <div class="category-icon">
+        <img src="https://static.vecteezy.com/system/resources/thumbnails/023/251/421/small/electric-vehicle-technology-illustration-png.png" alt="Electric (EV)">
+      </div>
+      <div class="category-name">Electric (EV)</div>
+    </div>
+    
+    <div class="category-card reveal" data-type="body" data-value="Coupe" style="transition-delay: 0.5s;">
+      <div class="category-icon">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSdnrLk9N2XgrONpR9DWzK48wHEqlvYXOG3EQ&s" alt="Coupe">
+      </div>
+      <div class="category-name">Coupe</div>
+    </div>
+  </div>
+</section>
+
+<section class="container mb-5 pb-5">
+  <div class="section-header reveal">
+    <h2 class="section-title">Trending <span>Vehicles</span></h2>
+    <a href="{% url 'cars' %}" class="view-all-link">View All Inventory <i class="fa-solid fa-arrow-right"></i></a>
+  </div>
+  
+  <div class="row g-4">
+    {% for lst in listings %}
+    <div class="col-12 col-md-6 col-lg-3">
+      <article class="modern-card reveal" style="transition-delay: 0.{{ forloop.counter0|add:2 }}s;">
+        
+        <div class="card-img-wrapper">
+          <div class="card-badge"><i class="fa-solid fa-star me-1" style="color: #fbbf24;"></i> Featured</div>
+          {% if lst.images.all %}
+            <img loading="lazy" src="{{ lst.images.all.0.image.url }}" alt="{{ lst.images.all.0.alt|default:lst.car.make }}" onerror="this.src='https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=600&q=80'">
+          {% else %}
+            <img loading="lazy" src="{% car_image lst.car.make lst.car.model '600x400' %}" alt="{{ lst.car.make }} {{ lst.car.model }}" onerror="this.src='https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=600&q=80'">
+          {% endif %}
+          
+          {% if lst.ai_deal_label %}
+          <div class="ai-badge {% if lst.ai_deal_label == 'Good Deal' %}good{% elif lst.ai_deal_label == 'Fair Price' %}fair{% elif lst.ai_deal_label == 'Expensive' %}exp{% endif %}">
+            {{ lst.ai_deal_label }}
+          </div>
+          {% endif %}
+          
+          <div class="ai-overlay">
+            <div class="ai-title"><i class="fa-solid fa-brain" style="color: #e11d48;"></i> AI Market Insights</div>
+            <div class="ai-overview">
+              {% if lst.car.expert_overview %}
+                {{ lst.car.expert_overview|striptags|truncatechars:100 }}
+              {% elif lst.description %}
+                {{ lst.description|striptags|truncatechars:100 }}
+              {% else %}
+                Compact, city-friendly design with practical space and efficiency.
+              {% endif %}
+            </div>
+            <div class="ai-graph ai-bars"
+                 data-market="{{ lst.ai_market|default:0 }}"
+                 data-tax="{{ lst.ai_tax|default:0 }}"
+                 data-ins="{{ lst.ai_ins|default:0 }}"
+                 data-duty="{{ lst.ai_duty|default:0 }}">
+              <div class="ai-row bar-market">
+                <div class="ai-label">Market</div>
+                <div class="ai-bar"><div class="ai-fill" style="background:#0f172a;"></div></div>
+                <div class="ai-val">{{ lst.ai_market|inr }}</div>
+              </div>
+              <div class="ai-row bar-tax">
+                <div class="ai-label">Tax</div>
+                <div class="ai-bar"><div class="ai-fill" style="background:#e11d48;"></div></div>
+                <div class="ai-val">{{ lst.ai_tax|inr }}</div>
+              </div>
+              <div class="ai-row bar-ins">
+                <div class="ai-label">Ins.</div>
+                <div class="ai-bar"><div class="ai-fill" style="background:#22c55e;"></div></div>
+                <div class="ai-val">{{ lst.ai_ins|inr }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modern-card-body">
+          <h3 class="card-title">{{ lst.car.make }} {{ lst.car.model }}</h3>
+          
+          <div class="car-meta">
+            <span class="meta-item"><i class="fa-regular fa-calendar"></i> {{ lst.car.year }}</span>
+            <span class="meta-item"><i class="fa-solid fa-gas-pump"></i> {{ lst.car.fuel_type|default:'Petrol' }}</span>
+            <span class="meta-item"><i class="fa-solid fa-gear"></i> {{ lst.car.transmission|default:'Auto' }}</span>
+          </div>
+
+          <div class="price-box">
+            <span class="price-label">Price</span>
+            <span class="car-price">{{ lst.price|inr }}</span>
+          </div>
+          
+          <div class="card-actions">
+            <a href="{% url 'listing_detail' lst.listing_id %}" class="btn btn-view text-center text-decoration-none">View Details</a>
+          </div>
+
+          {% if request.user.is_staff or request.user == lst.seller %}
+          <div class="admin-actions">
+            <a href="{% url 'listing_edit' lst.listing_id %}" class="btn btn-warning btn-sm flex-fill fw-bold text-dark"><i class="fa-solid fa-pen me-1"></i> Edit</a>
+            <a href="{% url 'listing_delete' lst.listing_id %}" class="btn btn-danger btn-sm flex-fill fw-bold"><i class="fa-solid fa-trash me-1"></i> Delete</a>
+          </div>
+          {% endif %}
+        </div>
+
+      </article>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="p-5 text-center bg-white reveal" style="border-radius: 16px; border: 2px dashed #cbd5e1;">
+            <i class="fa-solid fa-warehouse mb-3" style="font-size: 3rem; color: #cbd5e1;"></i>
+            <h4 class="text-secondary fw-bold">Inventory is currently updating.</h4>
+            <p class="text-muted mb-0">Please check back soon for our latest arrivals.</p>
+        </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<script>
+  // --- Intersection Observer for Scroll Reveals ---
+  document.addEventListener("DOMContentLoaded", () => {
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if(entry.isIntersecting) {
+          entry.target.classList.add('active');
+          // Optional: Stop observing once revealed to keep it visible
+          // observer.unobserve(entry.target); 
+        }
+      });
+    }, { threshold: 0.1 });
+
+    reveals.forEach(reveal => observer.observe(reveal));
+  });
+
+  // Tab Logic for New vs Used Search
+  (function(){
+    const tabs = document.querySelectorAll('.search-tab');
+    const form = document.getElementById('homeSearchForm');
+    
+    tabs.forEach(t => {
+      t.addEventListener('click', (e) => {
+        e.preventDefault();
+        tabs.forEach(x => x.classList.remove('active'));
+        t.classList.add('active');
+        
+        const type = t.dataset.tab;
+        form.querySelector('input[name=type]').value = type;
+        form.setAttribute('action', type === 'used' ? '{% url "listings" %}' : '{% url "cars" %}');
+      });
+    });
+  })();
+
+  // Category click redirect
+  (function(){
+    const cards = document.querySelectorAll('.category-card');
+    cards.forEach(c => {
+      c.addEventListener('click', () => {
+        const type = c.getAttribute('data-type');
+        const value = c.getAttribute('data-value');
+        const params = new URLSearchParams();
+        if (type === 'body') params.set('body_type', value);
+        if (type === 'fuel') params.set('fuel_type', value);
+        window.location.href = `{% url 'cars' %}?` + params.toString();
+      });
+    });
+  })();
+  
+  // AI Bar Fill Animation Trigger
+  (function(){
+    document.querySelectorAll('.ai-bars').forEach(el => {
+      const m = Number(el.dataset.market || 0);
+      const t = Number(el.dataset.tax || 0);
+      const i = Number(el.dataset.ins || 0);
+      const d = Number(el.dataset.duty || 0);
+      const max = Math.max(m, t, i, d, 1);
+      const setW = (cls, val) => {
+        const bar = el.querySelector(cls + ' .ai-fill');
+        // Only trigger the width if the bar exists
+        if (bar) {
+            // Add a tiny delay so the transition triggers after DOM load
+            setTimeout(() => {
+                bar.style.width = Math.min(100, Math.round((val / max) * 100)) + '%';
+            }, 100);
+        }
+      };
+      setW('.bar-market', m);
+      setW('.bar-tax', t);
+      setW('.bar-ins', i);
+      setW('.bar-duty', d);
+    });
+  })();
+</script>
+{% endblock %}

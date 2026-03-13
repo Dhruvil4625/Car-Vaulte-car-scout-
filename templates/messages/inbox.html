@@ -1,0 +1,393 @@
+{% extends 'base.html' %}
+{% load currency %}
+{% block title %}Message Center | Car Scout{% endblock %}
+
+{% block content %}
+<style>
+  /* --- Ultra-Smooth Cinematic Pan --- */
+  @keyframes cinematicPan {
+    0% { transform: scale(1.0) translateX(0); }
+    50% { transform: scale(1.05) translateX(-1%); }
+    100% { transform: scale(1.0) translateX(0); }
+  }
+
+  /* --- Inbox Hero Section --- */
+  .inbox-hero {
+    position: relative;
+    padding: 80px 0 100px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+  }
+
+  .inbox-hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: url('https://images.unsplash.com/photo-1512428559087-560fa5ceab42?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    z-index: 1;
+    animation: cinematicPan 60s ease-in-out infinite;
+    will-change: transform;
+  }
+
+  .inbox-hero::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, rgba(2, 6, 23, 0.85) 0%, rgba(2, 6, 23, 0.98) 100%);
+    z-index: 2;
+  }
+
+  .inbox-hero .container {
+    position: relative;
+    z-index: 3;
+    text-align: center;
+  }
+
+  .inbox-hero h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  }
+
+  .inbox-hero h1 span {
+    color: #e11d48;
+  }
+
+  .inbox-hero p {
+    color: #cbd5e1;
+    font-size: 1.15rem;
+    margin: 0;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+
+  /* --- Message List Container --- */
+  .message-wrapper {
+    margin-top: -60px; 
+    position: relative;
+    z-index: 10;
+    padding-bottom: 80px;
+  }
+
+  .message-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05);
+    padding: 30px;
+    margin-bottom: 20px;
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+  }
+
+  .message-card:hover {
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    transform: translateY(-4px);
+    border-color: rgba(225, 29, 72, 0.3);
+  }
+
+  /* --- Message Header & Avatar --- */
+  .msg-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .msg-sender-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .msg-avatar {
+    width: 50px;
+    height: 50px;
+    background: #f8fafc;
+    color: #0f172a;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    border: 2px solid #e2e8f0;
+  }
+
+  .msg-sender-name {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 4px 0;
+  }
+
+  .msg-time {
+    font-size: 0.85rem;
+    color: #64748b;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* --- Badges --- */
+  .role-badge {
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    vertical-align: middle;
+  }
+  .role-buyer { background: rgba(59, 130, 246, 0.1); color: #2563eb; border: 1px solid rgba(59, 130, 246, 0.2); }
+  .role-seller { background: rgba(15, 23, 42, 0.1); color: #0f172a; border: 1px solid rgba(15, 23, 42, 0.2); }
+
+  /* --- Premium Sentiment Badges --- */
+  .sentiment-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    padding: 5px 12px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 15px;
+  }
+  .sentiment-positive { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+  .sentiment-negative { background: #fef2f2; color: #e11d48; border: 1px solid #fecdd3; }
+  .sentiment-neutral { background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; }
+
+  /* --- Message Content --- */
+  .msg-body {
+    font-size: 1.05rem;
+    color: #334155;
+    line-height: 1.7;
+    margin-bottom: 20px;
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 10px;
+    border-left: 4px solid #e11d48;
+    font-style: italic;
+  }
+
+  /* --- Listing Context Box --- */
+  .msg-context {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+  }
+
+  .message-card:hover .msg-context {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+  }
+
+  .msg-context-car {
+    color: #0f172a;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .msg-context-car i {
+    color: #e11d48;
+  }
+
+  .msg-context-price {
+    font-weight: 800;
+    color: #10b981; 
+    font-size: 1.1rem;
+  }
+
+  .empty-state {
+    background: #ffffff;
+    border: 2px dashed #cbd5e1;
+    border-radius: 16px;
+    padding: 80px 20px;
+    text-align: center;
+    color: #64748b;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+  }
+  
+  .empty-state i {
+    color: #e2e8f0;
+  }
+
+  .msg-actions {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .msg-actions .btn {
+    border-radius: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-size: 0.75rem;
+  }
+
+  .msg-actions textarea,
+  .msg-actions select,
+  .msg-actions input {
+    border-radius: 8px;
+  }
+</style>
+
+<section class="inbox-hero reveal">
+  <div class="container">
+    <h1>Message <span>Center</span></h1>
+    <p>Communicate securely with buyers and sellers regarding vehicle listings.</p>
+  </div>
+</section>
+
+<section class="container message-wrapper">
+  <div class="row justify-content-center">
+    
+    <aside class="col-lg-3 d-none d-lg-block">
+      {% if request.user.is_staff or request.user.is_superuser %}
+        {% include 'admin/sidebar.html' %}
+      {% else %}
+        {% include 'users/sidebar.html' %}
+      {% endif %}
+    </aside>
+
+    <div class="col-lg-9">
+      
+      <div class="message-list">
+        {% for m in messages %}
+          <div class="message-card reveal" id="message-{{ m.message_id }}">
+            
+            <div class="msg-header">
+              <div class="msg-sender-info">
+                <div class="msg-avatar">
+                  <i class="fa-solid fa-user-astronaut"></i>
+                </div>
+                <div>
+                  <h5 class="msg-sender-name">
+                    {{ m.sender.email }}
+                    {% if m.sender.role == 'Buyer' %}
+                      <span class="role-badge role-buyer ms-2">Buyer</span>
+                    {% elif m.sender.role == 'Seller' %}
+                      <span class="role-badge role-seller ms-2">Seller</span>
+                    {% endif %}
+                  </h5>
+                  <span class="text-muted fw-bold" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Direct Message</span>
+                </div>
+              </div>
+              <div class="msg-time">
+                <i class="fa-regular fa-clock"></i> {{ m.sent_at }}
+              </div>
+            </div>
+
+            <div class="msg-body">
+              "{{ m.content }}"
+              
+              {% if m.sentiment_score is not None %}
+                <div class="mt-3">
+                  {% if m.sentiment_score >= 0.2 %}
+                    <span class="sentiment-badge sentiment-positive"><i class="fa-solid fa-face-smile"></i> Positive Sentiment</span>
+                  {% elif -0.2 >= m.sentiment_score %}
+                    <span class="sentiment-badge sentiment-negative"><i class="fa-solid fa-face-frown"></i> Priority Attention Needed</span>
+                  {% else %}
+                    <span class="sentiment-badge sentiment-neutral"><i class="fa-solid fa-face-meh"></i> Neutral Inquiry</span>
+                  {% endif %}
+                  {% if m.sentiment_label %}
+                    <span class="badge bg-info ms-2">{{ m.sentiment_label }}</span>
+                  {% endif %}
+                  {% if m.toxicity_score and m.toxicity_score > 0.5 %}
+                    <span class="badge bg-warning text-dark ms-2"><i class="fa-solid fa-triangle-exclamation me-1"></i> Toxic</span>
+                  {% endif %}
+                </div>
+              {% endif %}
+            </div>
+
+            {% if m.listing %}
+            <a href="{% url 'listing_detail' m.listing.listing_id %}" class="text-decoration-none">
+              <div class="msg-context">
+                <div class="msg-context-car">
+                  <i class="fa-solid fa-car-side"></i> 
+                  Inquiry Regarding: {{ m.listing.car.make }} {{ m.listing.car.model }} ({{ m.listing.car.year }})
+                </div>
+                <div class="msg-context-price">
+                  {{ m.listing.price|inr }}
+                </div>
+              </div>
+            </a>
+            {% endif %}
+
+            <div class="msg-actions">
+              <div class="row g-3">
+                <div class="col-lg-6">
+                  <form method="post" action="{% url 'message_reply' m.message_id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.path }}#message-{{ m.message_id }}">
+                    <label class="form-label fw-bold text-uppercase small">Reply</label>
+                    <textarea name="content" class="form-control mb-2" rows="3" placeholder="Send a reply to {{ m.sender.email }}..." required></textarea>
+                    <button type="submit" class="btn btn-outline-primary w-100"><i class="fa-solid fa-reply me-1"></i>Reply</button>
+                  </form>
+                </div>
+                <div class="col-lg-6">
+                  <form method="post" action="{% url 'rate_user' m.sender.user_id %}" class="mb-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.path }}#message-{{ m.message_id }}">
+                    <label class="form-label fw-bold text-uppercase small">Rate {{ m.sender.role|default:'User' }}</label>
+                    <div class="row g-2">
+                      <div class="col-4">
+                        <select name="score" class="form-select">
+                          <option value="5">5★</option>
+                          <option value="4">4★</option>
+                          <option value="3">3★</option>
+                          <option value="2">2★</option>
+                          <option value="1">1★</option>
+                        </select>
+                      </div>
+                      <div class="col-8">
+                        <input type="text" name="review" class="form-control" placeholder="Short review (optional)">
+                      </div>
+                    </div>
+                    <div class="d-flex gap-2 mt-2">
+                      <button type="submit" class="btn btn-outline-warning flex-fill"><i class="fa-solid fa-star me-1"></i>Rate</button>
+                      {% if m.listing %}
+                      <button formaction="{% url 'message_accept_deal' m.message_id %}" class="btn btn-success flex-fill"><i class="fa-solid fa-handshake-angle me-1"></i>Accept Deal</button>
+                      {% endif %}
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        {% empty %}
+          <div class="empty-state reveal">
+            <i class="fa-solid fa-inbox fs-1 mb-4 d-block" style="font-size: 4rem;"></i>
+            <h3 class="text-dark fw-bold mb-3">Your Inbox is Empty</h3>
+            <p class="mb-0 fs-5">You have no active conversations right now. When buyers or sellers contact you, their messages will appear here.</p>
+          </div>
+        {% endfor %}
+      </div>
+
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+

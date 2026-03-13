@@ -1,0 +1,321 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login | Car Scout</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  
+  <style>
+    body {
+        font-family: 'Montserrat', sans-serif;
+        background-color: #020617;
+        margin: 0;
+        overflow: hidden;
+    }
+
+    /* Your favorite cinematic background */
+    .auth-hero {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(2, 6, 23, 0.9) 100%), 
+                  url('https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+      padding: 20px;
+    }
+
+    /* Refined Glassmorphism Card */
+    .auth-card {
+      width: 100%;
+      max-width: 420px;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+      border-top: 4px solid #e11d48;
+      position: relative;
+    }
+
+    .auth-header {
+      padding: 40px 30px 10px;
+      text-align: center;
+    }
+
+    .auth-header h3 {
+      font-weight: 800;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      margin-bottom: 5px;
+    }
+
+    .auth-header p {
+      color: #94a3b8;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+    }
+
+    .auth-body {
+      padding: 20px 40px 40px;
+    }
+
+    /* Premium Icon Inputs */
+    .input-group-custom {
+      position: relative;
+      margin-bottom: 25px;
+    }
+
+    .input-group-custom label {
+      display: block;
+      color: #94a3b8;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-wrapper i {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #e11d48;
+      font-size: 1rem;
+      z-index: 2; /* Keeps icon above background */
+    }
+
+    /* Target both standard inputs and Bootstrap form-controls */
+    .input-wrapper input,
+    .input-wrapper .form-control {
+      width: 100%;
+      padding: 14px 16px 14px 45px;
+      background: rgba(0, 0, 0, 0.3) !important; /* Force dark background */
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      border-radius: 10px;
+      color: #fff !important; /* Force white text */
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+    }
+
+    .input-wrapper input:focus,
+    .input-wrapper .form-control:focus {
+      background: rgba(0, 0, 0, 0.5) !important;
+      border-color: #e11d48 !important;
+      outline: none;
+      box-shadow: 0 0 15px rgba(225, 29, 72, 0.3) !important;
+      color: #fff !important;
+    }
+
+    /* --- THE FIX: Stop Browser Autofill from turning inputs white --- */
+    .input-wrapper input:-webkit-autofill,
+    .input-wrapper input:-webkit-autofill:hover, 
+    .input-wrapper input:-webkit-autofill:focus, 
+    .input-wrapper input:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 30px #0f172a inset !important; /* Forces a dark slate background */
+      -webkit-text-fill-color: #fff !important; /* Forces white text */
+      transition: background-color 5000s ease-in-out 0s;
+    }
+
+    /* Ignition Start Button with Pulse/Glow */
+    .btn-ignition {
+      background: #e11d48;
+      color: #fff;
+      border: none;
+      padding: 16px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      border-radius: 10px;
+      width: 100%;
+      transition: all 0.4s ease;
+      box-shadow: 0 4px 15px rgba(225, 29, 72, 0.4);
+      margin-top: 10px;
+    }
+
+    .btn-ignition:hover {
+      background: #be123c;
+      box-shadow: 0 0 25px rgba(225, 29, 72, 0.6);
+      transform: translateY(-2px);
+    }
+
+    .btn-ignition:active {
+      transform: translateY(0);
+    }
+
+    /* Footer Links */
+    .auth-footer {
+      padding: 20px;
+      text-align: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 0.85rem;
+      color: #64748b;
+    }
+
+    .auth-footer a {
+      color: #e11d48;
+      font-weight: 700;
+      text-decoration: none;
+      margin-left: 5px;
+      transition: color 0.3s;
+    }
+
+    .auth-footer a:hover {
+      color: #fff;
+    }
+
+    /* Animation */
+    .fade-in-up {
+      animation: fadeInUp 1s ease-out both;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+<body>
+  <section class="auth-hero">
+    <div class="auth-card fade-in-up">
+      
+      <div class="auth-header">
+        <h3 class="m-0">Car <span style="color:#e11d48;">Scout</span></h3>
+        <p>REV UP YOUR DASHBOARD</p>
+      </div>
+
+      <div class="auth-body">
+        <form method="post">
+          {% csrf_token %}
+          
+          {% if error %}
+            <div class="alert alert-danger py-2" style="background: rgba(225, 29, 72, 0.1); border: 1px solid #e11d48; color: #fff; font-size: 0.8rem; border-radius: 8px;">
+                <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ error }}
+            </div>
+          {% elif form.non_field_errors %}
+            <div class="alert alert-danger py-2" style="background: rgba(225, 29, 72, 0.1); border: 1px solid #e11d48; color: #fff; font-size: 0.8rem; border-radius: 8px;">
+                <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ form.non_field_errors }}
+            </div>
+          {% endif %}
+
+          <div class="input-group-custom">
+            <label>Email Address</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-envelope"></i>
+              {{ form.email }}
+            </div>
+          </div>
+          
+          <div class="input-group-custom">
+            <label>Secure Password</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-lock"></i>
+              {{ form.password }}
+            </div>
+          </div>
+          
+          <button type="submit" class="btn-ignition">
+            <i class="fa-solid fa-bolt me-2"></i> Ignition Start
+          </button>
+        </form>
+      </div>
+
+      <div class="auth-footer">
+        <span>New to the club?</span> <a href="{% url 'signup' %}">Register Now</a>
+        <br>
+        <a href="{% url 'password_reset' %}"><i class="fa-solid fa-key me-1"></i> Forgot Password?</a>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="modal fade" id="otpModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 16px; background: rgba(15,23,42,0.95); color:#fff; border: 1px solid rgba(255,255,255,0.08);">
+        <div class="modal-header">
+          <h5 class="modal-title" style="font-weight:800; letter-spacing:1px;">Email Verification</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="otpForm" method="post" action="{% url 'verify_otp' %}">
+          {% csrf_token %}
+          <div class="modal-body px-4">
+            <p class="mb-2" style="color:#94a3b8;">Enter the 6‑digit code sent to <strong style="color:#fff;">{{ email }}</strong>.</p>
+            <input type="hidden" name="email" value="{{ email }}">
+            <input type="hidden" name="next" value="{{ next|default:'' }}">
+            <div class="input-group-custom">
+              <div class="input-wrapper">
+                <i class="fa-solid fa-shield-halved"></i>
+                <input type="text" name="otp" maxlength="6" minlength="6" class="form-control text-center fw-bold" placeholder="••••••" inputmode="numeric" pattern="[0-9]{6}" title="Enter 6 digits" autocomplete="one-time-code" required>
+              </div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <span id="otpStatus" class="small" style="color:#94a3b8;"></span>
+              <button type="button" id="resendBtn" class="btn btn-link p-0 text-decoration-none" style="color:#e11d48; font-weight:700;">Resend OTP</button>
+            </div>
+          </div>
+          <div class="modal-footer px-4">
+            <button id="verifyBtn" type="submit" class="btn btn-dark" style="border-radius:10px; text-transform:uppercase; letter-spacing:.5px;">Verify & Continue</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  {% if otp_required %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var modalEl = document.getElementById('otpModal');
+      if (modalEl) { new bootstrap.Modal(modalEl).show(); }
+      var resendBtn = document.getElementById('resendBtn');
+      var statusEl = document.getElementById('otpStatus');
+      var otpForm = document.getElementById('otpForm');
+      function getCsrf() {
+        var name='csrftoken='; var ca=document.cookie.split(';');
+        for(var i=0;i<ca.length;i++){var c=ca[i].trim(); if(c.indexOf(name)==0) return c.substring(name.length,c.length);}
+        return '';
+      }
+      function startCooldown(sec){
+        var left=sec;
+        resendBtn.disabled=true;
+        var it=setInterval(function(){
+          statusEl.textContent='Resend in '+left+'s';
+          left--;
+          if(left<0){ clearInterval(it); statusEl.textContent=''; resendBtn.disabled=false;}
+        },1000);
+      }
+      if (resendBtn){
+        resendBtn.addEventListener('click', function(){
+          resendBtn.disabled = true;
+          statusEl.textContent = 'Sending...';
+          fetch('{% url "resend_otp" %}', {
+            method: 'POST',
+            headers: {'X-CSRFToken': getCsrf(), 'Content-Type':'application/x-www-form-urlencoded'},
+            body: 'email={{ email|urlencode }}'
+          }).then(r=>r.json()).then(d=>{
+            if(d && d.ok){ statusEl.textContent='OTP sent'; startCooldown(30); }
+            else { statusEl.textContent = (d && d.error) ? d.error : 'Failed to send'; resendBtn.disabled=false; }
+          }).catch(()=>{ statusEl.textContent='Failed to send'; resendBtn.disabled=false; });
+        });
+      }
+      if (otpForm){
+        otpForm.addEventListener('submit', function(){
+          statusEl.textContent = 'Verifying...';
+          var btn = document.getElementById('verifyBtn');
+          if (btn) { btn.disabled = true; }
+        });
+      }
+    });
+  </script>
+  {% endif %}
+</body>
+</html>

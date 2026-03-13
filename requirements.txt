@@ -1,0 +1,10 @@
+Django>=5.2
+psycopg2-binary>=2.9
+Pillow>=10.0
+scikit-learn>=1.4
+transformers>=4.40
+torch>=2.2; platform_system != "Windows" or platform_system == "Windows"
+sentence-transformers>=2.6
+langchain>=0.1
+langchain-community>=0.1
+ollama>=0.1; platform_system != "Windows" or platform_system == "Windows"

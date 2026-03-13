@@ -1,0 +1,232 @@
+/* ==========================================================================
+   CAR SCOUT - MASTER STYLESHEET
+   Premium Light Theme
+   ========================================================================== */
+
+/* --- Global Variables --- */
+:root {
+  /* Brand Colors */
+  --primary: #e11d48;        /* Signature Crimson Red */
+  --primary-hover: #be123c;  /* Darker Red for Hover States */
+  --accent: #0f172a;         /* Deep Slate */
+  
+  /* Background & Surface Colors */
+  --bg-main: #f8fafc;        /* Clean Off-White Background */
+  --bg-card: #ffffff;        /* Pure White for Cards/Containers */
+  --bg-subtle: #f1f5f9;      /* Light Gray for Inputs/Hover */
+  
+  /* Text Colors */
+  --text-main: #0f172a;      /* High Contrast Dark Slate */
+  --text-muted: #64748b;     /* Readable Gray for secondary text */
+  --text-light: #94a3b8;     /* Lighter Gray for placeholders/borders */
+  
+  /* UI Elements */
+  --border-color: #e2e8f0;
+  
+  /* Shadows */
+  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 4px 15px rgba(225, 29, 72, 0.2);
+  
+  /* Layout */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* --- Global Resets & Typography --- */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-family: 'Montserrat', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-main);
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 0.5rem;
+}
+
+p {
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+a:hover {
+  color: var(--primary-hover);
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* --- Layout Utilities --- */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.cv-main {
+  padding: 40px 0;
+  min-height: calc(100vh - 400px); /* Pushes footer down */
+}
+
+/* --- Global Card Styling --- */
+.cv-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+  padding: 24px;
+}
+
+.cv-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: rgba(225, 29, 72, 0.2);
+}
+
+.cv-section-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--accent);
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* --- Global Form Inputs (To match the premium feel) --- */
+.form-control, .form-select {
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  transition: var(--transition);
+  font-family: 'Montserrat', sans-serif;
+}
+
+.form-control:focus, .form-select:focus {
+  background-color: var(--bg-card);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.1);
+  outline: none;
+}
+
+.form-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+/* --- Buttons --- */
+.btn-primary {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  font-weight: 700;
+  padding: 10px 24px;
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: var(--transition);
+}
+
+.btn-primary:hover, .btn-primary:focus {
+  background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
+  box-shadow: var(--shadow-glow);
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  border: 2px solid var(--border-color);
+  color: var(--text-muted);
+  font-weight: 700;
+  padding: 8px 22px; /* Adjusted for border width */
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: var(--transition);
+}
+
+.btn-secondary:hover {
+  background-color: var(--bg-subtle);
+  border-color: var(--text-light);
+  color: var(--text-main);
+}
+
+/* --- Utility Classes --- */
+.text-muted {
+  color: var(--text-muted) !important;
+}
+
+.bg-white {
+  background-color: var(--bg-card) !important;
+}
+
+/* --- Animations --- */
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+ 
+
+.btn, .btn-activity {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.08s ease-in;
+}
+.btn:hover, .btn-activity:hover {
+  filter: brightness(0.98) saturate(1.05);
+}
+.btn:active, .btn-activity:active {
+  transform: scale(0.98);
+}
+.cv-ripple {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  background: rgba(225, 29, 72, 0.35);
+  animation: cv-ripple 500ms linear;
+  pointer-events: none;
+}
+@keyframes cv-ripple {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}

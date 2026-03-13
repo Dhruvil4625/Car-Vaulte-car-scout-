@@ -1,0 +1,340 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Contact | Car Scout{% endblock %}
+
+{% block content %}
+<style>
+  /* --- Contact Hero Section --- */
+  .contact-hero {
+    /* Slightly darkened the top gradient from 0.85 to 0.90 for better contrast */
+    background: linear-gradient(135deg, rgba(2, 6, 23, 0.90) 0%, rgba(2, 6, 23, 0.95) 100%), 
+                url('https://images.unsplash.com/photo-1485291571150-772bcfc10da5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    padding: 100px 0 80px;
+    text-align: center;
+    color: #fff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .contact-hero h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 15px;
+    /* Powerful text shadow forces readability against bright backgrounds */
+    text-shadow: 0 5px 20px rgba(0, 0, 0, 0.9);
+  }
+
+  .contact-hero h1 span {
+    color: #e11d48; /* Premium Crimson Red */
+  }
+
+  .contact-hero p {
+    color: #cbd5e1; /* Slightly brightened the base text color */
+    font-size: 1.15rem;
+    max-width: 600px;
+    margin: 0 auto;
+    letter-spacing: 0.5px;
+    /* Secondary shadow for the subtext */
+    text-shadow: 0 3px 15px rgba(0, 0, 0, 0.9);
+  }
+
+  /* --- Glassmorphism Contact Info Cards --- */
+  .contact-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin-top: -50px; 
+    position: relative;
+    z-index: 10;
+  }
+
+  .contact-card {
+    background: rgba(20, 25, 35, 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 40px 20px;
+    text-align: center;
+    transition: all 0.4s ease;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+  }
+
+  .contact-card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(225, 29, 72, 0.5);
+    box-shadow: 0 20px 40px rgba(225, 29, 72, 0.15);
+  }
+
+  /* Polished Icon Containers */
+  .contact-icon-wrapper {
+    width: 80px;
+    height: 80px;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 25px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid rgba(225, 29, 72, 0.2);
+    transition: all 0.3s ease;
+  }
+
+  .contact-card:hover .contact-icon-wrapper {
+    border-color: #e11d48;
+    transform: scale(1.05);
+  }
+
+  .contact-icon-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; 
+  }
+
+  .contact-card h3 {
+    color: #fff;
+    font-weight: 800;
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .contact-card p, .contact-card a {
+    color: #94a3b8;
+    font-size: 1rem;
+    text-decoration: none;
+    transition: color 0.3s;
+    margin-bottom: 5px;
+  }
+
+  .contact-card a:hover {
+    color: #fff;
+  }
+
+  /* --- Contact Form Section --- */
+  .contact-form-section {
+    padding: 80px 0;
+    background-color: #020617; /* Deep dark background to match the theme */
+  }
+
+  .form-wrapper {
+    background: rgba(20, 25, 35, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    padding: 50px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    border-top: 4px solid #e11d48;
+  }
+
+  .form-title {
+    color: #fff;
+    font-weight: 800;
+    margin-bottom: 5px;
+    font-size: 2rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .form-subtitle {
+    color: #94a3b8;
+    margin-bottom: 40px;
+    font-size: 1rem;
+  }
+
+  /* Premium Input Styling (Matches Auth Pages) */
+  .input-group-custom {
+    position: relative;
+    margin-bottom: 20px;
+  }
+
+  .input-group-custom label {
+    display: block;
+    color: #94a3b8;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  .input-wrapper {
+    position: relative;
+  }
+
+  .input-wrapper i {
+    position: absolute;
+    left: 16px;
+    top: 15px; 
+    color: #e11d48;
+    font-size: 1rem;
+  }
+
+  /* Specifically target the textarea icon to sit at the top */
+  .textarea-icon {
+    top: 16px !important; 
+  }
+
+  .input-wrapper input,
+  .input-wrapper textarea {
+    width: 100%;
+    padding: 14px 16px 14px 45px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    color: #fff;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+  }
+
+  .input-wrapper textarea {
+    min-height: 150px;
+    resize: vertical;
+  }
+
+  .input-wrapper input:focus,
+  .input-wrapper textarea:focus {
+    background: rgba(0, 0, 0, 0.6);
+    border-color: #e11d48;
+    outline: none;
+    box-shadow: 0 0 15px rgba(225, 29, 72, 0.3);
+  }
+
+  /* Send Button */
+  .btn-submit {
+    background-color: #e11d48;
+    color: #fff;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 16px 40px;
+    border: none;
+    border-radius: 10px;
+    transition: all 0.4s ease;
+    box-shadow: 0 4px 15px rgba(225, 29, 72, 0.4);
+    margin-top: 10px;
+    width: 100%;
+  }
+
+  @media (min-width: 768px) {
+    .btn-submit {
+      width: auto;
+    }
+  }
+
+  .btn-submit:hover {
+    background-color: #be123c;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(225, 29, 72, 0.6);
+  }
+</style>
+
+<section class="contact-hero">
+  <div class="container">
+    <h1>Get in <span>Touch</span></h1>
+    <p>Have questions about a vehicle, financing, or test drives? Our team is ready to help you hit the road.</p>
+  </div>
+</section>
+
+<div class="container">
+  <div class="contact-info-grid">
+    
+    <div class="contact-card">
+      <div class="contact-icon-wrapper">
+        <img src="https://www.clipartmax.com/png/middle/207-2074118_call-us-call-icon-png.png" alt="Call Us">
+      </div>
+      <h3>Call Us</h3>
+      <p>Mon-Sat, 9AM to 7PM</p>
+      <a href="tel:+919909945734" class="fw-bold fs-5 text-white">+91 99099 45734</a>
+    </div>
+
+    <div class="contact-card">
+      <div class="contact-icon-wrapper">
+        <img src="https://thumbs.dreamstime.com/b/contact-us-email-icon-isolated-glassy-blue-round-button-abstract-illustration-contact-us-email-icon-glassy-blue-round-button-100262306.jpg" alt="Email Us">
+      </div>
+      <h3>Email Us</h3>
+      <p>We'll respond within 24 hours.</p>
+      <a href="mailto:ramoliadk@gmail.com" class="fw-bold text-white">ramoliadk@gmail.com</a>
+    </div>
+
+    <div class="contact-card">
+      <div class="contact-icon-wrapper">
+        <img src="https://img.icons8.com/color/1200/visit.jpg" alt="Visit Us">
+      </div>
+      <h3>Visit Us</h3>
+      <p>Corporate Headquarters</p>
+      <p class="fw-bold mb-0 text-white">Vadodara, Gujarat</p>
+    </div>
+
+  </div>
+</div>
+
+<section class="contact-form-section">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-9">
+        
+        <div class="form-wrapper">
+          <h2 class="form-title">Send a Message</h2>
+          <p class="form-subtitle">Fill out the form below and one of our automotive experts will get back to you shortly.</p>
+          
+          <form class="row g-3" action="#" method="POST">
+            {% csrf_token %}
+            
+            <div class="col-md-6">
+              <div class="input-group-custom">
+                <label>Full Name</label>
+                <div class="input-wrapper">
+                  <i class="fa-solid fa-user"></i>
+                  <input type="text" placeholder="John Doe" required>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="input-group-custom">
+                <label>Email Address</label>
+                <div class="input-wrapper">
+                  <i class="fa-solid fa-envelope"></i>
+                  <input type="email" placeholder="john@example.com" required>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-12">
+              <div class="input-group-custom">
+                <label>Subject</label>
+                <div class="input-wrapper">
+                  <i class="fa-solid fa-tag"></i>
+                  <input type="text" placeholder="e.g., Inquiry about BMW M4" required>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-12">
+              <div class="input-group-custom">
+                <label>Your Message</label>
+                <div class="input-wrapper">
+                  <i class="fa-solid fa-pen textarea-icon"></i>
+                  <textarea placeholder="How can we help you today?" required></textarea>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-12 text-end mt-2">
+              <button type="submit" class="btn-submit">
+                <i class="fa-solid fa-paper-plane me-2"></i> Send Message
+              </button>
+            </div>
+            
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

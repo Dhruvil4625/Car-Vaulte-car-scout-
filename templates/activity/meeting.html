@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Book a Meeting | Activity Center{% endblock %}
+{% block content %}
+<style>
+  .activity-hero{background:linear-gradient(135deg,rgba(2,6,23,.85),rgba(2,6,23,.95)),url('https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=1600&auto=format&fit=crop') center/cover no-repeat;padding:60px 0;margin-bottom:30px}
+  .activity-hero h1{color:#fff;font-weight:800;margin:0}
+  .activity-nav a{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;font-weight:700;text-decoration:none;border:1px solid rgba(255,255,255,.2);color:#cbd5e1}
+  .activity-nav a.active,.activity-nav a:hover{background:#e11d48;border-color:#e11d48;color:#fff}
+  .activity-car{width:56px;height:28px;background:url('https://cdn-icons-png.flaticon.com/512/743/743988.png') center/contain no-repeat;filter:invert(1);opacity:.9;transform:translateX(-20px);transition:.5s transform ease}
+  .activity-car.animate{transform:translateX(10px)}
+  .meet-card{background:#fff;border:1px solid var(--border-color);border-radius:12px;padding:20px;box-shadow:var(--shadow-sm)}
+  .btn-activity{position:relative;overflow:hidden}
+</style>
+
+<section class="activity-hero">
+  <div class="container d-flex align-items-center justify-content-between">
+    <div>
+      <h1>Activity Center</h1>
+      <div class="mt-2 activity-nav">
+        <a href="{% url 'activity_todos' %}"><i class="fa-solid fa-list-check"></i> To‑Do</a>
+        <a href="{% url 'activity_meeting' %}" class="active"><i class="fa-solid fa-calendar-plus"></i> Book a Meeting</a>
+        <a href="{% url 'activity_history' %}"><i class="fa-solid fa-clock-rotate-left"></i> History</a>
+      </div>
+    </div>
+    <div class="activity-car" id="activityCar"></div>
+  </div>
+</section>
+
+<section class="container mb-5">
+  <div class="row g-4">
+    <aside class="col-lg-3 d-none d-lg-block">
+      {% if request.user.is_staff or request.user.is_superuser %}
+        {% include 'admin/sidebar.html' %}
+      {% else %}
+        {% include 'users/sidebar.html' %}
+      {% endif %}
+    </aside>
+    <div class="col-lg-9">
+      <div class="meet-card">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h5 class="m-0 fw-bold">Google Calendar</h5>
+          <a class="btn btn-primary btn-activity" target="_blank" rel="noopener" href="https://calendar.google.com/calendar/u/0/r/eventedit?text=Car%20Scout%20Meeting&details=Meeting%20scheduled%20via%20Car%20Scout&add={{ request.user.email }}&sf=true">
+            <i class="fa-solid fa-square-plus me-1"></i> Create Event
+          </a>
+        </div>
+        <div class="ratio ratio-16x9">
+          <iframe src="https://calendar.google.com/calendar/embed?src={{ request.user.email|urlencode }}&ctz=UTC" style="border:0" loading="lazy"></iframe>
+        </div>
+        <p class="text-muted mt-3" style="font-size:.9rem">By creating events you agree to follow your organization’s calendar usage policy.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll('.activity-nav a').forEach(a=>{
+    a.addEventListener('click',()=>{const car=document.getElementById('activityCar');if(car){car.classList.add('animate');setTimeout(()=>car.classList.remove('animate'),500);}});
+  });
+</script>
+{% endblock %}
+

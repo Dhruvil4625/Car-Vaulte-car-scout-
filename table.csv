@@ -1,0 +1,64 @@
+Table Name,Column Name,Data Type,Constraints,Nullable,Description / Notes
+users,user_id,VARCHAR(36) or UUID,PRIMARY KEY,No,Unique user identifier
+users,email,VARCHAR(255),UNIQUE,No,Login email (unique across system)
+users,password_hash,VARCHAR(255),,No,Hashed password (bcrypt/argon2 recommended)
+users,name,VARCHAR(100),,Yes,Full name
+users,phone,VARCHAR(20),,Yes,Contact number
+users,role,"ENUM('Buyer','Seller')",,No,Determines user privileges
+users,created_at,DATETIME / TIMESTAMP,DEFAULT CURRENT_TIMESTAMP,No,Account creation timestamp
+users,updated_at,DATETIME / TIMESTAMP,ON UPDATE CURRENT_TIMESTAMP,Yes,Last profile update
+buyers,user_id,VARCHAR(36) or UUID,"PRIMARY KEY, FOREIGN KEY → users.user_id",No,1:1 relationship with users table
+buyers,preferences,JSON / TEXT,,Yes,"Saved search filters (make, model, price range, etc.)"
+buyers,favorite_count,INT,DEFAULT 0,No,Number of favorited listings (for quick stats)
+sellers,user_id,VARCHAR(36) or UUID,"PRIMARY KEY, FOREIGN KEY → users.user_id",No,1:1 relationship with users table
+sellers,dealership_name,VARCHAR(100),,Yes,Optional – only for dealerships
+sellers,location,VARCHAR(150),,Yes,City/area (can be extended to full address later)
+sellers,rating,"DECIMAL(3,2)",DEFAULT 0.00,No,Average seller rating (0.00–5.00)
+cars,vin,VARCHAR(17),PRIMARY KEY,No,Vehicle Identification Number – unique per vehicle
+cars,make,VARCHAR(50),,No,"Brand (Toyota, Honda, etc.)"
+cars,model,VARCHAR(100),,No,Model name
+cars,year,SMALLINT,,No,Manufacturing year
+cars,color,VARCHAR(50),,Yes,Exterior color
+cars,fuel_type,VARCHAR(30),,Yes,Petrol / Diesel / Electric / Hybrid / CNG
+cars,transmission,VARCHAR(30),,Yes,Manual / Automatic / CVT
+cars,mileage,INT,,Yes,Odometer reading (km) – can be updated in listings
+cars,body_type,VARCHAR(50),,Yes,Sedan / SUV / Hatchback / Coupe / etc.
+car_listings,listing_id,VARCHAR(36) or UUID,PRIMARY KEY,No,Unique ID for each sale listing
+car_listings,car_vin,VARCHAR(17),FOREIGN KEY → cars.vin,No,Links to vehicle master data
+car_listings,seller_id,VARCHAR(36) or UUID,FOREIGN KEY → users.user_id,No,Who is selling this car
+car_listings,price,"DECIMAL(12,2)",,No,Asking price (INR)
+car_listings,mileage,INT,,No,Mileage at time of listing (km)
+car_listings,description,TEXT,,Yes,Seller's description
+car_listings,status,"ENUM('Active','Pending','Sold','Withdrawn')",DEFAULT 'Active',No,Listing lifecycle status
+car_listings,created_at,DATETIME,DEFAULT CURRENT_TIMESTAMP,No,When listing was created
+car_listings,updated_at,DATETIME,ON UPDATE CURRENT_TIMESTAMP,Yes,Last modification time
+car_listings,views_count,INT,DEFAULT 0,No,How many times viewed
+inspections,inspection_id,VARCHAR(36) or UUID,PRIMARY KEY,No,Unique inspection record
+inspections,listing_id,VARCHAR(36) or UUID,FOREIGN KEY → car_listings.listing_id,No,Which listing this inspection belongs to
+inspections,inspection_date,DATETIME,,No,When inspection was performed
+inspections,condition_score,"DECIMAL(3,1)",,Yes,0.0 to 10.0 score
+inspections,accident_history,TEXT,,Yes,Summary of reported accidents
+inspections,report_details,TEXT / JSON,,Yes,Detailed report (or JSON from AI/third-party)
+inspections,source,"ENUM('AI','Third-party','Self')",DEFAULT 'Self',No,Origin of inspection data
+messages,message_id,VARCHAR(36) or UUID,PRIMARY KEY,No,Unique message identifier
+messages,sender_id,VARCHAR(36) or UUID,FOREIGN KEY → users.user_id,No,Who sent the message
+messages,receiver_id,VARCHAR(36) or UUID,FOREIGN KEY → users.user_id,No,Who received the message
+messages,listing_id,VARCHAR(36) or UUID,FOREIGN KEY → car_listings.listing_id,Yes,Optional – context of specific car
+messages,content,TEXT,,No,Message text
+messages,sent_at,DATETIME,DEFAULT CURRENT_TIMESTAMP,No,Timestamp when sent
+messages,is_read,BOOLEAN,DEFAULT FALSE,No,Has receiver seen it?
+test_drives,test_drive_id,VARCHAR(36) or UUID,PRIMARY KEY,No,Unique test drive request
+test_drives,listing_id,VARCHAR(36) or UUID,FOREIGN KEY → car_listings.listing_id,No,Which car
+test_drives,buyer_id,VARCHAR(36) or UUID,FOREIGN KEY → users.user_id,No,Who requested
+test_drives,proposed_date,DATETIME,,No,Suggested date/time
+test_drives,actual_date,DATETIME,,Yes,Confirmed / actual date (if happened)
+test_drives,status,"ENUM('Requested','Confirmed','Completed','Cancelled')",DEFAULT 'Requested',No,Current state
+test_drives,notes,TEXT,,Yes,Any additional info
+transactions,transaction_id,VARCHAR(36) or UUID,PRIMARY KEY,No,Unique sale/purchase record
+transactions,listing_id,VARCHAR(36) or UUID,FOREIGN KEY → car_listings.listing_id,No,Which listing was sold
+transactions,buyer_id,VARCHAR(36) or UUID,FOREIGN KEY → users.user_id,No,Buyer
+transactions,seller_id,VARCHAR(36) or UUID,FOREIGN KEY → users.user_id,No,Seller
+transactions,final_price,"DECIMAL(12,2)",,No,Agreed final price (after negotiation)
+transactions,completed_at,DATETIME,,Yes,When transaction was finalized
+transactions,status,"ENUM('Pending','Paid','Completed','Cancelled','Refunded')",DEFAULT 'Pending',No,Transaction lifecycle
+transactions,payment_method,VARCHAR(50),,Yes,UPI / Bank Transfer / Loan / Cash / etc.

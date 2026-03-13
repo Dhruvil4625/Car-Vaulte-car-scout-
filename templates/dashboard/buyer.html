@@ -1,0 +1,416 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Buyer Hub | Car Scout{% endblock %}
+
+{% block content %}
+<style>
+  /* --- Global Dashboard Variables & Resets --- */
+  :root {
+    --dash-bg: #f8fafc;
+    --dash-card: #ffffff;
+    --dash-border: #e2e8f0;
+    --dash-text: #0f172a;
+    --dash-muted: #64748b;
+    --dash-primary: #e11d48;
+    --dash-primary-hover: #be123c;
+  }
+
+  /* --- Top Hero/Header Area --- */
+  .dash-hero {
+    background: linear-gradient(135deg, rgba(2, 6, 23, 0.9) 0%, rgba(2, 6, 23, 0.98) 100%), 
+                url('https://images.unsplash.com/photo-1605810230434-7631ac76ec81?q=80&w=1920&auto=format&fit=crop') center/cover no-repeat;
+    padding: 50px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .dash-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .dash-title-group {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .dash-icon-wrapper {
+    width: 70px;
+    height: 70px;
+    background: rgba(255, 255, 255, 0.1); 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    flex-shrink: 0;
+    color: #fff;
+    font-size: 2rem;
+  }
+
+  .dash-title {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0 0 5px 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    line-height: 1;
+  }
+
+  .dash-title span {
+    color: var(--dash-primary);
+  }
+
+  .dash-subtitle {
+    color: #cbd5e1;
+    margin: 0;
+    font-weight: 500;
+    font-size: 1.05rem;
+    letter-spacing: 0.5px;
+  }
+
+  /* --- Quick Action Bar --- */
+  .buyer-actions {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+
+  .btn-dash-primary {
+    background-color: var(--dash-primary);
+    color: #ffffff;
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(225, 29, 72, 0.3);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    font-size: 0.95rem;
+  }
+
+  .btn-dash-primary:hover {
+    background-color: var(--dash-primary-hover);
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(225, 29, 72, 0.4);
+  }
+
+  .btn-dash-secondary {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    font-size: 0.95rem;
+    backdrop-filter: blur(10px);
+  }
+
+  .btn-dash-secondary:hover {
+    background-color: #ffffff;
+    color: var(--dash-text);
+  }
+
+  /* --- Dashboard Cards & Lists --- */
+  .dash-card {
+    background: var(--dash-card);
+    border-radius: 16px;
+    padding: 30px;
+    border: 1px solid var(--dash-border);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+    height: 100%;
+    transition: all 0.3s ease;
+  }
+  
+  .dash-card:hover {
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.06);
+    border-color: #cbd5e1;
+  }
+
+  .dash-card-header {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--dash-text);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 15px;
+  }
+
+  .dash-card-header i {
+    color: var(--dash-primary);
+  }
+
+  /* Custom List Rows */
+  .dash-list-item {
+    display: flex;
+    align-items: center;
+    padding: 18px 0;
+    border-bottom: 1px solid #f1f5f9;
+    gap: 18px;
+    transition: background-color 0.2s ease;
+  }
+  
+  .dash-list-item:hover {
+    background-color: #f8fafc;
+    border-radius: 8px;
+    padding-left: 10px;
+    padding-right: 10px;
+    margin-left: -10px;
+    margin-right: -10px;
+  }
+
+  .dash-list-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .dash-list-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+  }
+
+  .icon-purchase { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+  .icon-drive { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+  .icon-msg { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+
+  .dash-list-content {
+    flex-grow: 1;
+  }
+
+  .dash-list-content h6 {
+    margin: 0 0 5px 0;
+    font-weight: 800;
+    color: var(--dash-text);
+    font-size: 1.05rem;
+  }
+
+  .dash-list-content p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--dash-muted);
+    font-weight: 500;
+  }
+
+  .dash-list-meta {
+    font-weight: 800;
+    font-size: 1.15rem;
+    text-align: right;
+  }
+
+  .dash-btn-sm {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 800;
+    padding: 6px 14px;
+    border-radius: 8px;
+    letter-spacing: 0.5px;
+  }
+
+  /* --- Empty States --- */
+  .dash-empty {
+    background: #f8fafc;
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 50px 20px;
+    text-align: center;
+    color: var(--dash-muted);
+  }
+  
+  .dash-empty i {
+    font-size: 3rem;
+    color: #e2e8f0;
+    margin-bottom: 15px;
+    display: block;
+  }
+</style>
+
+<section class="dash-hero reveal">
+  <div class="container">
+    <div class="dash-header">
+      <div class="dash-title-group">
+        <div class="dash-icon-wrapper">
+          <i class="fa-solid fa-user-astronaut"></i>
+        </div>
+        <div>
+          <h2 class="dash-title">Buyer <span>Hub</span></h2>
+          <p class="dash-subtitle">Welcome back, {{ request.user.name|default:request.user.email }}</p>
+        </div>
+      </div>
+      <div class="buyer-actions">
+        <a href="{% url 'cars' %}" class="btn-dash-primary">
+          <i class="fa-solid fa-car-side"></i> Browse Inventory
+        </a>
+        <a href="{% url 'account_settings' %}" class="btn-dash-secondary">
+          <i class="fa-solid fa-user-gear"></i> Settings
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="container mb-5">
+  <div class="row g-4">
+    
+    <aside class="col-lg-3 d-none d-lg-block">
+      {% include 'users/sidebar.html' %}
+    </aside>
+    
+    <div class="col-lg-9">
+      
+      <div class="row mb-4 reveal" style="transition-delay: 0.1s;">
+        <div class="col-12">
+          {% include 'partials/chatbot.html' %}
+        </div>
+      </div>
+
+      <div class="row g-4 mb-4">
+        
+        <div class="col-lg-6">
+          <div class="dash-card reveal" style="transition-delay: 0.2s;">
+            <div class="dash-card-header">
+              <i class="fa-solid fa-garage-open"></i> My Garage
+            </div>
+            
+            <div class="dash-list">
+              {% for p in purchases %}
+                <div class="dash-list-item">
+                  <div class="dash-list-icon icon-purchase">
+                    <i class="fa-solid fa-check"></i>
+                  </div>
+                  <div class="dash-list-content">
+                    <h6>{{ p.listing.car.make }} {{ p.listing.car.model }}</h6>
+                    <p>Transaction Complete</p>
+                  </div>
+                  <div class="dash-list-meta text-success">
+                    {{ p.final_price }}
+                  </div>
+                </div>
+              {% empty %}
+                <div class="dash-empty">
+                  <i class="fa-solid fa-car-burst"></i>
+                  <h6 class="fw-bold mt-2" style="color: var(--dash-text);">No vehicles in garage.</h6>
+                  <p class="mb-0" style="font-size: 0.9rem;">Your completed purchases will appear here.</p>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+          <div class="dash-card reveal" style="transition-delay: 0.3s;">
+            <div class="dash-card-header">
+              <i class="fa-solid fa-steering-wheel"></i> Scheduled Drives
+            </div>
+            
+            <div class="dash-list">
+              {% for d in drives %}
+                <div class="dash-list-item">
+                  <div class="dash-list-icon icon-drive">
+                    <i class="fa-regular fa-calendar-check"></i>
+                  </div>
+                  <div class="dash-list-content">
+                    <h6>{{ d.listing.car.make }} {{ d.listing.car.model }}</h6>
+                    <p><i class="fa-regular fa-clock me-1"></i> {{ d.proposed_date }}</p>
+                  </div>
+                  <div class="dash-list-meta">
+                    <a href="{% url 'testdrives' %}" class="btn btn-outline-dark dash-btn-sm">View</a>
+                  </div>
+                </div>
+              {% empty %}
+                <div class="dash-empty">
+                  <i class="fa-regular fa-calendar-xmark"></i>
+                  <h6 class="fw-bold mt-2" style="color: var(--dash-text);">No active bookings.</h6>
+                  <p class="mb-0" style="font-size: 0.9rem;">Find a car you like and request a drive!</p>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="row g-4">
+        <div class="col-12">
+          <div class="dash-card reveal" style="transition-delay: 0.4s;">
+            <div class="dash-card-header">
+              <i class="fa-solid fa-inbox"></i> Secure Inbox
+            </div>
+            
+            <div class="dash-list">
+              {% for m in inbox %}
+                <div class="dash-list-item">
+                  <div class="dash-list-icon icon-msg">
+                    <i class="fa-solid fa-envelope-open-text"></i>
+                  </div>
+                  <div class="dash-list-content">
+                    <h6>From: {{ m.sender.email }}</h6>
+                    <p class="text-truncate" style="max-width: 500px;">{{ m.content }}</p>
+                  </div>
+                  <div class="dash-list-meta">
+                    <div class="d-flex flex-column gap-2 align-items-end">
+                      <a href="{% url 'messages' %}#message-{{ m.message_id }}" class="btn btn-outline-primary dash-btn-sm"><i class="fa-solid fa-reply me-1"></i> Reply</a>
+                      {% if m.listing %}
+                      <form method="post" action="{% url 'message_accept_deal' m.message_id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'dashboard_buyer' %}">
+                        <button type="submit" class="btn btn-outline-success dash-btn-sm"><i class="fa-solid fa-handshake-angle me-1"></i> Accept</button>
+                      </form>
+                      {% endif %}
+                      {% if m.sender.role == 'Seller' %}
+                      <a href="{% url 'sellers_detail' m.sender.user_id %}#rating-form" class="btn btn-outline-warning dash-btn-sm"><i class="fa-solid fa-star me-1"></i> Rate</a>
+                      {% elif m.sender.role == 'Buyer' %}
+                      <a href="{% url 'buyers_detail' m.sender.user_id %}#rating-form" class="btn btn-outline-warning dash-btn-sm"><i class="fa-solid fa-star me-1"></i> Rate</a>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              {% empty %}
+                <div class="dash-empty" style="padding: 60px 20px;">
+                  <i class="fa-regular fa-comments"></i>
+                  <h6 class="fw-bold mt-2" style="color: var(--dash-text);">Your inbox is clear.</h6>
+                  <p class="mb-0" style="font-size: 0.9rem;">Messages from sellers regarding your inquiries will arrive here.</p>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+{% endblock %}

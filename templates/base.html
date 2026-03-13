@@ -1,0 +1,198 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f8fafc"> 
+  <title>{% block title %}Car Scout{% endblock %}</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-5lX9OZt2QhMZcCj60zxlC0U8b2zYFvKkzGgO6hH2qYwP1tWQm3QxqQ3v+Kf9HfNfJXyB3D1GkHqIYbVQmF1N0w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+  <style>
+    /* --- Universal Font and Clean Light Background --- */
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background-color: #f8fafc; /* Crisp, premium off-white */
+      color: #0f172a; /* Deep slate text for high readability */
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      margin: 0;
+    }
+
+    /* Flexbox structure to keep the footer pinned to the bottom */
+    .cv-main {
+      flex: 1 0 auto;
+    }
+
+    /* --- Custom Premium Scrollbar --- */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #e2e8f0; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; transition: background 0.3s ease; }
+    ::-webkit-scrollbar-thumb:hover { background: #e11d48; }
+
+    /* Smooth global transitions for links */
+    a { transition: all 0.3s ease; }
+
+    /* --- User Avatar Styles --- */
+    .user-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      object-fit: cover;
+      display: inline-block;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    .user-avatar.sm { width: 22px; height: 22px; margin-right: 6px; }
+    .user-avatar.lg { width: 40px; height: 40px; margin-right: 10px; }
+
+
+    /* 1. Scroll Reveal Classes */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s ease-out, transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: opacity, transform;
+    }
+    .reveal.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* 2. Global Button Loading State */
+    .btn.loading {
+      position: relative;
+      color: transparent !important;
+      pointer-events: none;
+    }
+    .btn.loading::after {
+      content: "";
+      position: absolute;
+      width: 1.2rem;
+      height: 1.2rem;
+      top: 50%;
+      left: 50%;
+      margin-top: -0.6rem;
+      margin-left: -0.6rem;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      animation: buttonSpin 0.8s linear infinite;
+    }
+    @keyframes buttonSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* 3. Global AI Graph Styles */
+    .ai-overlay {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.94);
+      backdrop-filter: blur(6px);
+      border-top: 1px solid #e2e8f0;
+      transform: translateY(8px);
+      opacity: 0;
+      transition: all .25s ease;
+    }
+    .ai-title { font-size: .8rem; font-weight: 800; color: #0f172a; display:flex; align-items:center; gap:6px; margin-bottom:6px; text-transform: uppercase; letter-spacing:.3px; }
+    .ai-row { display:flex; align-items:center; gap:8px; margin:4px 0; font-size:.75rem; }
+    .ai-label { width:60px; color:#475569; font-weight:700; }
+    .ai-bar { flex:1; height:8px; background:#e2e8f0; border-radius:8px; overflow:hidden; }
+    .ai-fill { height:100%; width:0%; border-radius:8px; background:#0f172a; transition: width .4s ease; }
+    .ai-val { min-width:80px; text-align:right; font-weight:800; color:#0f172a; }
+    .ai-badge { position:absolute; top:10px; left:10px; padding:6px 10px; border-radius:999px; font-size:.7rem; font-weight:900; text-transform:uppercase; letter-spacing:.5px; background:#fff; border:1px solid #e2e8f0; color:#0f172a; }
+    .ai-badge.good { background:#ecfdf5; color:#065f46; border-color:#bbf7d0; }
+    .ai-badge.fair { background:#eff6ff; color:#1e3a8a; border-color:#bfdbfe; }
+    .ai-badge.exp  { background:#fef2f2; color:#991b1b; border-color:#fecaca; }
+    .ai-overview { font-size:.8rem; color:#475569; font-weight:700; background:#ffffff; border:1px dashed #e2e8f0; border-radius:10px; padding:8px 10px; margin-bottom:8px; }
+  </style>
+</head>
+<body>
+  
+  {% include 'usernavbar.html' %}
+  
+  <main class="cv-main">
+    {% block content %}{% endblock %}
+  </main>
+  
+  {% include 'footer.html' %}
+  
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{% static 'js/ui.js' %}"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      
+      // --- 1. Scroll Reveal (Intersection Observer) ---
+      // Automatically fades in elements with the "reveal" class as you scroll down
+      const observerOptions = { root: null, rootMargin: '0px', threshold: 0.1 };
+      const scrollObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('active');
+            observer.unobserve(entry.target); // Only animate once
+          }
+        });
+      }, observerOptions);
+      
+      document.querySelectorAll('.reveal').forEach(el => scrollObserver.observe(el));
+
+      // --- 2. Global Form Submit Protection ---
+      // Automatically adds a loading spinner to buttons when a form is submitted
+      // This prevents users from clicking "Buy" or "Send" twice by accident
+      const forms = document.querySelectorAll('form');
+      forms.forEach(form => {
+        form.addEventListener('submit', function() {
+          const submitBtn = this.querySelector('button[type="submit"], input[type="submit"], .btn');
+          if (submitBtn) {
+            submitBtn.classList.add('loading');
+            
+            // Disable other buttons in the form to prevent double submission
+            setTimeout(() => {
+              const allBtns = this.querySelectorAll('button');
+              allBtns.forEach(b => b.style.pointerEvents = 'none');
+            }, 10);
+          }
+        });
+      });
+
+      // --- 3. Global AI Bar Graph Init ---
+      (function initAIBars(){
+        try {
+          document.querySelectorAll('.ai-bars').forEach(el => {
+            if (el.dataset.__aiInit === '1') return;
+            const m = Number(el.dataset.market || 0);
+            const t = Number(el.dataset.tax || 0);
+            const i = Number(el.dataset.ins || 0);
+            const d = Number(el.dataset.duty || 0);
+            const max = Math.max(m, t, i, d, 1);
+            const setW = (cls, val) => {
+              const bar = el.querySelector(cls + ' .ai-fill');
+              if (bar) bar.style.width = Math.min(100, Math.round((val / max) * 100)) + '%';
+            };
+            setW('.bar-market', m);
+            setW('.bar-tax', t);
+            setW('.bar-ins', i);
+            setW('.bar-duty', d);
+            el.dataset.__aiInit = '1';
+          });
+        } catch(_) {}
+      })();
+
+    });
+  </script>
+
+</body>
+</html>
