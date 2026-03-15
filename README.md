@@ -17,6 +17,71 @@ It includes role-aware dashboards, OTP-based first-time account activation, prof
 - Activity tracking (to-dos, meetings, history)
 - Multi-language ready (`i18n`) configuration
 - Password reset flow via email templates
+---
+
+## ✨ Features
+
+### 🔐 Authentication & User Management
+- User signup, login, and logout
+- OTP-based first-time account verification
+- OTP resend support
+- Role-based user system (Admin, Buyer, Seller)
+- Account state handling (Active, Inactive, Blocked, Deleted)
+- Account settings management
+- Password reset via email
+
+### 🚗 Cars & Listings
+- Car inventory management
+- Create, edit, and delete listings
+- Listing status lifecycle (Active, Pending, Sold, Withdrawn)
+- Image/media uploads for listings
+- Brand-based and all-cars browsing
+- Car comparison feature
+
+### 💬 Communication & Deal Flow
+- Buyer ↔ Seller messaging
+- Message reply flow
+- Deal acceptance from message threads
+- Transaction creation and update through deal/payment flow
+
+### 🧾 Booking, Payments & Transactions
+- Listing booking flow
+- Razorpay payment gateway integration
+- Razorpay order creation endpoint
+- Razorpay signature verification endpoint
+- Full-payment and token-booking fallback logic
+- Transaction tracking with Razorpay metadata
+- EMI fields (months, rate, estimated amount)
+- Shipping/contact details captured with transaction
+- Invoice emails sent to buyer and seller after successful payment
+- Auto-mark listing as Sold on successful full payment
+
+### 📅 Test Drives
+- Test drive request creation
+- Test drive status updates and management
+
+### 🤖 AI & Smart Features
+- AI chatbot page/endpoint
+- AI utility layer for insights/automation
+- AI-assisted inspection scoring support
+- Message sentiment labeling
+- Message toxicity score detection
+
+### 📊 Dashboards & Activity
+- Role-based dashboard routing (Admin/Buyer/Seller)
+- Sales and purchase metrics
+- Activity modules:
+  - To-dos
+  - Meetings
+  - Activity history/logs
+
+### 🏙️ Platform Utilities & Pages
+- City/showroom discovery pages
+- Upcoming arrival management
+- Contact, FAQ, Privacy, and Terms pages
+- Email health/status check endpoint
+- Template-based responsive UI with static assets
+- Automated test coverage for key flows (OTP, deal flow, AI-related tests)
 
 ---
 
