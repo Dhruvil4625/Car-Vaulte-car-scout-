@@ -175,6 +175,9 @@ Create/update `.env` in project root (already added with placeholders):
 - Listings: `/listings/`, `/listings/new/`, `/listings/<id>/`
 - Messages: `/messages/`
 - Test drives: `/testdrives/`
+- Booking: `/booking/`
+- Payments: `/razorpay/order/`, `/razorpay/verify/` (aliases: `/create-order/`, `/verify-payment/`)
+- Profiles: `/profiles/buyers/`, `/profiles/sellers/`
 - Profiles: `/profiles/buyers/`, `/profiles/sellers/`
 - Dashboard: `/dashboard/`
 - Account settings: `/account/settings/`
