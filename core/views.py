@@ -774,7 +774,7 @@ def ListingMessageView(request, listing_id):
                 "thread_url": request.build_absolute_uri(reverse("messages")),
             }
             send_email_html_async(
-                subject="New Inquiry on Your Listing – Car Scout",
+                subject="New Inquiry on Your Listing – Vehicle Vault",
                 template_name="emails/message_notification.html",
                 context=ctx,
                 recipients=[listing.seller.email],
@@ -823,7 +823,7 @@ def ReplyToMessageView(request, message_id):
                 "thread_url": request.build_absolute_uri(reverse("messages")),
             }
             send_email_html_async(
-                subject="You Have a New Reply – Car Scout",
+                subject="You Have a New Reply – Vehicle Vault",
                 template_name="emails/message_notification.html",
                 context=ctx,
                 recipients=[message.sender.email],
@@ -1171,7 +1171,7 @@ def RequestSellToSellerView(request, user_id):
                     "thread_url": request.build_absolute_uri(reverse("messages")),
                 }
                 send_email_html_async(
-                    subject="New Seller Approach – Car Scout",
+                    subject="New Seller Approach – Vehicle Vault",
                     template_name="emails/message_notification.html",
                     context=ctx,
                     recipients=[seller.user.email],
@@ -1210,7 +1210,7 @@ def RequestBuyToBuyerView(request, user_id):
                     "thread_url": request.build_absolute_uri(reverse("messages")),
                 }
                 send_email_html_async(
-                    subject="New Offer from Seller – Car Scout",
+                    subject="New Offer from Seller – Vehicle Vault",
                     template_name="emails/message_notification.html",
                     context=ctx,
                     recipients=[buyer.user.email],
@@ -1493,7 +1493,7 @@ def UserSignupView(request):
             def _send():
                 try:
                     send_email_html_async(
-                        subject="Verify your email – Car Scout",
+                        subject="Verify your email – Vehicle Vault",
                         template_name="messages/otp_email.html",
                         context={"user": user, "site_url": site_url, "otp": code},
                         recipients=[user.email],
@@ -1632,7 +1632,7 @@ def UserLoginView(request):
                     img_path = os.path.join(settings.BASE_DIR, "static", "img", "bmw-m4-hero.jpg")
                     try:
                         send_email_html_async(
-                            subject="Welcome back to Car Scout",
+                            subject="Welcome back to Vehicle Vault",
                             template_name="emails/login_user.html",
                             context={"user": user, "site_url": site_url},
                             recipients=[user.email],
@@ -1642,7 +1642,7 @@ def UserLoginView(request):
                     except Exception:
                         try:
                             send_email_html_async(
-                                subject="Welcome back to Car Scout",
+                                subject="Welcome back to Vehicle Vault",
                                 template_name="emails/login_user.html",
                                 context={"user": user, "site_url": site_url},
                                 recipients=[user.email],
@@ -1662,7 +1662,7 @@ def UserLoginView(request):
                     img_path = os.path.join(settings.BASE_DIR, "static", "img", "bmw-m4-hero.jpg")
                     try:
                         send_email_html_async(
-                            subject="Verify your email – Car Scout",
+                            subject="Verify your email – Vehicle Vault",
                             template_name="messages/otp_email.html",
                             context={"user": user, "site_url": site_url, "otp": code},
                             recipients=[user.email],
@@ -1686,7 +1686,7 @@ def UserLoginView(request):
                 img_path = os.path.join(settings.BASE_DIR, "static", "img", "bmw-m4-hero.jpg")
                 try:
                     send_email_html_async(
-                        subject="Welcome back to Car Scout",
+                        subject="Welcome back to Vehicle Vault",
                         template_name="emails/login_user.html",
                         context={"user": user, "site_url": site_url},
                         recipients=[user.email],
@@ -1696,7 +1696,7 @@ def UserLoginView(request):
                 except Exception:
                     try:
                         send_email_html_async(
-                            subject="Welcome back to Car Scout",
+                            subject="Welcome back to Vehicle Vault",
                             template_name="emails/login_user.html",
                             context={"user": user, "site_url": site_url},
                             recipients=[user.email],
@@ -2029,7 +2029,7 @@ def verify_payment(request):
                 dashboard_url = request.build_absolute_uri(reverse("dashboard_buyer"))
                 img_path = os.path.join(settings.BASE_DIR, "static", "img", "bmw-m4-hero.jpg")
                 ctx = {
-                    "site_name": "Car Scout",
+                    "site_name": "Vehicle Vault",
                     "dashboard_url": dashboard_url,
                     "buyer_name": getattr(transaction.buyer, "name", "") or transaction.buyer.email,
                     "buyer_email": transaction.buyer.email,
@@ -2060,7 +2060,7 @@ def verify_payment(request):
                     "emi_amount": getattr(transaction, "emi_amount", None),
                 }
                 send_email_html_async(
-                    subject="Payment Receipt – Car Scout",
+                    subject="Payment Receipt – Vehicle Vault",
                     template_name="emails/invoice.html",
                     context=ctx,
                     recipients=[transaction.buyer.email],
@@ -2068,7 +2068,7 @@ def verify_payment(request):
                     attachments=_marketing_brochure_attachments(transaction.buyer),
                 )
                 send_email_html_async(
-                    subject="New Booking Payment Received – Car Scout",
+                    subject="New Booking Payment Received – Vehicle Vault",
                     template_name="emails/invoice.html",
                     context=ctx,
                     recipients=[transaction.seller.email],
