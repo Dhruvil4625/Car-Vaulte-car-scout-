@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User, Buyer, Seller, Car, CarListing, CarListingImage, Inspection, Message, TestDrive, Transaction, Showroom, UpcomingArrival, CarPro, CarCon, CarVariant, UserReview
+from .models import User, Buyer, Seller, Car, CarListing, CarListingImage, Inspection, Message, TestDrive, Transaction, Showroom, UpcomingArrival, CarPro, CarCon, CarVariant, UserReview, Favorite, SavedSearch
 
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
@@ -48,6 +48,8 @@ admin.site.register(TestDrive)
 admin.site.register(Transaction)
 admin.site.register(CarListingImage)
 admin.site.register(UserReview)
+admin.site.register(Favorite)
+admin.site.register(SavedSearch)
 @admin.register(Showroom)
 class ShowroomAdmin(admin.ModelAdmin):
     list_display = ('name', 'city', 'state', 'seller')
