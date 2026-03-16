@@ -1,6 +1,10 @@
 import uuid
+
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
 
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -18,10 +22,12 @@ class UserManager(BaseUserManager):
         
         return self.create_user(email, password, **extra_fields)
 
+
 class User(AbstractUser):
     class Role(models.TextChoices):
         BUYER = 'Buyer', 'Buyer'
         SELLER = 'Seller', 'Seller'
+
     class Status(models.TextChoices):
         ACTIVE = 'Active', 'Active'
         INACTIVE = 'Inactive', 'Inactive'
@@ -48,6 +54,7 @@ class User(AbstractUser):
     def __str__(self):
         return self.email
 
+
 class Buyer(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='buyer_profile')
     preferences = models.JSONField(blank=True, null=True)
@@ -55,6 +62,7 @@ class Buyer(models.Model):
 
     def __str__(self):
         return f"Buyer: {self.user.email}"
+
 
 class Seller(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='seller_profile')
@@ -83,6 +91,7 @@ class DealRating(models.Model):
     def __str__(self):
         return f"{self.rater.email} rated {self.rated_user.email}: {self.score}/5"
 
+
 class Car(models.Model):
     vin = models.CharField(max_length=17, primary_key=True)
     make = models.CharField(max_length=50)
@@ -106,6 +115,7 @@ class Car(models.Model):
     def __str__(self):
         return f"{self.year} {self.make} {self.model} ({self.vin})"
 
+
 class CarPro(models.Model):
     car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='pros')
     text = models.CharField(max_length=200)
@@ -113,12 +123,14 @@ class CarPro(models.Model):
     def __str__(self):
         return f"Pro for {self.car}: {self.text[:30]}"
 
+
 class CarCon(models.Model):
     car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='cons')
     text = models.CharField(max_length=200)
 
     def __str__(self):
         return f"Con for {self.car}: {self.text[:30]}"
+
 
 class CarVariant(models.Model):
     car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='variants')
@@ -128,6 +140,7 @@ class CarVariant(models.Model):
 
     def __str__(self):
         return f"{self.car} {self.name}"
+
 
 class UserReview(models.Model):
     car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='user_reviews')
@@ -139,6 +152,7 @@ class UserReview(models.Model):
 
     def __str__(self):
         return f"{self.reviewer_name} on {self.car}"
+
 
 class CarListing(models.Model):
     class Status(models.TextChoices):
@@ -162,6 +176,7 @@ class CarListing(models.Model):
     def __str__(self):
         return f"Listing {self.listing_id} - {self.car}"
 
+
 class CarListingImage(models.Model):
     listing = models.ForeignKey(CarListing, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to='listing_images/')
@@ -170,6 +185,7 @@ class CarListingImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.listing_id if hasattr(self,'listing_id') else self.listing}"
+
 
 class CarListingAsset(models.Model):
     class Kind(models.TextChoices):
@@ -186,6 +202,7 @@ class CarListingAsset(models.Model):
 
     def __str__(self):
         return f"{self.kind} for {self.listing}"
+
 
 class Inspection(models.Model):
     class Source(models.TextChoices):
@@ -205,6 +222,7 @@ class Inspection(models.Model):
     def __str__(self):
         return f"Inspection {self.inspection_id} for {self.listing}"
 
+
 class Message(models.Model):
     message_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
@@ -220,8 +238,7 @@ class Message(models.Model):
     def __str__(self):
         return f"Message from {self.sender} to {self.receiver}"
 
-from django.db.models.signals import post_save
-from django.dispatch import receiver
+
 @receiver(post_save, sender=Message)
 def _analyze_sentiment(sender, instance, created, **kwargs):
     if not created:
@@ -234,9 +251,10 @@ def _analyze_sentiment(sender, instance, created, **kwargs):
         instance.sentiment_score = s
         instance.sentiment_label = ml.get("label")
         instance.toxicity_score = tox
-        instance.save(update_fields=["sentiment_score","sentiment_label","toxicity_score"])
+        instance.save(update_fields=["sentiment_score", "sentiment_label", "toxicity_score"])
     except Exception:
         pass
+
 
 class TestDrive(models.Model):
     class Status(models.TextChoices):
@@ -255,6 +273,7 @@ class TestDrive(models.Model):
 
     def __str__(self):
         return f"Test Drive {self.status} - {self.listing}"
+
 
 class Transaction(models.Model):
     class Status(models.TextChoices):
@@ -279,6 +298,7 @@ class Transaction(models.Model):
     def __str__(self):
         return f"Transaction {self.transaction_id} - {self.status}"
 
+
 class Showroom(models.Model):
     showroom_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=120)
@@ -292,6 +312,7 @@ class Showroom(models.Model):
 
     def __str__(self):
         return f"{self.name} — {self.city}, {self.state}"
+
 
 class UpcomingArrival(models.Model):
     class Status(models.TextChoices):
@@ -311,6 +332,7 @@ class UpcomingArrival(models.Model):
     def __str__(self):
         return f"Arrival {self.make} {self.model} at {self.showroom}"
 
+
 class Todo(models.Model):
     todo_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='todos')
@@ -322,6 +344,7 @@ class Todo(models.Model):
     def __str__(self):
         return self.title
 
+
 class ActivityLog(models.Model):
     log_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='activity_logs')
@@ -331,6 +354,7 @@ class ActivityLog(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.action}"
+
 
 class Favorite(models.Model):
     favorite_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -345,6 +369,7 @@ class Favorite(models.Model):
 
     def __str__(self):
         return f"{self.user.email} ♥ {self.listing}"
+
 
 class SavedSearch(models.Model):
     saved_search_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
