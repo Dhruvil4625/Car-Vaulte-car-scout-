@@ -48,6 +48,9 @@ from .views import (
     booke,
     create_razorpay_order,
     verify_payment,
+    transactions_export,
+    toggle_favorite,
+    save_search,
 )
 
 urlpatterns = [
@@ -105,6 +108,9 @@ urlpatterns = [
     # optional aliases matching sample naming
     path("create-order/", create_razorpay_order, name="create_order_alias"),
     path("verify-payment/", verify_payment, name="verify_payment_alias"),
+    path("transactions/export/", transactions_export, name="transactions_export"),
+    path("favorites/toggle/", toggle_favorite, name="toggle_favorite"),
+    path("searches/save/", save_search, name="save_search"),
     path("password_reset/", auth_views.PasswordResetView.as_view(
         html_email_template_name="messages/password_reset.html",
         email_template_name="messages/password_reset_email.txt",
