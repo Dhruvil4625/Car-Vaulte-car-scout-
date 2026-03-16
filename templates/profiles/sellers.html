@@ -8,20 +8,24 @@
   .reveal { opacity: 0; transform: translateY(30px); transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
   .reveal.active { opacity: 1; transform: translateY(0); }
 
-  /* --- Updated Hero with new background image --- */
+  /* --- Fixed Hero: Overlay lightened significantly so the image shines through --- */
   .directory-hero {
-    /* We keep the dark gradient overlay to ensure the white text is readable against the new lighter image */
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%), 
-                /* Update the path below to where you save the provided PNG file in your static folder */
+    /* Lowered opacity (0.2 to 0.7) and added a subtle tech-blue tint */
+    background: linear-gradient(to bottom, rgba(6, 182, 212, 0.2) 0%, rgba(15, 23, 42, 0.8) 100%), 
                 url('{% static "images/image_abbffa.png" %}') center/cover no-repeat;
-    padding: 80px 0 100px; text-align: center; overflow: hidden; position: relative;
+    padding: 100px 0 120px; /* Made slightly taller to show more of the car */
+    text-align: center; 
+    overflow: hidden; 
+    position: relative;
   }
   .directory-hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: inherit; animation: cinematicPan 60s ease-in-out infinite; z-index: -1; }
-  .directory-hero h1 { font-size: 3rem; font-weight: 900; color: #ffffff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; text-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+  
+  /* Increased text shadow to ensure readability against the bright image */
+  .directory-hero h1 { font-size: 3.5rem; font-weight: 900; color: #ffffff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; text-shadow: 0 4px 25px rgba(0,0,0,0.8); }
   .directory-hero h1 span { color: #e11d48; }
-  .directory-hero p { color: #cbd5e1; font-size: 1.15rem; font-weight: 500; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+  .directory-hero p { color: #e2e8f0; font-size: 1.2rem; font-weight: 600; text-shadow: 0 4px 15px rgba(0,0,0,0.9); }
 
-  .directory-wrapper { margin-top: -50px; position: relative; z-index: 10; padding-bottom: 80px; }
+  .directory-wrapper { margin-top: -60px; position: relative; z-index: 10; padding-bottom: 80px; }
 
   .action-bar {
     background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
@@ -31,7 +35,6 @@
   }
   .action-bar h3 { margin: 0; font-weight: 800; color: #0f172a; font-size: 1.3rem; display: flex; align-items: center; gap: 12px; }
   
-  /* --- NEW: Verified Badge Styles --- */
   .badge-icon-lg {
     height: 40px; width: 40px; object-fit: cover; border-radius: 50%;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
