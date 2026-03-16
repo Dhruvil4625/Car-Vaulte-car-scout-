@@ -167,19 +167,12 @@ AUTH_USER_MODEL = "core.User"
 LOGIN_REDIRECT_URL = "/"
 LOGIN_URL = "/login/"
 
-# Email
-# Allow explicit override via environment, otherwise:
-# - console backend in DEBUG
-# - smtp backend in non-DEBUG
-EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", 'django.core.mail.backends.smtp.EmailBackend')
-EMAIL_HOST = os.getenv("EMAIL_HOST", 'smtp.gmail.com')
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
-EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() in ("1", "true", "yes")
-# Load email credentials from environment to avoid committing secrets
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "your-email@example.com")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")  # app password (use env)
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", 10))
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "true").lower() == "true"
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 
 _DEV_HOST_IP = os.getenv("DEV_HOST_IP", "").strip()
 _CSRF_ORIGINS = ["http://127.0.0.1:8000", "http://localhost:8000"]
@@ -188,8 +181,7 @@ if _DEV_HOST_IP:
 CSRF_TRUSTED_ORIGINS = _CSRF_ORIGINS
 CSRF_USE_SESSIONS = True
 
-# Load Groq API key from environment (do not commit secrets)
+# Load API keys from environment only
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-
-RAZORPAY_KEY_ID = ""
-RAZORPAY_KEY_SECRET = ""
+RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "")
+RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
