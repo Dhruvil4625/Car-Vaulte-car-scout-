@@ -516,6 +516,11 @@
             <div class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.8rem; letter-spacing: 1px;">Asking Price</div>
             <div class="main-price">{{ listing.price|inr }}</div>
           </div>
+          {% if is_buyer %}
+          <button type="button" id="favBtn" class="btn btn-outline-dark fw-bold w-100 mb-3" style="border-radius:10px;">
+            <i class="fa-regular fa-heart me-1"></i> Save Vehicle
+          </button>
+          {% endif %}
 
           {% if is_buyer and listing.status == 'Active' %}
           <form method="post" action="{% url 'listing_purchase' listing.listing_id %}">
@@ -605,6 +610,37 @@
       document.head.appendChild(style);
     }
   });
+
+  // Favorite toggle
+  (function(){
+    const fav = document.getElementById('favBtn');
+    if (!fav) return;
+    let liked = false;
+    function getCsrf(){
+      const m = document.cookie.match(/csrftoken=([^;]+)/);
+      return m ? m[1] : '';
+    }
+    fav.addEventListener('click', async () => {
+      try {
+        const body = new URLSearchParams();
+        body.append('listing_id', '{{ listing.listing_id }}');
+        const res = await fetch('{% url "toggle_favorite" %}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCsrf()
+          },
+          body: body.toString()
+        });
+        const j = await res.json();
+        if (!j.ok) throw new Error(j.error || 'Failed');
+        liked = !!j.liked;
+        fav.innerHTML = liked ? '<i class="fa-solid fa-heart me-1 text-danger"></i> Saved' : '<i class="fa-regular fa-heart me-1"></i> Save Vehicle';
+      } catch(e) {
+        console.log(e);
+      }
+    });
+  })();
 
   // --- Segmented Media Tabs Logic ---
   document.querySelectorAll('.media-tabs .btn').forEach(btn => {
