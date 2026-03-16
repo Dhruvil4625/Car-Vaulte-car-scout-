@@ -285,15 +285,19 @@
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <label class="form-label">City</label>
-                        <input type="text" id="shippingCity" class="form-control" placeholder="e.g. Mumbai">
+                        <select id="shippingCity" class="form-select" disabled>
+                            <option value="">Select state first</option>
+                        </select>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label">State</label>
-                        <input type="text" id="shippingState" class="form-control" placeholder="e.g. Maharashtra">
+                        <select id="shippingState" class="form-select">
+                            <option value="">Select state</option>
+                        </select>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label">Pincode</label>
-                        <input type="text" id="shippingPostcode" class="form-control" placeholder="6-digit code">
+                        <input type="text" id="shippingPostcode" class="form-control" placeholder="6-digit code" maxlength="6" inputmode="numeric">
                     </div>
                 </div>
             </div>
@@ -380,6 +384,10 @@
     const listingSelect = document.getElementById('listingSelect');
     const displayVehiclePrice = document.getElementById('displayVehiclePrice');
     const rzpButton = document.getElementById('rzp-button1');
+    const stateSelect = document.getElementById('shippingState');
+    const citySelect = document.getElementById('shippingCity');
+    const pincodeInput = document.getElementById('shippingPostcode');
+    const addressTextarea = document.getElementById('shippingAddress');
 
     // --- Custom Alert Logic ---
     let modalRedirectUrl = null;
@@ -448,6 +456,97 @@
     
     // Initial Call
     updatePriceAndEMI();
+
+    // --- State/City Dropdowns (India) with server-backed dataset + fallback ---
+    (function initStates(){
+      fetch("{% url 'geo_states' %}").then(r => r.json()).then(j => {
+        const states = Array.isArray(j.states) ? j.states : [];
+        states.sort().forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s; opt.textContent = s;
+          stateSelect.appendChild(opt);
+        });
+      }).catch(() => {});
+      stateSelect.addEventListener('change', () => {
+        const st = stateSelect.value;
+        citySelect.innerHTML = '';
+        if (!st) {
+          citySelect.disabled = true;
+          const opt = document.createElement('option');
+          opt.value = ''; opt.textContent = 'Select state first';
+          citySelect.appendChild(opt);
+          return;
+        }
+        citySelect.disabled = true;
+        const placeholder = document.createElement('option');
+        placeholder.value=''; placeholder.textContent = 'Loading cities...';
+        citySelect.appendChild(placeholder);
+        fetch("{% url 'geo_cities' %}?state=" + encodeURIComponent(st))
+          .then(r => r.json())
+          .then(j => {
+            citySelect.innerHTML = '';
+            const cities = Array.isArray(j.cities) ? j.cities : [];
+            citySelect.disabled = false;
+            const ph = document.createElement('option');
+            ph.value=''; ph.textContent = 'Select city';
+            citySelect.appendChild(ph);
+            cities.sort().forEach(c => {
+              const opt = document.createElement('option');
+              opt.value = c; opt.textContent = c;
+              citySelect.appendChild(opt);
+            });
+          })
+          .catch(() => {
+            citySelect.innerHTML = '';
+            citySelect.disabled = false;
+            const opt = document.createElement('option');
+            opt.value=''; opt.textContent='Enter city manually';
+            citySelect.appendChild(opt);
+          });
+      });
+    })();
+
+    // --- Pincode Autofill (India Post API) ---
+    let pinTimeout = null;
+    pincodeInput.addEventListener('input', () => {
+      const pin = (pincodeInput.value || '').replace(/\\D/g,'').slice(0,6);
+      pincodeInput.value = pin;
+      if (pin.length !== 6) return;
+      clearTimeout(pinTimeout);
+      pinTimeout = setTimeout(async () => {
+        try {
+          const resp = await fetch('https://api.postalpincode.in/pincode/' + pin);
+          const data = await resp.json();
+          if (Array.isArray(data) && data[0]?.Status === 'Success' && Array.isArray(data[0].PostOffice) && data[0].PostOffice.length) {
+            const po = data[0].PostOffice[0];
+            const state = po.State || '';
+            const district = po.District || '';
+            // set state
+            stateSelect.value = state;
+            stateSelect.dispatchEvent(new Event('change'));
+            // set city to district if present, otherwise Name
+            const cityVal = district || po.Name || '';
+            if (cityVal) {
+              // try select existing option, or append
+              let found = false;
+              [...citySelect.options].forEach(o => { if (o.value === cityVal) found = true; });
+              if (!found) {
+                const opt = document.createElement('option');
+                opt.value = cityVal; opt.textContent = cityVal;
+                citySelect.appendChild(opt);
+              }
+              citySelect.value = cityVal;
+            }
+            // prefill address with PO name if empty
+            if (!addressTextarea.value && po.Name) {
+              addressTextarea.value = po.Name;
+            }
+          }
+        } catch (e) {
+          // ignore
+        }
+      }, 300);
+    });
 
     // --- Razorpay Checkout Logic ---
     rzpButton.onclick = function(e) {
