@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Saved Items | Vehicle Vault{% endblock %}
+{% block content %}
+<section class="container mb-5">
+  <div class="row g-4">
+    <aside class="col-lg-3 d-none d-lg-block">
+      {% include 'users/sidebar.html' %}
+    </aside>
+    <div class="col-lg-9">
+      <div class="dash-card reveal" style="transition-delay:0.1s;">
+        <div class="dash-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="fa-solid fa-heart text-danger me-2"></i> Saved Vehicles</h5>
+        </div>
+        <div class="dash-list">
+          {% for f in favorites %}
+          <div class="d-flex align-items-center justify-content-between border-bottom py-3">
+            <div>
+              <div class="fw-bold">{{ f.listing.car.make }} {{ f.listing.car.model }} ({{ f.listing.car.year }})</div>
+              <div class="text-muted" style="font-size:.9rem;">Saved on {{ f.created_at }}</div>
+            </div>
+            <div class="d-flex gap-2">
+              <a href="{% url 'listing_detail' f.listing.listing_id %}" class="btn btn-outline-dark btn-sm">View</a>
+              <form method="post" action="{% url 'favorite_delete' f.favorite_id %}">
+                {% csrf_token %}
+                <button class="btn btn-outline-danger btn-sm">Remove</button>
+              </form>
+            </div>
+          </div>
+          {% empty %}
+          <div class="text-center text-muted py-4">No saved vehicles yet.</div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="dash-card reveal mt-4" style="transition-delay:0.15s;">
+        <div class="dash-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="fa-regular fa-bookmark me-2"></i> Saved Searches</h5>
+        </div>
+        <div class="dash-list">
+          {% for s in saved_searches %}
+          <div class="d-flex align-items-center justify-content-between border-bottom py-3">
+            <div>
+              <div class="fw-bold">{{ s.name|default:"Saved Search" }}</div>
+              <div class="text-muted" style="font-size:.9rem;">{{ s.created_at }}</div>
+            </div>
+            <div class="d-flex gap-2">
+              {% if s.params %}
+              <a href="{% url 'cars' %}?{% for k,v in s.params.items %}{{ k }}={{ v|urlencode }}{% if not forloop.last %}&{% endif %}{% endfor %}" class="btn btn-outline-dark btn-sm">Run</a>
+              {% endif %}
+              <form method="post" action="{% url 'saved_search_delete' s.saved_search_id %}">
+                {% csrf_token %}
+                <button class="btn btn-outline-danger btn-sm">Delete</button>
+              </form>
+            </div>
+          </div>
+          {% empty %}
+          <div class="text-center text-muted py-4">No saved searches yet.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
