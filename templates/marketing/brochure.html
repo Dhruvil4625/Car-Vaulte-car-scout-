@@ -1,1 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Car Scout – One‑Page Brochure</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --navy:#0A1F44;
+      --teal:#00D4FF;
+      --gold:#FFD700;
+      --white:#ffffff;
+      --text:#0f172a;
+      --muted:#475569;
+      --card:#ffffff;
+      --border:#e2e8f0;
+      --radius:14px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      color:var(--text);
+      background:#f8fafc;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+    .wrap{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+      background:linear-gradient(180deg,#f8fafc 0%, #eef2f7 100%);
+    }
+    #flyer-content{
+      width:min(900px,100%);
+      aspect-ratio:210/297;
+      background:var(--white);
+      border:1px solid var(--border);
+      border-radius:18px;
+      box-shadow:0 25px 60px rgba(0,0,0,.08);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+    .hero{
+      position:relative;
+      background:var(--navy);
+      height:45%;
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+      padding:18px 24px 24px;
+    }
+    .hero-inner{
+      width:100%;
+      max-width:920px;
+      position:relative;
+    }
+    .hero-title{
+      position:absolute;
+      top:14px;
+      left:0;
+      right:0;
+      text-align:center;
+      font-family:Montserrat, sans-serif;
+      color:var(--white);
+      letter-spacing:.5px;
+    }
+    .hero-title .title{
+      margin:0;
+      font-size:42px;
+      font-weight:900;
+    }
+    .hero-title .subtitle{
+      margin:6px 0 0 0;
+      font-size:18px;
+      font-weight:800;
+      color:var(--teal);
+    }
+    .hero-img{
+      width:100%;
+      height:64%;
+      position:absolute;
+      left:0; right:0;
+      top:28%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:0 24px;
+    }
+    .hero-img img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      border-radius:12px;
+      filter:brightness(0.9) saturate(1.05);
+      box-shadow:0 14px 40px rgba(0,0,0,.25);
+    }
+    .hero-bottom{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:6px;
+      margin-top:auto;
+    }
+    .hero-tagline{
+      color:var(--white);
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.6px;
+      font-size:13px;
+    }
+    .hero-sub{
+      color:#cbd5e1;
+      font-size:12px;
+      font-weight:600;
+    }
+    .gold-bar{
+      position:absolute;
+      left:0; right:0;
+      bottom:0;
+      height:4px;
+      background:var(--gold);
+    }
+    .mid{
+      padding:22px 24px;
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      grid-auto-rows:1fr;
+      gap:14px;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:16px 14px;
+      box-shadow:0 10px 28px rgba(0,0,0,.04);
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      transition:transform .2s ease, box-shadow .2s ease;
+    }
+    .card:hover{transform:translateY(-2px); box-shadow:0 16px 36px rgba(0,0,0,.06)}
+    .card::before{
+      content:"";
+      position:absolute;
+      left:0; right:0; top:0;
+      height:3px;
+      background:var(--teal);
+      border-radius:14px 14px 0 0;
+    }
+    .card-title{
+      font-weight:800;
+      color:var(--text);
+      font-size:14.5px;
+    }
+    .card-desc{
+      color:var(--muted);
+      font-size:13.5px;
+      line-height:1.45;
+    }
+    .bottom{
+      display:grid;
+      grid-template-columns:1.25fr .95fr;
+      gap:16px;
+      padding:8px 24px 22px;
+      align-items:end;
+    }
+    .steps{
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:16px;
+      background:#fff;
+    }
+    .steps-title{
+      font-family:Montserrat, sans-serif;
+      font-weight:900;
+      font-size:16px;
+      color:var(--text);
+      margin:0 0 10px 0;
+    }
+    .step-row{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:var(--text);
+      font-size:13.5px;
+      font-weight:600;
+      margin:7px 0;
+    }
+    .bullet{
+      width:8px; height:8px; border-radius:50%; background:var(--teal);
+      flex:0 0 8px;
+    }
+    .tech{
+      background:linear-gradient(90deg, #00b5e2, var(--teal));
+      border-radius:var(--radius);
+      color:#fff;
+      padding:16px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      min-height:84px;
+      font-weight:800;
+      font-size:12.8px;
+      letter-spacing:.3px;
+    }
+    .credits{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      padding:0 24px 18px;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:600;
+    }
+    .qr{
+      width:78px; height:78px; border:1px solid var(--border); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--muted); background:#fff;
+    }
+    @media (max-width:900px){
+      #flyer-content{aspect-ratio:auto}
+      .mid{grid-template-columns:repeat(2,1fr)}
+      .bottom{grid-template-columns:1fr; gap:12px}
+      .tech{min-height:64px}
+    }
+    @media (max-width:560px){
+      .mid{grid-template-columns:1fr}
+    }
+    @media print{
+      @page{size:A4 portrait; margin:0}
+      body{margin:0; padding:0}
+      body > *:not(#root){display:none !important}
+      #root > *{background:none !important; padding:0 !important; margin:0 !important; min-height:auto !important; display:block !important}
+      #flyer-content{width:210mm !important; height:297mm !important; max-width:none !important; aspect-ratio:auto !important; margin:0 !important; box-shadow:none !important; page-break-before:avoid; page-break-after:avoid; page-break-inside:avoid}
+      *{-webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; color-adjust:exact !important}
+    }
+  </style>
+</head>
+<body>
+  <div id="root" class="wrap">
+    <div id="flyer-content">
+      <div class="hero">
+        <div class="hero-inner">
+          <div class="hero-title">
+            <h1 class="title">CAR SCOUT</h1>
+            <div class="subtitle">India's Smartest Way to Buy & Sell Cars</div>
+          </div>
+          <div class="hero-img">
+            <img src="/static/img/bmw-m4-hero.jpg" alt="Premium Car">
+          </div>
+          <div class="hero-bottom">
+            <div class="hero-tagline">Discover • Negotiate • Own — With Intelligence & Trust</div>
+            <div class="hero-sub">AI‑Powered • Secure • Made in India</div>
+          </div>
+          <div class="gold-bar"></div>
+        </div>
+      </div>
+      <div class="mid">
+        <div class="card">
+          <div class="card-title">Immersive 360° & 3D</div>
+          <div class="card-desc">Turntable spins, panoramas and 3D models for clarity.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Secure Chat & Deals</div>
+          <div class="card-desc">In‑app messaging with guided negotiation for trust.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">AI Recommendations</div>
+          <div class="card-desc">Smart matches and real‑time price fairness insights.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Sentiment Intelligence</div>
+          <div class="card-desc">Message tone and safety signals to stay protected.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">AI Condition Scoring</div>
+          <div class="card-desc">Insightful scoring from uploaded car photos.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Razorpay Payments</div>
+          <div class="card-desc">UPI, cards and EMI with fast, secure checkout.</div>
+        </div>
+      </div>
+      <div class="bottom">
+        <div class="steps">
+          <div class="steps-title">Simple. Smart. Secure.</div>
+          <div class="step-row"><span class="bullet"></span><span>Search & Discover with AI Guidance</span></div>
+          <div class="step-row"><span class="bullet"></span><span>Explore Details & Get AI Insights</span></div>
+          <div class="step-row"><span class="bullet"></span><span>Chat, Negotiate & Schedule Test Drive</span></div>
+          <div class="step-row"><span class="bullet"></span><span>Pay Securely & Drive Home with Confidence</span></div>
+        </div>
+        <div class="tech">Django • PostgreSQL • Razorpay • Google Maps • Hugging Face • Python</div>
+      </div>
+      <div class="credits">
+        <div>
+          <div>Developed by Dhruvil as Internship Project</div>
+          <div>Vadodara, Gujarat • 2025–2026</div>
+        </div>
+        <div class="qr">QR: Live Demo / GitHub</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
 
