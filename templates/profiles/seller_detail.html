@@ -4,256 +4,61 @@
 
 {% block content %}
 <style>
-  /* --- Profile Hero Section --- */
+  .reveal { opacity: 0; transform: translateY(20px); transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+  .reveal.active { opacity: 1; transform: translateY(0); }
+
   .profile-hero {
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%), 
-                url('https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
-    padding: 60px 0 80px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.99) 100%), url('https://images.unsplash.com/photo-1562624475-96c2c78dfdf6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover;
+    padding: 80px 0 100px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   }
+  .profile-hero h1 { font-size: 3rem; font-weight: 900; color: #ffffff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+  .profile-hero h1 span { color: #e11d48; }
+  .profile-hero p { color: #94a3b8; font-size: 1.1rem; }
 
-  .profile-hero h1 {
-    font-size: 2.5rem;
-    font-weight: 800;
-    color: #ffffff;
-    margin-bottom: 5px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
+  .crm-wrapper { margin-top: -60px; position: relative; z-index: 10; padding-bottom: 80px; }
+  
+  .premium-card { background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 15px 40px rgba(0,0,0,0.04); padding: 35px; height: 100%; position: relative; }
+  .sticky-card { position: sticky; top: 100px; } 
 
-  .profile-hero h1 span {
-    color: #ef4444; /* Vibrant Red Accent */
-  }
+  /* Left Profile Styles */
+  .profile-head { text-align: center; margin-bottom: 30px; }
+  .avatar-lg { width: 100px; height: 100px; border-radius: 50%; border: 4px solid #fff1f2; box-shadow: 0 8px 20px rgba(225, 29, 72, 0.2); margin-bottom: 15px; }
+  .profile-name { font-size: 1.6rem; font-weight: 900; color: #0f172a; margin-bottom: 5px; }
+  .profile-badge { display: inline-block; background: #0f172a; color: #ffffff; font-size: 0.75rem; font-weight: 800; padding: 6px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; }
 
-  .profile-hero p {
-    color: #94a3b8;
-    font-size: 1.05rem;
-    margin: 0;
-  }
+  .contact-list { list-style: none; padding: 0; margin: 0 0 30px; }
+  .contact-list li { display: flex; align-items: center; gap: 15px; color: #334155; font-size: 0.95rem; font-weight: 600; padding: 12px 0; border-bottom: 1px dashed #e2e8f0; }
+  .contact-list li:last-child { border-bottom: none; }
+  .contact-list i { color: #e11d48; font-size: 1.2rem; width: 20px; text-align: center; background: #fff1f2; padding: 8px; border-radius: 8px; }
 
-  /* --- Layout Wrapper --- */
-  .crm-wrapper {
-    margin-top: -50px;
-    position: relative;
-    z-index: 10;
-    padding-bottom: 80px;
-  }
+  /* Dashboard Stat Grid */
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
+  .stat-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; text-align: center; transition: all 0.3s; }
+  .stat-box:hover { border-color: #cbd5e1; transform: translateY(-2px); }
+  .stat-title { font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+  .stat-value { font-size: 1.4rem; font-weight: 900; color: #0f172a; }
+  .stat-value.gold { color: #f59e0b; }
 
-  /* --- Premium Cards --- */
-  .premium-card {
-    background: #ffffff;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-    padding: 30px;
-    height: 100%;
-  }
+  /* Right Form Styles */
+  .composer-header { display: flex; align-items: center; gap: 18px; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #f1f5f9; }
+  .composer-icon { width: 55px; height: 55px; background: #0f172a; color: #ffffff; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 8px 15px rgba(15,23,42,0.2); }
+  .composer-header h3 { font-weight: 900; color: #0f172a; font-size: 1.5rem; margin: 0; letter-spacing: -0.5px; }
+  
+  .crm-form label { font-size: 0.85rem; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block; }
+  .crm-form .form-control, .crm-form .form-select { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 10px; padding: 14px 18px; font-size: 1rem; font-weight: 500; transition: all 0.3s; }
+  .crm-form .form-control:focus, .crm-form .form-select:focus { background: #fff; border-color: #e11d48; box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.1); outline: none; }
+  .crm-form textarea { min-height: 150px; resize: vertical; }
 
-  /* --- Seller Profile Card --- */
-  .seller-avatar {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    overflow: hidden;
-    margin-bottom: 20px;
-  }
-
-  .seller-name {
-    font-size: 1.4rem;
-    font-weight: 800;
-    color: #0f172a;
-    margin-bottom: 5px;
-  }
-
-  .seller-badge {
-    display: inline-block;
-    background: rgba(15, 23, 42, 0.1);
-    color: #0f172a;
-    font-size: 0.75rem;
-    font-weight: 700;
-    padding: 4px 12px;
-    border-radius: 20px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 20px;
-  }
-
-  .contact-list {
-    list-style: none;
-    padding: 0;
-    margin: 0 0 25px 0;
-  }
-
-  .contact-list li {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    color: #475569;
-    font-size: 0.95rem;
-    margin-bottom: 12px;
-    padding-bottom: 12px;
-    border-bottom: 1px dashed #e2e8f0;
-  }
-
-  .contact-list li:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
-    padding-bottom: 0;
-  }
-
-  .contact-list i {
-    color: #ef4444; /* Accent color for seller icons */
-    width: 20px;
-    text-align: center;
-  }
-
-  .stat-box {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .stat-box-title {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #64748b;
-    text-transform: uppercase;
-  }
-
-  .stat-box-value {
-    font-size: 1.25rem;
-    font-weight: 800;
-    color: #f59e0b; /* Golden yellow for rating */
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
-
-  .rating-box {
-    background: #fff7ed;
-    border: 1px solid #fed7aa;
-    border-radius: 10px;
-    padding: 18px;
-    margin-top: 18px;
-  }
-
-  /* --- Composer Form Styling --- */
-  .composer-header {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 25px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid #f1f5f9;
-  }
-
-  .composer-icon {
-    width: 45px;
-    height: 45px;
-    background: #0f172a;
-    color: #ffffff;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-  }
-
-  .composer-header h3 {
-    font-weight: 700;
-    color: #0f172a;
-    font-size: 1.3rem;
-    margin: 0;
-  }
-
-  .crm-form label {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #64748b;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 8px;
-    display: block;
-  }
-
-  .crm-form .form-control,
-  .crm-form .form-select {
-    background-color: #f8fafc;
-    border: 1px solid #e2e8f0;
-    color: #334155;
-    border-radius: 8px;
-    padding: 12px 15px;
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
-    box-shadow: none;
-    width: 100%;
-  }
-
-  .crm-form .form-control:focus,
-  .crm-form .form-select:focus {
-    background-color: #fff;
-    border-color: #ef4444;
-    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
-  }
-
-  .crm-form textarea {
-    min-height: 120px;
-    resize: vertical;
-  }
-
-  /* --- Buttons --- */
-  .btn-primary-custom {
-    background-color: #ef4444;
-    color: #fff;
-    font-weight: 700;
-    padding: 12px 25px;
-    border-radius: 8px;
-    border: none;
-    transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    flex: 2;
-  }
-
-  .btn-primary-custom:hover {
-    background-color: #dc2626;
-    color: #fff;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 15px rgba(239, 68, 68, 0.2);
-  }
-
-  .btn-cancel-custom {
-    background-color: transparent;
-    color: #475569;
-    border: 2px solid #cbd5e1;
-    font-weight: 700;
-    padding: 12px 25px;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-  }
-
-  .btn-cancel-custom:hover {
-    background-color: #f1f5f9;
-    border-color: #94a3b8;
-    color: #0f172a;
-  }
+  .btn-primary-custom { background: #e11d48; color: #fff; font-weight: 800; padding: 14px 25px; border-radius: 10px; border: none; transition: all 0.3s; text-transform: uppercase; letter-spacing: 1px; flex: 2; box-shadow: 0 4px 15px rgba(225, 29, 72, 0.3); }
+  .btn-primary-custom:hover { background: #be123c; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(225, 29, 72, 0.4); }
+  .btn-cancel-custom { background: transparent; color: #0f172a; border: 2px solid #cbd5e1; font-weight: 800; padding: 12px 25px; border-radius: 10px; transition: all 0.3s; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; display: flex; align-items: center; justify-content: center; flex: 1; }
+  .btn-cancel-custom:hover { background: #0f172a; color: #fff; border-color: #0f172a; }
 </style>
 
 <section class="profile-hero">
   <div class="container">
-    <h1>Seller <span>Profile</span></h1>
-    <p>View dealership details and inquire about their available inventory.</p>
+    <h1 class="reveal">Seller <span>Profile</span></h1>
+    <p class="reveal" style="transition-delay: 0.1s;">View dealership details and request inventory information.</p>
   </div>
 </section>
 
@@ -261,87 +66,58 @@
   <div class="row g-4">
     
     <div class="col-lg-4">
-      <div class="premium-card">
-        
-        <div class="seller-avatar">
-          <img src="https://www.iconpacks.net/icons/2/free-user-icon-3296-thumb.png" alt="User" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+      <div class="premium-card sticky-card reveal" style="transition-delay: 0.2s;">
+        <div class="profile-head">
+          <img src="https://ui-avatars.com/api/?name={{ seller.user.name|default:seller.user.email }}&background=E11D48&color=fff&size=150" class="avatar-lg" alt="User">
+          <h2 class="profile-name">{{ seller.user.name|default:seller.user.email }}</h2>
+          <div class="profile-badge">Verified Seller</div>
         </div>
-        
-        <h2 class="seller-name">{{ seller.user.name|default:seller.user.email }}</h2>
-        <div class="seller-badge">Verified Seller</div>
         
         <ul class="contact-list">
-          <li>
-            <i class="fa-solid fa-building"></i> 
-            <span class="fw-bold">{{ seller.dealership_name|default:"Independent Seller" }}</span>
-          </li>
-          <li>
-            <i class="fa-solid fa-location-dot"></i> 
-            <span>{{ seller.location|default:"<em class='text-muted'>Location not specified</em>" }}</span>
-          </li>
-          <li>
-            <i class="fa-regular fa-envelope"></i> 
-            <span style="word-break: break-all;">{{ seller.user.email }}</span>
-          </li>
+          <li><i class="fa-solid fa-building"></i> <span class="text-truncate">{{ seller.dealership_name|default:"Independent Seller" }}</span></li>
+          <li><i class="fa-solid fa-location-dot"></i> <span>{{ seller.location|default:"<em class='text-muted fw-normal'>Location unverified</em>" }}</span></li>
+          <li><i class="fa-solid fa-envelope"></i> <span class="text-truncate">{{ seller.user.email }}</span></li>
         </ul>
 
-        <div class="stat-box mt-4">
-          <div class="stat-box-title">
-            Seller Rating
+        <div class="stat-grid">
+          <div class="stat-box">
+            <div class="stat-title">Avg Rating</div>
+            <div class="stat-value gold">{{ rating_stats.avg|default:seller.rating }} <i class="fa-solid fa-star fs-6"></i></div>
           </div>
-          <div class="stat-box-value">
-            {{ rating_stats.avg|default:seller.rating }} <i class="fa-solid fa-star text-warning" style="font-size: 1rem;"></i>
-          </div>
-        </div>
-
-        <div class="rating-box">
-          <div class="d-flex justify-content-between align-items-center">
-            <div>
-              <div class="stat-box-title mb-1">Community Reviews</div>
-              <div class="fw-bold text-dark">{{ rating_stats.count|default:0 }} rating{{ rating_stats.count|pluralize }}</div>
-            </div>
-            <div class="text-warning fs-5">
-              <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-            </div>
+          <div class="stat-box">
+            <div class="stat-title">Reviews</div>
+            <div class="stat-value">{{ rating_stats.count|default:0 }}</div>
           </div>
         </div>
 
         {% if request.user.is_authenticated and request.user != seller.user %}
-        <div class="mt-4 pt-3 border-top" id="rating-form">
-          <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-star-half-stroke text-warning me-2"></i>Rate This Seller</h6>
+        <div class="mt-4 pt-4 border-top" id="rating-form">
+          <h6 class="fw-bold text-dark mb-3 text-uppercase" style="letter-spacing: 0.5px; font-size: 0.85rem;"><i class="fa-solid fa-star-half-stroke text-warning me-2"></i>Rate This Seller</h6>
           <form method="post" action="{% url 'rate_user' seller.user.user_id %}" class="crm-form">
             {% csrf_token %}
             <input type="hidden" name="next" value="{{ request.path }}#rating-form">
             <div class="mb-3">
-              <label>Score</label>
-              <select name="score" class="form-select">
-                {% for value in '12345' %}
-                  <option value="{{ value }}" {% if current_user_rating and current_user_rating.score|stringformat:'s' == value %}selected{% endif %}>{{ value }} Star{{ value|pluralize }}</option>
-                {% endfor %}
+              <select name="score" class="form-select py-2">
+                {% for value in '12345' %}<option value="{{ value }}" {% if current_user_rating and current_user_rating.score|stringformat:'s' == value %}selected{% endif %}>{{ value }} Star{{ value|pluralize }}</option>{% endfor %}
               </select>
             </div>
             <div class="mb-3">
-              <label>Review</label>
-              <textarea name="review" class="form-control" placeholder="Share your experience with this seller...">{% if current_user_rating %}{{ current_user_rating.review }}{% endif %}</textarea>
+              <textarea name="review" class="form-control" style="min-height:80px;" placeholder="Share your experience...">{% if current_user_rating %}{{ current_user_rating.review }}{% endif %}</textarea>
             </div>
-            <button type="submit" class="btn-primary-custom w-100"><i class="fa-solid fa-star me-2"></i>Save Rating</button>
+            <button type="submit" class="btn btn-dark w-100 fw-bold text-uppercase" style="letter-spacing: 1px; border-radius: 8px;">Save Rating</button>
           </form>
         </div>
         {% endif %}
-
       </div>
     </div>
 
     <div class="col-lg-8">
-      <div class="premium-card">
-        
+      <div class="premium-card reveal" style="transition-delay: 0.3s;">
         <div class="composer-header">
-          <div class="composer-icon">
-            <i class="fa-solid fa-comment-dots"></i>
-          </div>
+          <div class="composer-icon"><i class="fa-solid fa-comment-dots"></i></div>
           <div>
             <h3>Send an Inquiry</h3>
-            <p class="text-muted mb-0" style="font-size: 0.85rem;">Reach out directly to request a purchase or ask questions.</p>
+            <p class="text-muted mb-0" style="font-size: 0.9rem; font-weight: 500;">Reach out directly to request a purchase or ask questions.</p>
           </div>
         </div>
 
@@ -349,9 +125,7 @@
           {% csrf_token %}
           
           {% if error %}
-            <div class="alert alert-danger" style="border-radius: 8px;">
-              <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ error }}
-            </div>
+            <div class="alert alert-danger" style="border-radius: 10px; font-weight: 600;"><i class="fa-solid fa-triangle-exclamation me-2"></i> {{ error }}</div>
           {% endif %}
 
           {% if listings %}
@@ -363,7 +137,7 @@
                 <option value="{{ l.listing_id }}">{{ l.car.make }} {{ l.car.model }} ({{ l.car.year }}) - {{ l.price }}</option>
               {% endfor %}
             </select>
-            <small class="text-muted mt-1 d-block"><i class="fa-solid fa-circle-info me-1"></i> Selecting a car will attach a direct link to your message.</small>
+            <small class="text-muted mt-2 d-block fw-bold"><i class="fa-solid fa-link text-danger me-1"></i> Selecting a car attaches a secure button to your message.</small>
           </div>
           {% endif %}
 
@@ -372,19 +146,21 @@
             <textarea name="content" class="form-control" placeholder="Hi there, I am interested in purchasing a vehicle and would like to know..." required></textarea>
           </div>
 
-          <div class="d-flex gap-3 pt-3 border-top">
+          <div class="d-flex gap-3 pt-4 mt-2 border-top">
             <a href="{% url 'sellers' %}" class="btn-cancel-custom">Cancel</a>
-            <button type="submit" class="btn-primary-custom">
-              <i class="fa-solid fa-paper-plane me-2"></i> Send Request
-            </button>
+            <button type="submit" class="btn-primary-custom"><i class="fa-solid fa-paper-plane me-2"></i> Send Request</button>
           </div>
-
         </form>
-
       </div>
     </div>
 
   </div>
 </section>
 
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if(entry.isIntersecting) entry.target.classList.add('active'); }); }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(reveal => observer.observe(reveal));
+  });
+</script>
 {% endblock %}
