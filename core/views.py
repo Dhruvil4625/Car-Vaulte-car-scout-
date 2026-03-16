@@ -19,6 +19,9 @@ from django.db import transaction
 from django.core.cache import cache
 from django.utils import timezone
 import csv
+import json
+from urllib import request as urlrequest
+from urllib.error import URLError, HTTPError
 
 from core.email_utils import send_email_html, send_email_html_async
 from .forms import UserSignupForm, CarListingForm, CarForm, UpcomingArrivalForm, UserLoginForm, InspectionForm
@@ -697,6 +700,51 @@ def save_search(request):
         params = {}
     ss = SavedSearch.objects.create(user=request.user, name=name or "", params=params)
     return JsonResponse({"ok": True, "id": str(ss.saved_search_id)})
+
+
+@login_required
+def saved_items(request):
+    from .models import Favorite, SavedSearch
+    if request.user.role != User.Role.BUYER:
+        # sellers can still see saved for future parity; show empty lists
+        favorites = Favorite.objects.filter(user=request.user).select_related("listing__car").order_by("-created_at")
+        searches = SavedSearch.objects.filter(user=request.user).order_by("-created_at")
+    else:
+        favorites = Favorite.objects.filter(user=request.user).select_related("listing__car").order_by("-created_at")
+        searches = SavedSearch.objects.filter(user=request.user).order_by("-created_at")
+    return render(request, "account/saved.html", {"favorites": favorites, "saved_searches": searches})
+
+
+@login_required
+def favorite_delete(request, favorite_id):
+    if request.method != "POST":
+        return redirect("saved_items")
+    from .models import Favorite
+    try:
+        fav = Favorite.objects.get(favorite_id=favorite_id, user=request.user)
+        fav.delete()
+    except Favorite.DoesNotExist:
+        pass
+    return redirect("saved_items")
+
+
+@login_required
+def saved_search_delete(request, saved_search_id):
+    if request.method != "POST":
+        return redirect("saved_items")
+    from .models import SavedSearch
+    try:
+        ss = SavedSearch.objects.get(saved_search_id=saved_search_id, user=request.user)
+        ss.delete()
+    except SavedSearch.DoesNotExist:
+        pass
+    return redirect("saved_items")
+
+
+@login_required
+def account_exports(request):
+    role = getattr(request.user, "role", None)
+    return render(request, "account/exports.html", {"role": role})
 
 @login_required
 def ListingMessageView(request, listing_id):
@@ -2051,3 +2099,76 @@ def transactions_export(request):
         return response
     else:
         return HttpResponse("Unsupported format", status=400)
+
+
+# --- Geo endpoints for exhaustive States/Cities with graceful fallback ---
+def geo_states(request):
+    # Try external registry (countriesnow) then fallback to curated list
+    states = []
+    try:
+        data = json.dumps({"country": "India"}).encode("utf-8")
+        req = urlrequest.Request(
+            "https://countriesnow.space/api/v0.1/countries/states",
+            data=data,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urlrequest.urlopen(req, timeout=8) as resp:
+            body = json.loads(resp.read().decode("utf-8"))
+            if body.get("error") is False and body.get("data") and body["data"].get("states"):
+                states = [s.get("name") for s in body["data"]["states"] if s.get("name")]
+    except Exception:
+        states = []
+    if not states:
+        # minimal curated fallback
+        states = sorted({
+            "Gujarat","Maharashtra","Karnataka","Tamil Nadu","Telangana","Delhi",
+            "Uttar Pradesh","Rajasthan","Madhya Pradesh","West Bengal","Bihar","Punjab","Kerala","Assam","Odisha","Chhattisgarh","Jharkhand","Uttarakhand","Haryana","Goa","Jammu & Kashmir"
+        })
+    return JsonResponse({"states": states})
+
+
+def geo_cities(request):
+    state = (request.GET.get("state") or "").strip()
+    cities = []
+    if state:
+        try:
+            data = json.dumps({"country": "India", "state": state}).encode("utf-8")
+            req = urlrequest.Request(
+                "https://countriesnow.space/api/v0.1/countries/state/cities",
+                data=data,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urlrequest.urlopen(req, timeout=8) as resp:
+                body = json.loads(resp.read().decode("utf-8"))
+                if body.get("error") is False and body.get("data"):
+                    cities = [c for c in body["data"] if c]
+        except Exception:
+            cities = []
+    if not cities:
+        # small curated fallback per state
+        fallback = {
+            "Gujarat": ["Ahmedabad","Vadodara","Surat","Rajkot"],
+            "Maharashtra": ["Mumbai","Pune","Nagpur","Nashik","Thane"],
+            "Karnataka": ["Bengaluru","Mysuru","Mangaluru","Hubballi"],
+            "Tamil Nadu": ["Chennai","Coimbatore","Madurai","Tiruchirappalli"],
+            "Telangana": ["Hyderabad","Warangal","Nizamabad"],
+            "Delhi": ["New Delhi","Delhi"],
+            "Uttar Pradesh": ["Lucknow","Kanpur","Agra","Noida","Ghaziabad"],
+            "Rajasthan": ["Jaipur","Udaipur","Jodhpur","Kota"],
+            "Madhya Pradesh": ["Indore","Bhopal","Gwalior","Jabalpur"],
+            "West Bengal": ["Kolkata","Howrah","Durgapur","Siliguri"],
+            "Punjab": ["Ludhiana","Amritsar","Jalandhar","Patiala"],
+            "Kerala": ["Kochi","Thiruvananthapuram","Kozhikode"],
+            "Assam": ["Guwahati","Silchar","Dibrugarh","Jorhat"],
+            "Odisha": ["Bhubaneswar","Cuttack","Rourkela"],
+            "Chhattisgarh": ["Raipur","Bhilai","Bilaspur"],
+            "Jharkhand": ["Ranchi","Jamshedpur","Dhanbad"],
+            "Uttarakhand": ["Dehradun","Haridwar"],
+            "Haryana": ["Gurugram","Faridabad","Panipat","Karnal"],
+            "Goa": ["Panaji","Margao"],
+            "Jammu & Kashmir": ["Srinagar","Jammu"]
+        }
+        cities = fallback.get(state, [])
+    return JsonResponse({"state": state, "cities": cities})
