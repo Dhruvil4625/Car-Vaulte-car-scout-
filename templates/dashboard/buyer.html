@@ -298,6 +298,17 @@
       </div>
 
       <div class="row g-4 mb-4">
+        <div class="col-lg-12">
+          <div class="dash-card reveal" style="transition-delay: 0.15s;">
+            <div class="dash-card-header">
+              <i class="fa-solid fa-chart-line"></i> Purchases by Month
+            </div>
+            <canvas id="buyerPurchasesChart" height="160"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4 mb-4">
         
         <div class="col-lg-6">
           <div class="dash-card reveal" style="transition-delay: 0.2s;">
@@ -476,4 +487,23 @@
     </div>
   </div>
 </section>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  (function(){
+    const labels = {{ monthly_labels|default:'[]'|safe }};
+    const counts = {{ monthly_counts|default:'[]'|safe }};
+    const amounts = {{ monthly_amount|default:'[]'|safe }};
+    const ctx = document.getElementById('buyerPurchasesChart')?.getContext('2d');
+    if (ctx) {
+      new Chart(ctx, {
+        type: 'bar',
+        data: { labels, datasets: [
+          { label: 'Purchases', data: counts, backgroundColor: 'rgba(59,130,246,0.6)' },
+          { label: 'Amount (₹)', data: amounts, type: 'line', yAxisID: 'y1', borderColor: 'rgba(225,29,72,0.9)', tension: 0.2 }
+        ]},
+        options: { scales: { y: { beginAtZero: true }, y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } } } }
+      });
+    }
+  })();
+</script>
 {% endblock %}
