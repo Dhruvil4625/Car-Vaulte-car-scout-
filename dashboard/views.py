@@ -27,6 +27,22 @@ def dashboard_admin(request):
     messages_count = Message.objects.count()
     drives_count = TestDrive.objects.count()
     inspections_count = Inspection.objects.count()
+    # Platform-wide analytics
+    from django.db.models import Count, Sum
+    from django.db.models.functions import TruncMonth
+    monthly = (
+        Transaction.objects.filter(status__in=["Paid", "Completed"])
+        .annotate(month=TruncMonth("completed_at"))
+        .values("month")
+        .annotate(count=Count("transaction_id"), revenue=Sum("final_price"))
+        .order_by("month")
+    )
+    monthly_labels = [m["month"].strftime("%b %Y") if m["month"] else "N/A" for m in monthly]
+    monthly_counts = [int(m["count"]) for m in monthly]
+    monthly_revenue = [float(m["revenue"] or 0.0) for m in monthly]
+    top_views_qs = CarListing.objects.order_by("-views_count").values_list("car__model", "views_count")[:10]
+    top_labels = [t[0] or "Listing" for t in top_views_qs]
+    top_views = [int(t[1] or 0) for t in top_views_qs]
     ctx = {
         "users_count": users_count,
         "buyers_count": buyers_count,
@@ -36,6 +52,11 @@ def dashboard_admin(request):
         "messages_count": messages_count,
         "drives_count": drives_count,
         "inspections_count": inspections_count,
+        "monthly_labels": monthly_labels,
+        "monthly_counts": monthly_counts,
+        "monthly_revenue": monthly_revenue,
+        "top_labels": top_labels,
+        "top_views": top_views,
     }
     return render(request, "dashboard/admin.html", ctx)
 
@@ -75,8 +96,29 @@ def dashboard_buyer(request):
     purchases = Transaction.objects.filter(buyer=request.user).select_related("listing__car", "seller").order_by("-completed_at")[:10]
     drives = TestDrive.objects.filter(buyer=request.user).select_related("listing__car").order_by("-proposed_date")[:10]
     inbox = Message.objects.filter(receiver=request.user).select_related("sender").order_by("-sent_at")[:10]
+    from django.db.models import Count, Sum
+    from django.db.models.functions import TruncMonth
     from core.models import Favorite, SavedSearch
     favs = Favorite.objects.filter(user=request.user).select_related("listing__car").order_by("-created_at")[:6]
     searches = SavedSearch.objects.filter(user=request.user).order_by("-created_at")[:6]
-    ctx = {"purchases": purchases, "drives": drives, "inbox": inbox, "favorites": favs, "saved_searches": searches}
+    monthly = (
+        Transaction.objects.filter(buyer=request.user, status__in=["Paid", "Completed"])
+        .annotate(month=TruncMonth("completed_at"))
+        .values("month")
+        .annotate(count=Count("transaction_id"), amount=Sum("final_price"))
+        .order_by("month")
+    )
+    monthly_labels = [m["month"].strftime("%b %Y") if m["month"] else "N/A" for m in monthly]
+    monthly_counts = [int(m["count"]) for m in monthly]
+    monthly_amount = [float(m["amount"] or 0.0) for m in monthly]
+    ctx = {
+        "purchases": purchases,
+        "drives": drives,
+        "inbox": inbox,
+        "favorites": favs,
+        "saved_searches": searches,
+        "monthly_labels": monthly_labels,
+        "monthly_counts": monthly_counts,
+        "monthly_amount": monthly_amount,
+    }
     return render(request, "dashboard/buyer.html", ctx)
