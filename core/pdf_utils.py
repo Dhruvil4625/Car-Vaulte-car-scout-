@@ -22,7 +22,7 @@ def _rounded_rect(c, x, y, w, h, r=6*mm, fill_color=WHITE, stroke_color=colors.H
 
 def build_brochure_pdf(user=None, base_dir=None):
     """
-    Returns brochure PDF bytes for the Car Scout one-page flyer (A4 portrait).
+    Returns brochure PDF bytes for the Vehicle Vault one-page flyer (A4 portrait).
     """
     buf = BytesIO()
     c = canvas.Canvas(buf, pagesize=A4)
@@ -36,7 +36,7 @@ def build_brochure_pdf(user=None, base_dir=None):
     # Title and subtitle
     c.setFillColor(WHITE)
     c.setFont("Helvetica-Bold", 34)
-    c.drawCentredString(W/2, H - header_h + 0.75*header_h, "CAR SCOUT")
+    c.drawCentredString(W/2, H - header_h + 0.75*header_h, "VEHICLE VAULT")
     c.setFont("Helvetica-Bold", 18)
     c.setFillColor(TEAL)
     c.drawCentredString(W/2, H - header_h + 0.63*header_h, "India's Smartest Way to Buy & Sell Cars")
