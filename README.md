@@ -1,6 +1,6 @@
-# Car Vault (Car Scout)
+# Car Vault (Vehicle Vault)
 
-Car Vault (Car Scout) is a full-stack Django platform for used-car discovery, listing management, buyer/seller communication, test drives, and deal completion.
+Car Vault (Vehicle Vault) is a full-stack Django platform for used-car discovery, listing management, buyer/seller communication, test drives, and deal completion.
 
 It includes role-aware dashboards, OTP-based first-time account activation, profile/rating workflows, and a modern template-based UI.
 
