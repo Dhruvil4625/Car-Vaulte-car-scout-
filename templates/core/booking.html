@@ -6,191 +6,246 @@
 
 {% block content %}
 <style>
+    /* --- Ultra-Smooth Cinematic Pan --- */
+    @keyframes cinematicPan {
+        0% { transform: scale(1.0) translateX(0); }
+        50% { transform: scale(1.05) translateX(-1%); }
+        100% { transform: scale(1.0) translateX(0); }
+    }
+
+    /* --- Scroll Reveal & Pulse --- */
+    .reveal {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal.active { opacity: 1; transform: translateY(0); }
+
+    @keyframes pulse-red {
+        0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+    .btn-pulse { animation: pulse-red 2s infinite; }
+
+    /* --- Hero Section --- */
     .booking-hero {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-        padding: 80px 0 60px;
-        color: white;
+        position: relative;
+        padding: 80px 0 100px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        overflow: hidden;
         text-align: center;
-        margin-bottom: -50px;
     }
+    .booking-hero::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background: url('https://images.unsplash.com/photo-1560958089-b8a1929cea89?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+        z-index: 1; animation: cinematicPan 60s ease-in-out infinite; will-change: transform;
+    }
+    .booking-hero::after {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(135deg, rgba(2, 6, 23, 0.85) 0%, rgba(2, 6, 23, 0.98) 100%);
+        z-index: 2;
+    }
+    .booking-hero .container { position: relative; z-index: 3; }
+    
     .booking-hero h1 {
-        font-weight: 800;
-        font-size: 2.5rem;
-        margin-bottom: 15px;
+        font-weight: 900;
+        font-size: 3rem;
+        margin-bottom: 10px;
+        color: white;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
-    .booking-hero span {
-        color: #ef4444;
-    }
+    .booking-hero span { color: #ef4444; }
+    .booking-hero p { color: #cbd5e1; font-size: 1.1rem; font-weight: 500; }
+
+    /* --- Form Layout --- */
     .booking-card-wrapper {
         max-width: 800px;
-        margin: 0 auto 80px;
+        margin: -60px auto 80px;
         position: relative;
         z-index: 10;
     }
     .booking-card {
         background: white;
         border-radius: 20px;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.1);
-        padding: 40px;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.1);
+        padding: 40px 50px;
         border: 1px solid #e2e8f0;
     }
+    
+    @media (max-width: 768px) {
+        .booking-card { padding: 30px 20px; }
+    }
+
     .booking-form-section {
-        margin-bottom: 30px;
-        padding-bottom: 20px;
+        margin-bottom: 35px;
+        padding-bottom: 25px;
         border-bottom: 1px solid #f1f5f9;
     }
+    .booking-form-section:last-of-type { border-bottom: none; padding-bottom: 0; }
+
     .section-label {
-        font-weight: 700;
-        font-size: 0.9rem;
+        font-weight: 800;
+        font-size: 0.95rem;
         text-transform: uppercase;
         letter-spacing: 1px;
-        color: #64748b;
+        color: #0f172a;
         margin-bottom: 20px;
         display: flex;
         align-items: center;
         gap: 10px;
     }
-    .section-label i {
-        color: #ef4444;
+    .section-label i { color: #ef4444; font-size: 1.2rem; }
+    
+    .form-label {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
+
     .form-select, .form-control {
+        background-color: #f8fafc;
         border-radius: 10px;
-        padding: 12px 15px;
+        padding: 14px 15px;
         border: 1px solid #e2e8f0;
         font-size: 0.95rem;
+        font-weight: 500;
+        color: #0f172a;
+        transition: all 0.3s ease;
     }
     .form-select:focus, .form-control:focus {
+        background-color: #fff;
         border-color: #ef4444;
         box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+        outline: none;
     }
+    .form-control[readonly] { background-color: #e2e8f0; cursor: not-allowed; }
+
+    /* --- Payment Summary & EMI --- */
+    .emi-highlight {
+        background: #ecfdf5;
+        color: #059669;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-weight: 900;
+        border: 1px solid #10b981;
+        font-size: 1.05rem;
+    }
+
     .payment-summary {
         background: #f8fafc;
         border-radius: 15px;
         padding: 25px;
         margin-top: 30px;
+        border: 1px solid #e2e8f0;
     }
     .summary-row {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 10px;
-        color: #64748b;
+        margin-bottom: 12px;
+        color: #475569;
+        font-weight: 600;
     }
+    .summary-row.car-price-row { color: #94a3b8; text-decoration: line-through; }
+    
     .summary-total {
         display: flex;
         justify-content: space-between;
         margin-top: 15px;
         padding-top: 15px;
-        border-top: 2px dashed #e2e8f0;
+        border-top: 2px dashed #cbd5e1;
         color: #0f172a;
-        font-weight: 800;
-        font-size: 1.25rem;
+        font-weight: 900;
+        font-size: 1.3rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
+    .summary-total span:last-child { color: #ef4444; }
+
     .btn-pay-now {
         background: #ef4444;
         color: white;
         border: none;
-        padding: 15px 30px;
+        padding: 18px 30px;
         border-radius: 12px;
-        font-weight: 700;
+        font-weight: 800;
         font-size: 1.1rem;
         width: 100%;
-        margin-top: 20px;
+        margin-top: 25px;
         transition: all 0.3s ease;
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
     .btn-pay-now:hover {
         background: #dc2626;
         transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(239, 68, 68, 0.2);
+        box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
     }
 
     /* --- Custom Popup Modal Styles --- */
     .custom-modal-overlay {
-        position: fixed;
-        top: 0; left: 0; width: 100vw; height: 100vh;
-        background: rgba(15, 23, 42, 0.7);
-        backdrop-filter: blur(5px);
-        z-index: 9999;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.3s ease;
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(5px);
+        z-index: 9999; display: flex; align-items: center; justify-content: center;
+        opacity: 0; visibility: hidden; transition: all 0.3s ease;
     }
-    .custom-modal-overlay.active {
-        opacity: 1;
-        visibility: visible;
-    }
+    .custom-modal-overlay.active { opacity: 1; visibility: visible; }
     .custom-modal-box {
-        background: white;
-        border-radius: 20px;
-        padding: 40px 30px;
-        width: 90%;
-        max-width: 400px;
-        text-align: center;
-        transform: translateY(20px) scale(0.95);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        border: 1px solid #e2e8f0;
+        background: white; border-radius: 20px; padding: 40px 30px;
+        width: 90%; max-width: 400px; text-align: center;
+        transform: translateY(20px) scale(0.95); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border: 1px solid #e2e8f0;
     }
-    .custom-modal-overlay.active .custom-modal-box {
-        transform: translateY(0) scale(1);
-    }
+    .custom-modal-overlay.active .custom-modal-box { transform: translateY(0) scale(1); }
     .custom-modal-icon {
-        width: 80px; height: 80px;
-        border-radius: 50%;
+        width: 80px; height: 80px; border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
-        margin: 0 auto 20px;
-        font-size: 2.5rem;
+        margin: 0 auto 20px; font-size: 2.5rem;
     }
     .icon-success { background: #dcfce7; color: #10b981; }
     .icon-error { background: #fee2e2; color: #ef4444; }
     
-    .custom-modal-box h3 {
-        font-weight: 800; color: #0f172a; margin-bottom: 10px; font-size: 1.5rem;
-    }
-    .custom-modal-box p {
-        color: #64748b; margin-bottom: 25px; line-height: 1.6; font-size: 0.95rem;
-    }
+    .custom-modal-box h3 { font-weight: 800; color: #0f172a; margin-bottom: 10px; font-size: 1.5rem; }
+    .custom-modal-box p { color: #64748b; margin-bottom: 25px; line-height: 1.6; font-size: 0.95rem; }
     .custom-modal-btn {
         width: 100%; border: none; padding: 14px; border-radius: 10px;
-        font-weight: 700; color: white; transition: all 0.3s ease;
+        font-weight: 800; color: white; transition: all 0.3s ease;
         text-transform: uppercase; letter-spacing: 1px;
     }
     .btn-success-theme { background: #10b981; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
     .btn-success-theme:hover { background: #059669; transform: translateY(-2px); }
-    
     .btn-error-theme { background: #ef4444; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); }
     .btn-error-theme:hover { background: #dc2626; transform: translateY(-2px); }
 </style>
 
-<section class="booking-hero">
+<section class="booking-hero reveal">
     <div class="container">
-        <h1>Secure <span>Booking</span></h1>
-        <p>Reserve your dream vehicle today with a small token amount.</p>
+        <h1>Secure <span>Checkout</span></h1>
+        <p>Reserve your dream vehicle today. Fast, safe, and fully refundable.</p>
     </div>
 </section>
 
 <div class="container booking-card-wrapper">
-    <div class="booking-card">
+    <div class="booking-card reveal" style="transition-delay: 0.1s;">
         <form id="bookingForm" class="booking-form">
             {% csrf_token %}
+            
             <div class="booking-form-section">
-                <div class="section-label">
-                    <i class="fa-solid fa-car"></i>
-                    Vehicle Details
-                </div>
+                <div class="section-label"><i class="fa-solid fa-car"></i> Order Details</div>
                 <div class="mb-3">
-                    <label class="form-label">Select Vehicle</label>
+                    <label class="form-label">Select Vehicle to Reserve</label>
                     <select id="listingSelect" class="form-select" required>
-                        <option value="" data-price="0">Choose a vehicle...</option>
+                        <option value="" data-price="0">Choose a vehicle from inventory...</option>
                         {% for listing in listings %}
                         <option value="{{ listing.listing_id }}" data-price="{{ listing.price }}" {% if preselected_id == listing.listing_id|stringformat:"s" %}selected{% endif %}>
-                            {{ listing.car.make }} {{ listing.car.model }} ({{ listing.car.year }}) - {{ listing.price|inr }}
+                            {{ listing.car.make }} {{ listing.car.model }} ({{ listing.car.year }}) — {{ listing.price|inr }}
                         </option>
                         {% endfor %}
                     </select>
@@ -198,48 +253,111 @@
             </div>
 
             <div class="booking-form-section">
-                <div class="section-label">
-                    <i class="fa-solid fa-user"></i>
-                    Your Information
-                </div>
+                <div class="section-label"><i class="fa-solid fa-id-badge"></i> Buyer Profile</div>
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Full Name</label>
+                        <label class="form-label">Registered Name</label>
                         <input type="text" class="form-control" value="{{ user.name|default:'' }}" readonly>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Email Address</label>
+                        <label class="form-label">Account Email</label>
                         <input type="email" class="form-control" value="{{ user.email }}" readonly>
                     </div>
                 </div>
             </div>
 
+            <div class="booking-form-section">
+                <div class="section-label"><i class="fa-solid fa-map-location-dot"></i> Delivery / Registration Address</div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Recipient Name</label>
+                        <input type="text" id="shippingName" class="form-control" placeholder="Full legal name" value="{{ user.name|default:'' }}">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Contact Phone</label>
+                        <input type="text" id="shippingPhone" class="form-control" placeholder="+91 XXXXX XXXXX" value="{{ user.phone|default:'' }}">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Street Address</label>
+                    <textarea id="shippingAddress" class="form-control" rows="2" placeholder="House/Flat No., Street, Landmark"></textarea>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">City</label>
+                        <input type="text" id="shippingCity" class="form-control" placeholder="e.g. Mumbai">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">State</label>
+                        <input type="text" id="shippingState" class="form-control" placeholder="e.g. Maharashtra">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Pincode</label>
+                        <input type="text" id="shippingPostcode" class="form-control" placeholder="6-digit code">
+                    </div>
+                </div>
+            </div>
+
+            <div class="booking-form-section">
+                <div class="section-label"><i class="fa-solid fa-calculator"></i> Finance Estimator (Optional)</div>
+                <div class="row align-items-end">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Loan Tenure</label>
+                        <select id="emiMonths" class="form-select">
+                            <option value="">Full Cash (No EMI)</option>
+                            <option value="12">12 Months (1 yr)</option>
+                            <option value="24">24 Months (2 yrs)</option>
+                            <option value="36">36 Months (3 yrs)</option>
+                            <option value="48">48 Months (4 yrs)</option>
+                            <option value="60">60 Months (5 yrs)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Est. Interest (%)</label>
+                        <input type="number" id="emiRate" class="form-control" placeholder="e.g., 9.5" step="0.1" value="9.5">
+                    </div>
+                    <div class="col-md-4 mb-3 text-end">
+                        <div class="d-flex flex-column align-items-end">
+                            <span class="form-label mb-2">Estimated Monthly</span>
+                            <span id="emiDisplay" class="emi-highlight">—</span>
+                        </div>
+                    </div>
+                </div>
+                <small class="text-muted d-block mt-1"><i class="fa-solid fa-circle-info me-1"></i> EMI is indicative. Final bank rates will be applied during handover.</small>
+            </div>
+
             <div class="payment-summary">
-                <div class="summary-row">
-                    <span>Vehicle Price</span>
+                <div class="summary-row car-price-row">
+                    <span>Full Vehicle Price</span>
                     <span id="displayVehiclePrice">₹ 0</span>
                 </div>
                 <div class="summary-row">
-                    <span>Booking Amount (Fixed)</span>
-                    <span>₹ 500.00</span>
+                    <span>Reservation Token Amount</span>
+                    <span class="text-dark">₹ 500.00</span>
+                </div>
+                <div class="summary-row">
+                    <span>Processing Fees</span>
+                    <span class="text-success fw-bold">Waived</span>
                 </div>
                 <div class="summary-total">
-                    <span>Total to Pay</span>
+                    <span>Due Today</span>
                     <span>₹ 500.00</span>
                 </div>
             </div>
 
-            <button type="button" id="rzp-button1" class="btn-pay-now">
-                <i class="fa-solid fa-shield-check"></i> Pay Securely with Razorpay
+            <button type="button" id="rzp-button1" class="btn-pay-now btn-pulse">
+                <i class="fa-solid fa-lock"></i> Pay ₹500 Securely
             </button>
+            <div class="text-center mt-3">
+                <small class="text-muted"><i class="fa-solid fa-shield-halved me-1"></i> 256-bit encrypted checkout by Razorpay.</small>
+            </div>
         </form>
     </div>
 </div>
 
 <div id="customModalOverlay" class="custom-modal-overlay">
     <div class="custom-modal-box">
-        <div id="customModalIcon" class="custom-modal-icon">
-            </div>
+        <div id="customModalIcon" class="custom-modal-icon"></div>
         <h3 id="customModalTitle">Title</h3>
         <p id="customModalMessage">Message content</p>
         <button type="button" id="customModalBtn" class="custom-modal-btn">OK</button>
@@ -248,6 +366,17 @@
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // --- Scroll Reveal ---
+        const reveals = document.querySelectorAll('.reveal');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if(entry.isIntersecting) entry.target.classList.add('active');
+            });
+        }, { threshold: 0.1 });
+        reveals.forEach(reveal => observer.observe(reveal));
+    });
+
     const listingSelect = document.getElementById('listingSelect');
     const displayVehiclePrice = document.getElementById('displayVehiclePrice');
     const rzpButton = document.getElementById('rzp-button1');
@@ -273,7 +402,7 @@
             iconDiv.className = 'custom-modal-icon icon-error';
             iconDiv.innerHTML = '<i class="fa-solid fa-xmark"></i>';
             modalBtn.className = 'custom-modal-btn btn-error-theme';
-            modalBtn.innerText = 'Try Again';
+            modalBtn.innerText = 'Dismiss';
         }
         
         modalOverlay.classList.add('active');
@@ -281,34 +410,68 @@
 
     modalBtn.addEventListener('click', () => {
         modalOverlay.classList.remove('active');
-        if (modalRedirectUrl) {
-            window.location.href = modalRedirectUrl;
-        }
+        if (modalRedirectUrl) window.location.href = modalRedirectUrl;
     });
 
-    // --- Price Update Logic ---
-    function updatePrice() {
+    // --- Price & EMI Update Logic ---
+    function updatePriceAndEMI() {
         const selectedOption = listingSelect.options[listingSelect.selectedIndex];
-        const price = selectedOption.getAttribute('data-price');
-        if (price && price != "0") {
-            displayVehiclePrice.innerText = '₹ ' + parseFloat(price).toLocaleString('en-IN');
+        const priceStr = selectedOption.getAttribute('data-price') || "0";
+        const price = parseFloat(priceStr);
+        
+        // Update Vehicle Price (Strikethrough)
+        if (price > 0) {
+            displayVehiclePrice.innerText = '₹ ' + price.toLocaleString('en-IN');
         } else {
             displayVehiclePrice.innerText = '₹ 0';
         }
+        
+        // Compute EMI
+        const months = parseInt(document.getElementById('emiMonths').value || "0");
+        const rateAnnual = parseFloat(document.getElementById('emiRate').value || "0");
+        const emiEl = document.getElementById('emiDisplay');
+        
+        if (price > 0 && months > 0 && rateAnnual > 0) {
+            const r = rateAnnual / 12 / 100;
+            const n = months;
+            const emi = price * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
+            emiEl.innerText = '₹ ' + Math.round(emi).toLocaleString('en-IN') + ' / mo';
+        } else {
+            emiEl.innerText = '—';
+        }
     }
 
-    listingSelect.addEventListener('change', updatePrice);
-    updatePrice();
+    // Event Listeners for Dynamic Calculation
+    listingSelect.addEventListener('change', updatePriceAndEMI);
+    document.getElementById('emiMonths').addEventListener('change', updatePriceAndEMI);
+    document.getElementById('emiRate').addEventListener('input', updatePriceAndEMI);
+    
+    // Initial Call
+    updatePriceAndEMI();
 
-    // --- Razorpay Payment Logic ---
+    // --- Razorpay Checkout Logic ---
     rzpButton.onclick = function(e) {
+        e.preventDefault();
+        
         const listingId = listingSelect.value;
         if (!listingId) {
-            showCustomAlert('error', 'Hold On!', 'Please select a vehicle from the dropdown before proceeding to payment.');
+            showCustomAlert('error', 'Selection Required', 'Please select a vehicle from the dropdown before proceeding to checkout.');
             return;
         }
 
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+
+        const shipping = new URLSearchParams();
+        shipping.append('listing_id', listingId);
+        shipping.append('shipping_name', document.getElementById('shippingName').value || '');
+        shipping.append('shipping_phone', document.getElementById('shippingPhone').value || '');
+        shipping.append('shipping_address', document.getElementById('shippingAddress').value || '');
+        shipping.append('shipping_city', document.getElementById('shippingCity').value || '');
+        shipping.append('shipping_state', document.getElementById('shippingState').value || '');
+        shipping.append('shipping_postcode', document.getElementById('shippingPostcode').value || '');
+        shipping.append('shipping_country', 'India');
+        shipping.append('emi_months', document.getElementById('emiMonths').value || '');
+        shipping.append('emi_rate', document.getElementById('emiRate').value || '');
 
         fetch("{% url 'create_razorpay_order' %}", {
             method: 'POST',
@@ -316,7 +479,7 @@
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'X-CSRFToken': csrfToken
             },
-            body: 'amount=500&listing_id=' + listingId
+            body: shipping.toString()
         })
         .then(async response => {
             const ct = response.headers.get('content-type') || '';
@@ -341,7 +504,7 @@
         })
         .then(data => {
             if (typeof Razorpay === 'undefined') {
-                showCustomAlert('error', 'SDK Error', 'Unable to load payment gateway. Please check your internet connection or disable ad-blockers.');
+                showCustomAlert('error', 'SDK Error', 'Unable to load secure payment gateway. Please check your internet connection or disable ad-blockers.');
                 return;
             }
             const options = {
@@ -349,7 +512,7 @@
                 "amount": data.amount,
                 "currency": data.currency,
                 "name": "Car Vault",
-                "description": "Vehicle Booking Fee",
+                "description": "Vehicle Reservation Token",
                 "order_id": data.id,
                 "handler": function (response) {
                     const body = new URLSearchParams();
@@ -374,24 +537,22 @@
                     })
                     .then(verifyData => {
                         if (verifyData.status === "Payment verified successfully") {
-                            showCustomAlert('success', 'Booking Confirmed!', 'Your payment was successful and the vehicle has been reserved.', "{% url 'dashboard_buyer' %}");
+                            showCustomAlert('success', 'Reservation Confirmed!', 'Your ₹500 token payment was successful. The seller will contact you shortly.', "{% url 'dashboard_buyer' %}");
                         } else {
-                            showCustomAlert('error', 'Verification Failed', "Payment verification failed: " + verifyData.error);
+                            showCustomAlert('error', 'Verification Failed', "Secure verification failed: " + verifyData.error);
                         }
                     })
                     .catch(err => {
                         console.error(err);
-                        showCustomAlert('error', 'Reconciliation Required', 'Payment was captured but server verification failed. We will reconcile this shortly.');
+                        showCustomAlert('error', 'Reconciliation Required', 'Payment was captured but server verification failed. We will reconcile this automatically.');
                     });
                 },
                 "prefill": {
-                    "name": "{{ user.name|default:'' }}",
+                    "name": document.getElementById('shippingName').value || "{{ user.name|default:'' }}",
                     "email": "{{ user.email }}",
-                    "contact": "{{ user.phone|default:'' }}"
+                    "contact": document.getElementById('shippingPhone').value || "{{ user.phone|default:'' }}"
                 },
-                "theme": {
-                    "color": "#ef4444"
-                }
+                "theme": { "color": "#ef4444" }
             };
             const rzp1 = new Razorpay(options);
             rzp1.open();
@@ -399,10 +560,9 @@
         .catch(err => {
             if (err.message !== 'Auth required') {
                 console.error(err);
-                showCustomAlert('error', 'Payment Initialization Failed', err && err.message ? err.message : 'Please try again.');
+                showCustomAlert('error', 'Gateway Initialization Failed', err && err.message ? err.message : 'Please refresh and try again.');
             }
         });
-        e.preventDefault();
-    }
+    };
 </script>
 {% endblock %}
