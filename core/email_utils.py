@@ -9,7 +9,7 @@ from smtplib import SMTPAuthenticationError, SMTPException
 from django.core.mail.backends.smtp import EmailBackend
 import threading
 
-def send_email_html(subject, template_name, context, recipients, inline_images=None):
+def send_email_html(subject, template_name, context, recipients, inline_images=None, attachments=None):
     html_body = render_to_string(template_name, context or {})
     text_body = ""
     try:
@@ -33,6 +33,21 @@ def send_email_html(subject, template_name, context, recipients, inline_images=N
                 msg.attach(image)
             except Exception:
                 continue
+    # Attachments: list of tuples (filename, data_bytes, mimetype) or paths
+    for att in (attachments or []):
+        try:
+            if isinstance(att, (list, tuple)) and len(att) >= 2:
+                fname = att[0]
+                data = att[1]
+                mtype = att[2] if len(att) > 2 else mimetypes.guess_type(fname)[0] or "application/octet-stream"
+                msg.attach(fname, data, mtype)
+            elif isinstance(att, str):
+                fname = att.split("/")[-1]
+                ctype, _ = mimetypes.guess_type(att)
+                with open(att, "rb") as f:
+                    msg.attach(fname, f.read(), ctype or "application/octet-stream")
+        except Exception:
+            continue
     try:
         conn = get_connection(timeout=getattr(settings, "EMAIL_TIMEOUT", 10))
         conn.send_messages([msg])
@@ -51,10 +66,10 @@ def send_email_html(subject, template_name, context, recipients, inline_images=N
         except Exception:
             if getattr(settings, "DEBUG", False):
                 raise
-def send_email_html_async(subject, template_name, context, recipients, inline_images=None):
+def send_email_html_async(subject, template_name, context, recipients, inline_images=None, attachments=None):
     def _run():
         try:
-            send_email_html(subject, template_name, context, recipients, inline_images)
+            send_email_html(subject, template_name, context, recipients, inline_images, attachments)
         except Exception:
             pass
     t = threading.Thread(target=_run, daemon=True)
