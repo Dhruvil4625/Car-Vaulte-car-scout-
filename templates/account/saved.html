@@ -1,64 +1,328 @@
 {% extends 'base.html' %}
-{% block title %}Saved Items | Vehicle Vault{% endblock %}
+{% load static %}{% load currency %}{% load images %}
+{% block title %}Saved Items | Car Vault{% endblock %}
+
 {% block content %}
-<section class="container mb-5">
+<style>
+  /* --- Scroll Reveal --- */
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* --- Premium Dashboard Cards --- */
+  .premium-dash-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+    padding: 30px;
+    margin-bottom: 25px;
+  }
+
+  .dash-header-title {
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: #0f172a;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 15px;
+  }
+
+  .dash-header-title.heart i { color: #e11d48; background: rgba(225, 29, 72, 0.1); padding: 10px; border-radius: 10px; }
+  .dash-header-title.search i { color: #3b82f6; background: rgba(59, 130, 246, 0.1); padding: 10px; border-radius: 10px; }
+
+  /* --- Saved Vehicle Rows --- */
+  .saved-item-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+    background: #ffffff;
+  }
+
+  .saved-item-row:hover {
+    border-color: #fca5a5;
+    box-shadow: 0 10px 25px rgba(225, 29, 72, 0.05);
+    transform: translateY(-2px);
+  }
+
+  .saved-img-wrap {
+    width: 140px;
+    height: 90px;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: #0f172a;
+    position: relative;
+  }
+
+  .saved-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+  
+  .saved-item-row:hover .saved-img-wrap img { transform: scale(1.1); }
+
+  .saved-info { flex-grow: 1; }
+  
+  .saved-title {
+    font-weight: 800;
+    font-size: 1.15rem;
+    color: #0f172a;
+    margin-bottom: 4px;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .saved-title:hover { color: #e11d48; }
+  
+  .saved-price {
+    font-weight: 900;
+    color: #e11d48;
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+  }
+
+  .saved-meta {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* --- Saved Search Rows --- */
+  .search-item-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+    background: #f8fafc;
+  }
+
+  .search-item-row:hover {
+    border-color: #93c5fd;
+    background: #ffffff;
+    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.05);
+  }
+
+  .search-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .search-badge {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    text-transform: capitalize;
+  }
+
+  /* --- Buttons --- */
+  .action-wrap {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .btn-icon-custom {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+  }
+
+  .btn-view { background: #0f172a; color: #ffffff; }
+  .btn-view:hover { background: #1e293b; color: #ffffff; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2); }
+
+  .btn-run { background: #3b82f6; color: #ffffff; }
+  .btn-run:hover { background: #2563eb; color: #ffffff; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); }
+
+  .btn-remove { background: #fff1f2; color: #e11d48; border-color: #fecaca; }
+  .btn-remove:hover { background: #e11d48; color: #ffffff; border-color: #e11d48; transform: translateY(-2px); }
+
+  /* --- Empty State --- */
+  .empty-state {
+    text-align: center;
+    padding: 50px 20px;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 2px dashed #cbd5e1;
+  }
+  .empty-state i {
+    font-size: 3rem;
+    color: #cbd5e1;
+    margin-bottom: 15px;
+  }
+  .empty-state h5 { font-weight: 800; color: #0f172a; }
+  .empty-state p { color: #64748b; font-size: 0.9rem; }
+
+  /* Mobile Adjustments */
+  @media (max-width: 768px) {
+    .saved-item-row { flex-direction: column; align-items: stretch; text-align: center; }
+    .saved-img-wrap { width: 100%; height: 160px; }
+    .saved-meta { justify-content: center; }
+    .action-wrap { justify-content: center; margin-top: 10px; }
+    .search-item-row { flex-direction: column; align-items: stretch; gap: 15px; }
+    .btn-icon-custom { width: 100%; height: 45px; gap: 8px; }
+    .btn-icon-custom::after { content: attr(title); font-weight: 700; font-family: inherit; font-size: 0.9rem; }
+  }
+</style>
+
+<section class="container my-5 py-4">
   <div class="row g-4">
+    
     <aside class="col-lg-3 d-none d-lg-block">
       {% include 'users/sidebar.html' %}
     </aside>
+    
     <div class="col-lg-9">
-      <div class="dash-card reveal" style="transition-delay:0.1s;">
-        <div class="dash-header d-flex justify-content-between align-items-center">
-          <h5 class="mb-0"><i class="fa-solid fa-heart text-danger me-2"></i> Saved Vehicles</h5>
-        </div>
+      
+      <div class="premium-dash-card reveal" style="transition-delay:0.1s;">
+        <h2 class="dash-header-title heart"><i class="fa-solid fa-heart"></i> My Garage (Saved Vehicles)</h2>
+        
         <div class="dash-list">
           {% for f in favorites %}
-          <div class="d-flex align-items-center justify-content-between border-bottom py-3">
-            <div>
-              <div class="fw-bold">{{ f.listing.car.make }} {{ f.listing.car.model }} ({{ f.listing.car.year }})</div>
-              <div class="text-muted" style="font-size:.9rem;">Saved on {{ f.created_at }}</div>
+          <div class="saved-item-row">
+            
+            <div class="saved-img-wrap">
+              {% if f.listing.images.all %}
+                <img src="{{ f.listing.images.all.0.image.url }}" alt="{{ f.listing.car.make }}">
+              {% else %}
+                <img src="{% car_image f.listing.car.make f.listing.car.model '300x200' %}" alt="{{ f.listing.car.make }}">
+              {% endif %}
             </div>
-            <div class="d-flex gap-2">
-              <a href="{% url 'listing_detail' f.listing.listing_id %}" class="btn btn-outline-dark btn-sm">View</a>
+            
+            <div class="saved-info">
+              <a href="{% url 'listing_detail' f.listing.listing_id %}" class="d-block saved-title">
+                {{ f.listing.car.make }} {{ f.listing.car.model }} <span class="text-muted fw-normal">({{ f.listing.car.year }})</span>
+              </a>
+              <div class="saved-price">{{ f.listing.price|inr }}</div>
+              <div class="saved-meta">
+                <i class="fa-regular fa-clock"></i> Saved on {{ f.created_at|date:"M d, Y" }}
+              </div>
+            </div>
+            
+            <div class="action-wrap">
+              <a href="{% url 'listing_detail' f.listing.listing_id %}" class="btn-icon-custom btn-view" title="View Listing">
+                <i class="fa-solid fa-arrow-right"></i>
+              </a>
               <form method="post" action="{% url 'favorite_delete' f.favorite_id %}">
                 {% csrf_token %}
-                <button class="btn btn-outline-danger btn-sm">Remove</button>
+                <button type="submit" class="btn-icon-custom btn-remove" title="Remove">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
               </form>
             </div>
+            
           </div>
           {% empty %}
-          <div class="text-center text-muted py-4">No saved vehicles yet.</div>
+          <div class="empty-state">
+            <i class="fa-solid fa-car-burst"></i>
+            <h5>Your Garage is Empty</h5>
+            <p>You haven't saved any vehicles yet. Start exploring to find your dream car!</p>
+            <a href="{% url 'all_cars' %}" class="btn btn-dark fw-bold px-4 rounded-pill mt-2">Browse Cars</a>
+          </div>
           {% endfor %}
         </div>
       </div>
 
-      <div class="dash-card reveal mt-4" style="transition-delay:0.15s;">
-        <div class="dash-header d-flex justify-content-between align-items-center">
-          <h5 class="mb-0"><i class="fa-regular fa-bookmark me-2"></i> Saved Searches</h5>
-        </div>
+      <div class="premium-dash-card reveal mt-4" style="transition-delay:0.2s;">
+        <h2 class="dash-header-title search"><i class="fa-solid fa-radar"></i> Saved Searches</h2>
+        
         <div class="dash-list">
           {% for s in saved_searches %}
-          <div class="d-flex align-items-center justify-content-between border-bottom py-3">
-            <div>
-              <div class="fw-bold">{{ s.name|default:"Saved Search" }}</div>
-              <div class="text-muted" style="font-size:.9rem;">{{ s.created_at }}</div>
+          <div class="search-item-row">
+            
+            <div class="search-info">
+              <div class="fw-bold fs-5 text-dark">{{ s.name|default:"Custom Search Query" }}</div>
+              <div class="text-muted mb-2" style="font-size:.85rem;"><i class="fa-regular fa-calendar-plus me-1"></i> Created: {{ s.created_at|date:"M d, Y" }}</div>
+              
+              <div class="search-badges">
+                {% if s.params %}
+                  {% for k, v in s.params.items %}
+                    <span class="search-badge">{{ k }}: {{ v }}</span>
+                  {% endfor %}
+                {% else %}
+                  <span class="search-badge">All Inventory</span>
+                {% endif %}
+              </div>
             </div>
-            <div class="d-flex gap-2">
+            
+            <div class="action-wrap">
               {% if s.params %}
-              <a href="{% url 'cars' %}?{% for k,v in s.params.items %}{{ k }}={{ v|urlencode }}{% if not forloop.last %}&{% endif %}{% endfor %}" class="btn btn-outline-dark btn-sm">Run</a>
+              <a href="{% url 'cars' %}?{% for k,v in s.params.items %}{{ k }}={{ v|urlencode }}{% if not forloop.last %}&{% endif %}{% endfor %}" class="btn-icon-custom btn-run" title="Run Search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+              </a>
               {% endif %}
               <form method="post" action="{% url 'saved_search_delete' s.saved_search_id %}">
                 {% csrf_token %}
-                <button class="btn btn-outline-danger btn-sm">Delete</button>
+                <button type="submit" class="btn-icon-custom btn-remove" title="Delete Search">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
               </form>
             </div>
+            
           </div>
           {% empty %}
-          <div class="text-center text-muted py-4">No saved searches yet.</div>
+          <div class="empty-state">
+            <i class="fa-solid fa-magnifying-glass-chart"></i>
+            <h5>No Saved Searches</h5>
+            <p>Save your specific filter parameters to quickly check for new inventory matches.</p>
+          </div>
           {% endfor %}
         </div>
       </div>
+
     </div>
   </div>
 </section>
+
+<script>
+  // --- Intersection Observer for Scroll Reveals ---
+  document.addEventListener("DOMContentLoaded", () => {
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if(entry.isIntersecting) {
+          entry.target.classList.add('active');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    reveals.forEach(reveal => observer.observe(reveal));
+  });
+</script>
 {% endblock %}
