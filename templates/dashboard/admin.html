@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}Command Center | Car Scout{% endblock %}
+{% block title %}Command Center | Vehicle Vault{% endblock %}
 
 {% block content %}
 <style>
@@ -267,7 +267,56 @@
 
   </div>
 
+  <div class="row g-4 mt-1">
+    <div class="col-lg-8">
+      <div class="segment-card reveal" style="transition-delay: 0.2s;">
+        <div class="fw-bold text-uppercase text-muted mb-2" style="letter-spacing:1px;"><i class="fa-solid fa-chart-line me-2"></i> Platform Sales by Month</div>
+        <canvas id="adminSalesChart" height="200"></canvas>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="segment-card reveal" style="transition-delay: 0.3s;">
+        <div class="fw-bold text-uppercase text-muted mb-2" style="letter-spacing:1px;"><i class="fa-solid fa-chart-column me-2"></i> Top Viewed Listings</div>
+        <canvas id="adminTopViews" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+
     </div>
   </div>
 </section>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  (function(){
+    const labels = {{ monthly_labels|default:'[]'|safe }};
+    const counts = {{ monthly_counts|default:'[]'|safe }};
+    const revenue = {{ monthly_revenue|default:'[]'|safe }};
+    const ctx1 = document.getElementById('adminSalesChart')?.getContext('2d');
+    if (ctx1) {
+      new Chart(ctx1, {
+        type: 'bar',
+        data: { labels, datasets: [
+          { label: 'Sales', data: counts, backgroundColor: 'rgba(16,185,129,0.6)' },
+          { label: 'Revenue (₹)', data: revenue, type: 'line', yAxisID: 'y1', borderColor: 'rgba(225,29,72,0.9)', tension: 0.2 }
+        ]},
+        options: {
+          scales: {
+            y: { beginAtZero: true },
+            y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } }
+          }
+        }
+      });
+    }
+    const tlabels = {{ top_labels|default:'[]'|safe }};
+    const tviews = {{ top_views|default:'[]'|safe }};
+    const ctx2 = document.getElementById('adminTopViews')?.getContext('2d');
+    if (ctx2) {
+      new Chart(ctx2, {
+        type: 'bar',
+        data: { labels: tlabels, datasets: [{ label: 'Views', data: tviews, backgroundColor: 'rgba(59,130,246,0.6)' }] },
+        options: { scales: { y: { beginAtZero: true } } }
+      });
+    }
+  })();
+</script>
 {% endblock %}
