@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="blueBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#22cfff"/>
+      <stop offset="100%" style="stop-color:#009ee6"/>
+    </linearGradient>
+    <radialGradient id="circleShadow" cx="40%" cy="40%">
+      <stop offset="0%" style="stop-color:#6ce6ff"/>
+      <stop offset="68%" style="stop-color:#1abfff"/>
+      <stop offset="100%" style="stop-color:#007fcb"/>
+    </radialGradient>
+    <linearGradient id="carBodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b73cc"/>
+      <stop offset="55%" style="stop-color:#2458ad"/>
+      <stop offset="100%" style="stop-color:#143f88"/>
+    </linearGradient>
+    <linearGradient id="glassGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff"/>
+      <stop offset="100%" style="stop-color:#b9ddff"/>
+    </linearGradient>
+    <linearGradient id="headlightGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#fffde2"/>
+      <stop offset="100%" style="stop-color:#ffe36a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" fill="#ffffff"/>
+
+  <!-- Outer Blue Circle with 3D effect -->
+  <circle cx="256" cy="200" r="140" fill="url(#circleShadow)" opacity="1"/>
+  
+  <!-- Dark blue shadow segment (bottom right) -->
+  <path d="M 256 60 A 140 140 0 0 1 370 330 A 140 140 0 0 1 256 330 A 140 140 0 0 0 256 60" fill="#005fa3" opacity="0.35"/>
+  
+  <!-- Bright blue accent segment (top left) -->
+  <path d="M 256 60 A 140 140 0 0 0 142 330 L 256 200 Z" fill="#79ecff" opacity="0.7"/>
+
+  <!-- White inner circle for car icon -->
+  <circle cx="256" cy="200" r="100" fill="white"/>
+
+  <!-- Car Icon Group -->
+  <g transform="translate(256, 200)">
+    <!-- Mirrors -->
+    <path d="M -56 -8 L -74 0 L -60 10 L -45 3 Z" fill="#1956a3"/>
+    <path d="M 56 -8 L 74 0 L 60 10 L 45 3 Z" fill="#1956a3"/>
+
+    <!-- Roofline -->
+    <path d="M -42 -8 Q -28 -42 0 -48 Q 28 -42 42 -8" fill="none" stroke="#1a5ab0" stroke-width="4.5" stroke-linecap="round"/>
+
+    <!-- Cabin / glass -->
+    <path d="M -46 7 Q -37 -24 0 -29 Q 37 -24 46 7 L 30 13 Q 0 17 -30 13 Z" fill="url(#glassGrad)" stroke="#1a5ab0" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M 0 -25 L 0 15" stroke="#1a5ab0" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+    <path d="M -25 -13 Q 0 -28 25 -13" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" opacity="0.95"/>
+
+    <!-- Main front body -->
+    <path d="M -68 12 Q -63 37 -50 58 L -24 71 Q 0 75 24 71 L 50 58 Q 63 37 68 12 Q 39 20 0 24 Q -39 20 -68 12 Z" fill="url(#carBodyGrad)"/>
+
+    <!-- Hood creases -->
+    <path d="M -53 12 Q -24 5 -8 18" fill="none" stroke="#97c7ff" stroke-width="4" stroke-linecap="round" opacity="0.75"/>
+    <path d="M 53 12 Q 24 5 8 18" fill="none" stroke="#97c7ff" stroke-width="4" stroke-linecap="round" opacity="0.75"/>
+
+    <!-- BMW-inspired sharp headlights -->
+    <path d="M -56 22 Q -45 18 -28 22 L -34 34 Q -49 35 -58 31 Z" fill="url(#headlightGrad)" stroke="#1a5ab0" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M 56 22 Q 45 18 28 22 L 34 34 Q 49 35 58 31 Z" fill="url(#headlightGrad)" stroke="#1a5ab0" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M -51 25 L -34 26" stroke="#fffdf0" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
+    <path d="M 51 25 L 34 26" stroke="#fffdf0" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
+
+    <!-- Twin kidney-style grille -->
+    <path d="M -23 22 Q -21 18 -13 18 Q -4 18 -2 24 L -4 60 Q -13 68 -22 60 Z" fill="#ffffff" stroke="#1a5ab0" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M 23 22 Q 21 18 13 18 Q 4 18 2 24 L 4 60 Q 13 68 22 60 Z" fill="#ffffff" stroke="#1a5ab0" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M -18 24 L -18 57" stroke="#1a5ab0" stroke-width="4" stroke-linecap="round"/>
+    <path d="M -12 23 L -12 60" stroke="#1a5ab0" stroke-width="4" stroke-linecap="round"/>
+    <path d="M -6 24 L -6 58" stroke="#1a5ab0" stroke-width="4" stroke-linecap="round"/>
+    <path d="M 18 24 L 18 57" stroke="#1a5ab0" stroke-width="4" stroke-linecap="round"/>
+    <path d="M 12 23 L 12 60" stroke="#1a5ab0" stroke-width="4" stroke-linecap="round"/>
+    <path d="M 6 24 L 6 58" stroke="#1a5ab0" stroke-width="4" stroke-linecap="round"/>
+
+    <!-- Lower intake accents -->
+    <path d="M -47 58 Q -35 69 -18 73" fill="none" stroke="#2360b6" stroke-width="4.5" stroke-linecap="round"/>
+    <path d="M 47 58 Q 35 69 18 73" fill="none" stroke="#2360b6" stroke-width="4.5" stroke-linecap="round"/>
+    <path d="M -24 65 Q 0 72 24 65" fill="none" stroke="#a8d4ff" stroke-width="3.5" stroke-linecap="round" opacity="0.75"/>
+  </g>
+
+  <!-- VAULT Text -->
+  <text x="256" y="380" font-family="Arial, Helvetica, sans-serif" font-size="48" font-weight="bold" fill="#0d4ea3" text-anchor="middle" letter-spacing="2">VAULT</text>
+  
+  <!-- VEHICLE Text -->
+  <text x="256" y="410" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700" fill="#0aa9e8" text-anchor="middle" letter-spacing="1.2">VEHICLE</text>
+</svg>

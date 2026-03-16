@@ -37,11 +37,22 @@ razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
 
 
 def _marketing_brochure_attachments(user=None):
+    # Try to load the pre-generated high-quality PDF from disk first
+    try:
+        pdf_path = os.path.join(settings.BASE_DIR, "Vehical Vault.pdf")
+        if os.path.exists(pdf_path):
+            with open(pdf_path, "rb") as f:
+                content = f.read()
+            return [("Vehicle_Vault_Brochure.pdf", content, "application/pdf")]
+    except Exception:
+        pass
+
+    # Fallback to generating one on the fly if file is missing
     try:
         from core.pdf_utils import build_brochure_pdf
         brochure = build_brochure_pdf(user=user, base_dir=getattr(settings, "BASE_DIR", None))
         if brochure:
-            return [("CarScout_Marketing_Brochure.pdf", brochure, "application/pdf")]
+            return [("Vehicle_Vault_Brochure.pdf", brochure, "application/pdf")]
     except Exception:
         pass
     return None

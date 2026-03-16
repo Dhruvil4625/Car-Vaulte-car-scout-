@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-lrlo3+$od@=29)w==emln9*szhfo!ege3mvj*oo$pwg0pli2j$"
+SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-change-me")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -181,7 +181,6 @@ if _DEV_HOST_IP:
 CSRF_TRUSTED_ORIGINS = _CSRF_ORIGINS
 CSRF_USE_SESSIONS = True
 
-# Load API keys from environment only
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "")
 RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")

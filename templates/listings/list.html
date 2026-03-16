@@ -674,8 +674,12 @@
     const btn = document.getElementById('saveSearchBtn');
     if (!btn) return;
     function getCsrf(){
-      const m = document.cookie.match(/csrftoken=([^;]+)/);
-      return m ? m[1] : '';
+      const meta = document.querySelector('meta[name="csrf-token"]');
+      if (meta && meta.content) return meta.content;
+      const c = document.cookie.match(/csrftoken=([^;]+)/);
+      if (c) return c[1];
+      const inp = document.querySelector('input[name="csrfmiddlewaretoken"]');
+      return inp ? inp.value : '';
     }
     btn.addEventListener('click', async () => {
       try {
@@ -686,6 +690,7 @@
         const res = await fetch('{% url "save_search" %}', {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': getCsrf() },
+          credentials: 'same-origin',
           body: payload.toString()
         });
         const j = await res.json();

@@ -256,6 +256,15 @@
           <div class="d-flex gap-2 mb-2 px-2">
             <button class="btn btn-dark fw-bold btn-sm rounded-pill px-3" id="btnExterior">Exterior</button>
             <button class="btn btn-outline-secondary fw-bold btn-sm rounded-pill px-3" id="btnInterior">Interior</button>
+            <div class="ms-auto d-flex align-items-center gap-2">
+              <button class="btn btn-outline-dark btn-sm fw-bold" id="btnPanoLeft"><i class="fa-solid fa-arrow-left"></i></button>
+              <button class="btn btn-outline-dark btn-sm fw-bold" id="btnPanoRight"><i class="fa-solid fa-arrow-right"></i></button>
+              <button class="btn btn-outline-danger fw-bold btn-sm rounded-pill" id="btnPanoAuto"><i class="fa-solid fa-play me-1"></i> Auto Rotate</button>
+              <div class="d-flex align-items-center gap-2 ms-2">
+                <label class="text-muted fw-bold" for="panoSpeed" style="font-size:.8rem;">Speed</label>
+                <input type="range" id="panoSpeed" min="0.2" max="5" step="0.2" value="1.2">
+              </div>
+            </div>
           </div>
           <div id="panoExterior" class="media-stage border-0"></div>
           <div id="panoInterior" class="media-stage border-0" style="display:none;"></div>
@@ -264,9 +273,23 @@
           {% if spin_ext or spin_int %}
             <div class="d-flex gap-2 mb-2 px-2">
               <button class="btn btn-dark fw-bold btn-sm rounded-pill px-3" id="btnSpinExterior">Exterior</button>
-              <button class="btn btn-outline-danger fw-bold btn-sm rounded-pill px-3 ms-auto" id="btnSpinAuto"><i class="fa-solid fa-play me-1"></i> Auto Spin</button>
+              {% if spin_int %}
+              <button class="btn btn-outline-secondary fw-bold btn-sm rounded-pill px-3" id="btnSpinInterior">Interior</button>
+              {% endif %}
+              <div class="ms-auto d-flex align-items-center gap-2">
+                <button class="btn btn-outline-dark btn-sm fw-bold" id="btnSpinPrev"><i class="fa-solid fa-arrow-left"></i></button>
+                <button class="btn btn-outline-dark btn-sm fw-bold" id="btnSpinNext"><i class="fa-solid fa-arrow-right"></i></button>
+                <button class="btn btn-outline-danger fw-bold btn-sm rounded-pill" id="btnSpinAuto"><i class="fa-solid fa-play me-1"></i> Auto Spin</button>
+                <div class="d-flex align-items-center gap-2 ms-2">
+                  <label class="text-muted fw-bold" for="spinSpeed" style="font-size:.8rem;">Speed</label>
+                  <input type="range" id="spinSpeed" min="40" max="1000" step="20" value="240">
+                </div>
+              </div>
             </div>
             <div id="spinExterior" class="media-stage border-0" style="cursor: ew-resize;"></div>
+            {% if spin_int %}
+            <div id="spinInterior" class="media-stage border-0" style="cursor: ew-resize; display:none;"></div>
+            {% endif %}
           {% else %}
             <div class="media-stage d-flex align-items-center justify-content-center flex-column text-muted border-0">
               <i class="fa-solid fa-arrows-spin fs-1 mb-3 opacity-50"></i>
@@ -617,8 +640,12 @@
     if (!fav) return;
     let liked = false;
     function getCsrf(){
-      const m = document.cookie.match(/csrftoken=([^;]+)/);
-      return m ? m[1] : '';
+      const meta = document.querySelector('meta[name="csrf-token"]');
+      if (meta && meta.content) return meta.content;
+      const c = document.cookie.match(/csrftoken=([^;]+)/);
+      if (c) return c[1];
+      const inp = document.querySelector('input[name="csrfmiddlewaretoken"]');
+      return inp ? inp.value : '';
     }
     fav.addEventListener('click', async () => {
       try {
@@ -630,6 +657,7 @@
             'Content-Type': 'application/x-www-form-urlencoded',
             'X-CSRFToken': getCsrf()
           },
+          credentials: 'same-origin',
           body: body.toString()
         });
         const j = await res.json();
@@ -646,9 +674,11 @@
   document.querySelectorAll('.media-tabs .btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       document.querySelectorAll('.media-tabs .btn').forEach(b => b.classList.remove('active'));
-      e.target.classList.add('active');
+      const clickedBtn = e.currentTarget;
+      clickedBtn.classList.add('active');
       
-      const targetId = e.target.getAttribute('data-target');
+      const targetId = clickedBtn.getAttribute('data-target');
+      if (!targetId) return;
       document.querySelectorAll('.media-view').forEach(view => view.style.display = 'none');
       document.getElementById(targetId).style.display = 'block';
       
@@ -686,162 +716,342 @@
   }
 
   // --- 360 Panorama Logic ---
-  let extUrl = "{{ pano_exterior|default:'' }}";
-  let intUrl = "{{ pano_interior|default:'' }}";
+  let extUrl = "{{ pano_exterior|default:''|escapejs }}";
+  let intUrl = "{{ pano_interior|default:''|escapejs }}";
+  const galleryFallbackUrl = "{% if images %}{{ images.0.image.url|escapejs }}{% endif %}";
   (function(){
     const fallbackExt = "https://pannellum.org/images/cerro-toco-0.jpg";
     const fallbackInt = "https://pannellum.org/images/bma-1.jpg";
-    function resolveUrl(src, fallback){
-      return new Promise((res) => {
-        if (!src) { res(fallback || null); return; }
-        const i = new Image();
-        i.onload = () => res(src);
-        i.onerror = () => res(fallback || null);
-        i.src = src;
-      });
+
+    function cleanUrl(u) {
+      return (u || '').replace(/&amp;/g, '&').trim();
     }
-    function isLikelyPano(u){
-      try { return /pano|equirect|360/i.test(u || ""); } catch(_) { return false; }
-    }
-    function checkRatio(u){
-      return new Promise((resolve) => {
-        try {
-          const img = new Image();
-          img.onload = () => {
-            const r = img.naturalWidth / img.naturalHeight;
-            resolve(r > 1.9 && r < 2.1); // approx 2:1
-          };
-          img.onerror = () => resolve(false);
-          img.src = u;
-        } catch(_) { resolve(false); }
-      });
-    }
-    Promise.all([resolveUrl(extUrl, fallbackExt), resolveUrl(intUrl, null)]).then(async ([extResolved, intResolved]) => {
-      // If no interior provided, reuse exterior
-      if (!intResolved) intResolved = extResolved || fallbackInt;
-      let exteriorViewer = null;
-      let interiorViewer = null;
-      let initialized = false;
-      function fallbackImg(containerId, url){
-        const el = document.getElementById(containerId);
-        if (!el) return;
-        el.innerHTML = "";
-        const img = new Image();
-        img.src = url || fallbackExt;
-        img.style.width = "100%";
-        img.style.height = "100%";
-        img.style.objectFit = "contain";
-        el.appendChild(img);
-      }
-      if (!extResolved && !intResolved) extResolved = fallbackExt;
-      window.__panoInit = function(){
-        if (initialized) return;
-        initialized = true;
-        (async () => {
-          const pe = document.getElementById('panoExterior');
-          const pi = document.getElementById('panoInterior');
-          const canPanoExt = !!extResolved && isLikelyPano(extResolved) && await checkRatio(extResolved);
-          const canPanoInt = !!intResolved && isLikelyPano(intResolved) && await checkRatio(intResolved);
-          const hasPannellum = (typeof pannellum !== 'undefined');
-          // Exterior
-          if (extResolved) {
-            if (hasPannellum && canPanoExt) {
-              try { exteriorViewer = pannellum.viewer('panoExterior', {type: 'equirectangular', panorama: extResolved, autoLoad: true, showZoomCtrl: true, crossOrigin: 'anonymous'}); }
-              catch(_) { fallbackImg('panoExterior', extResolved); }
-            } else {
-              fallbackImg('panoExterior', extResolved);
-            }
-            if (pe) pe.style.display = 'block';
-            if (pi) pi.style.display = 'none';
-          } else if (intResolved) {
-            // Only interior available
-            if (hasPannellum && canPanoInt) {
-              try { interiorViewer = pannellum.viewer('panoInterior', {type: 'equirectangular', panorama: intResolved, autoLoad: true, showZoomCtrl: true, crossOrigin: 'anonymous'}); }
-              catch(_) { fallbackImg('panoInterior', intResolved); }
-            } else {
-              fallbackImg('panoInterior', intResolved);
-            }
-            if (pe) pe.style.display = 'none';
-            if (pi) pi.style.display = 'block';
-          }
-        })();
+
+    let extResolved = cleanUrl(extUrl) || cleanUrl(galleryFallbackUrl) || fallbackExt;
+    let intResolved = cleanUrl(intUrl);
+    
+    let exteriorViewer = null;
+    let interiorViewer = null;
+    let initialized = false;
+
+    function fallbackImg(containerId, url){
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      el.innerHTML = "";
+      const img = new Image();
+      img.src = cleanUrl(url) || cleanUrl(galleryFallbackUrl) || fallbackExt;
+      img.style.width = "100%";
+      img.style.height = "100%";
+      img.style.objectFit = "contain";
+      img.alt = '360 view image';
+      img.onerror = () => {
+        if (img.src !== fallbackExt) {
+          img.src = fallbackExt;
+        }
       };
-      
-      const btnExterior = document.getElementById('btnExterior');
-      const btnInterior = document.getElementById('btnInterior');
-      
-      if (btnExterior) btnExterior.addEventListener('click', () => {
-        if (!extResolved) return;
-        if (!initialized) window.__panoInit();
-        document.getElementById('panoExterior').style.display = 'block';
-        document.getElementById('panoInterior').style.display = 'none';
-        btnExterior.className = 'btn btn-dark fw-bold btn-sm rounded-pill px-3';
-        if (btnInterior) btnInterior.className = 'btn btn-outline-secondary fw-bold btn-sm rounded-pill px-3';
+      el.appendChild(img);
+    }
+
+    function probeImage(url) {
+      return new Promise((resolve) => {
+        const src = cleanUrl(url);
+        if (!src) {
+          resolve({ ok: false, ratio: 0 });
+          return;
+        }
+        const img = new Image();
+        img.onload = () => {
+          const w = Number(img.naturalWidth || 0);
+          const h = Number(img.naturalHeight || 1);
+          resolve({ ok: true, ratio: w / h });
+        };
+        img.onerror = () => resolve({ ok: false, ratio: 0 });
+        img.src = src;
       });
-      if (btnInterior) btnInterior.addEventListener('click', () => {
-        if (!intResolved) return;
-        if (!initialized) window.__panoInit();
-        document.getElementById('panoExterior').style.display = 'none';
-        document.getElementById('panoInterior').style.display = 'block';
-        try {
-          const hasPannellum = (typeof pannellum !== 'undefined');
-          if (hasPannellum && !interiorViewer) {
-            const ready = isLikelyPano(intResolved) && true; // viewer already chosen during init
-            if (ready) {
-              interiorViewer = pannellum.viewer('panoInterior', {type: 'equirectangular', panorama: intResolved, autoLoad: true, showZoomCtrl: true, crossOrigin: 'anonymous'});
-            } else {
-              throw new Error("not pano");
-            }
-          }
-        } catch(_) { fallbackImg('panoInterior', intResolved); }
-        btnInterior.className = 'btn btn-dark fw-bold btn-sm rounded-pill px-3';
-        if (btnExterior) btnExterior.className = 'btn btn-outline-secondary fw-bold btn-sm rounded-pill px-3';
-      });
+    }
+
+    async function mountPano(containerId, src, setViewer) {
+      const url = cleanUrl(src);
+      if (!url) {
+        fallbackImg(containerId, cleanUrl(galleryFallbackUrl) || fallbackExt);
+        return;
+      }
+
+      const hasPannellum = (typeof pannellum !== 'undefined');
+      const check = await probeImage(url);
+      const looksEquirect = check.ok && check.ratio > 1.8 && check.ratio < 2.25;
+
+      if (!hasPannellum || !looksEquirect) {
+        fallbackImg(containerId, url);
+        return;
+      }
+
+      try {
+        const viewer = pannellum.viewer(containerId, {
+          type: 'equirectangular',
+          panorama: url,
+          autoLoad: true,
+          showZoomCtrl: true,
+          hfov: 110,
+          pitch: -3,
+        });
+
+        viewer.on('error', () => {
+          fallbackImg(containerId, url);
+          setViewer(null);
+        });
+
+        setViewer(viewer);
+      } catch (e) {
+        console.error('Pannellum mount error', e);
+        fallbackImg(containerId, url);
+      }
+    }
+
+    window.__panoInit = async function(){
+      if (initialized) return;
+      initialized = true;
+      
+      const pe = document.getElementById('panoExterior');
+      
+      // Initialize Exterior (it is visible when this function is called via tab switch)
+      if (pe) {
+        await mountPano('panoExterior', extResolved, (viewer) => { exteriorViewer = viewer; });
+        pe.style.display = 'block';
+      }
+    };
+    
+    // Wire up buttons immediately (they exist in DOM)
+    const btnExterior = document.getElementById('btnExterior');
+    const btnInterior = document.getElementById('btnInterior');
+    
+    if (btnExterior) btnExterior.addEventListener('click', () => {
+      if (!initialized) window.__panoInit();
+      document.getElementById('panoExterior').style.display = 'block';
+      const pi = document.getElementById('panoInterior');
+      if (pi) pi.style.display = 'none';
+      
+      btnExterior.className = 'btn btn-dark fw-bold btn-sm rounded-pill px-3';
+      if (btnInterior) btnInterior.className = 'btn btn-outline-secondary fw-bold btn-sm rounded-pill px-3';
     });
+    
+    if (btnInterior) btnInterior.addEventListener('click', () => {
+      if (!intResolved) return;
+      
+      // Ensure main init ran (though likely it did if we are here)
+      if (!initialized) window.__panoInit();
+      
+      document.getElementById('panoExterior').style.display = 'none';
+      const pi = document.getElementById('panoInterior');
+      if (pi) {
+        pi.style.display = 'block';
+        // Lazy init Interior Viewer now that it is visible
+        if (!interiorViewer) {
+           mountPano('panoInterior', intResolved, (viewer) => { interiorViewer = viewer; });
+        }
+      }
+      
+      btnInterior.className = 'btn btn-dark fw-bold btn-sm rounded-pill px-3';
+      if (btnExterior) btnExterior.className = 'btn btn-outline-secondary fw-bold btn-sm rounded-pill px-3';
+    });
+    
+    // Pano controls
+    let panoAutoTimer = null;
+    let panoStep = 0.5; // Slower default speed
+    const panoSpeed = document.getElementById('panoSpeed');
+    const panoAutoBtn = document.getElementById('btnPanoAuto');
+    const panoLeft = document.getElementById('btnPanoLeft');
+    const panoRight = document.getElementById('btnPanoRight');
+    
+    function panoCurrentViewer(){
+      const extVisible = document.getElementById('panoExterior').style.display !== 'none';
+      return extVisible ? exteriorViewer : interiorViewer;
+    }
+    
+    function panoStartAuto(){
+      const v = panoCurrentViewer();
+      if (!v) return;
+      panoAutoTimer = setInterval(() => {
+        try { v.setYaw(v.getYaw() + panoStep); } catch(_) {}
+      }, 50);
+    }
+    
+    function panoStopAuto(){
+      if (panoAutoTimer) { clearInterval(panoAutoTimer); panoAutoTimer = null; }
+    }
+    
+    if (panoSpeed) panoSpeed.addEventListener('input', () => {
+      panoStep = Math.max(0.1, Math.min(3, Number(panoSpeed.value || 0.5)));
+    });
+    
+    if (panoAutoBtn) panoAutoBtn.addEventListener('click', (e) => {
+      const button = e.currentTarget;
+      if (panoAutoTimer) {
+        panoStopAuto();
+        button.innerHTML = '<i class="fa-solid fa-play me-1"></i> Auto Rotate';
+        button.classList.replace('btn-danger', 'btn-outline-danger');
+      } else {
+        button.innerHTML = '<i class="fa-solid fa-pause me-1"></i> Stop Rotate';
+        button.classList.replace('btn-outline-danger', 'btn-danger');
+        panoStartAuto();
+      }
+    });
+    
+    if (panoLeft) panoLeft.addEventListener('click', () => {
+      const v = panoCurrentViewer(); if (!v) return;
+      try { v.setYaw(v.getYaw() - 10); } catch(_) {}
+    });
+    
+    if (panoRight) panoRight.addEventListener('click', () => {
+      const v = panoCurrentViewer(); if (!v) return;
+      try { v.setYaw(v.getYaw() + 10); } catch(_) {}
+    });
+
   })();
 
   // --- JS Turntable Logic ---
   let SPIN_INTERVAL_MS = 240;
   const spinExt = [];
   {% for u in spin_ext %} spinExt.push("{{ u }}"); {% endfor %}
+  const spinInt = [];
+  {% for u in spin_int %} spinInt.push("{{ u }}"); {% endfor %}
   
-  if (spinExt.length) {
-    function initSpin(containerId, frames) {
+  if (spinExt.length || spinInt.length) {
+    let autoTimer = null;
+
+    function initSpin(containerId, frames, onInteract) {
       const el = document.getElementById(containerId);
-      let idx = 0, dragging = false, lastX = 0;
+      if (!el) return null;
+      let idx = 0;
+      let pointerDown = false;
+      let lastX = 0;
+      let dragCarry = 0;
+      const DRAG_STEP_PX = 10;
       const img = new Image();
       img.style.width = "100%"; img.style.height = "100%"; img.style.objectFit = "contain";
+      img.draggable = false;
       el.innerHTML = ""; el.appendChild(img);
-      
+      el.style.touchAction = 'none';
+      el.style.userSelect = 'none';
       function show(i) { if (!frames.length) return; idx = (i % frames.length + frames.length) % frames.length; img.src = frames[idx]; }
       function next() { show(idx + 1); }
       function prev() { show(idx - 1); }
-      
+
+      function applyDragDelta(dx) {
+        dragCarry += dx;
+        while (dragCarry >= DRAG_STEP_PX) {
+          prev();
+          dragCarry -= DRAG_STEP_PX;
+        }
+        while (dragCarry <= -DRAG_STEP_PX) {
+          next();
+          dragCarry += DRAG_STEP_PX;
+        }
+      }
+
       show(0);
-      el.addEventListener("mousedown", e => { dragging = true; lastX = e.clientX; });
-      window.addEventListener("mouseup", () => { dragging = false; });
-      el.addEventListener("mousemove", e => {
-        if (!dragging) return;
+
+      el.addEventListener('pointerdown', e => {
+        pointerDown = true;
+        dragCarry = 0;
+        lastX = e.clientX;
+        el.style.cursor = 'grabbing';
+        if (typeof onInteract === 'function') onInteract();
+        if (typeof el.setPointerCapture === 'function') {
+          try { el.setPointerCapture(e.pointerId); } catch(_) {}
+        }
+      });
+
+      el.addEventListener('pointermove', e => {
+        if (!pointerDown) return;
         const dx = e.clientX - lastX;
         lastX = e.clientX;
-        if (dx > 2) prev(); else if (dx < -2) next(); 
+        applyDragDelta(dx);
+        e.preventDefault();
       });
+
+      function endPointer(e) {
+        pointerDown = false;
+        dragCarry = 0;
+        el.style.cursor = 'ew-resize';
+        if (e && typeof el.releasePointerCapture === 'function') {
+          try { el.releasePointerCapture(e.pointerId); } catch(_) {}
+        }
+      }
+
+      el.addEventListener('pointerup', endPointer);
+      el.addEventListener('pointercancel', endPointer);
+      el.addEventListener('pointerleave', endPointer);
+
       return { show, next, prev, frames, el };
     }
+
+    function startAuto(){
+      if (!currentViewer) return;
+      autoTimer = setInterval(() => currentViewer.next(), SPIN_INTERVAL_MS);
+    }
+    function stopAuto(){
+      if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+    }
+    function updateAuto(){
+      if (autoTimer) { stopAuto(); startAuto(); }
+    }
+
+    let spinExtViewer = initSpin("spinExterior", spinExt, stopAuto);
+    let spinIntViewer = initSpin("spinInterior", spinInt, stopAuto);
+    let currentViewer = spinExtViewer || spinIntViewer;
     
-    let spinExtViewer = initSpin("spinExterior", spinExt);
-    let autoTimer = null;
+    const btnExt = document.getElementById('btnSpinExterior');
+    const btnInt = document.getElementById('btnSpinInterior');
+    const btnPrev = document.getElementById('btnSpinPrev');
+    const btnNext = document.getElementById('btnSpinNext');
+    const btnAuto = document.getElementById('btnSpinAuto');
+    const speedInput = document.getElementById('spinSpeed');
     
-    document.getElementById('btnSpinAuto').addEventListener('click', (e) => {
+    if (btnExt) btnExt.addEventListener('click', () => {
+      stopAuto();
+      document.getElementById('spinExterior').style.display = 'block';
+      const si = document.getElementById('spinInterior'); if (si) si.style.display = 'none';
+      currentViewer = spinExtViewer;
+      btnExt.className = 'btn btn-dark fw-bold btn-sm rounded-pill px-3';
+      if (btnInt) btnInt.className = 'btn btn-outline-secondary fw-bold btn-sm rounded-pill px-3';
+    });
+    if (btnInt) btnInt.addEventListener('click', () => {
+      stopAuto();
+      document.getElementById('spinExterior').style.display = 'none';
+      const si = document.getElementById('spinInterior'); if (si) si.style.display = 'block';
+      currentViewer = spinIntViewer;
+      btnInt.className = 'btn btn-dark fw-bold btn-sm rounded-pill px-3';
+      if (btnExt) btnExt.className = 'btn btn-outline-secondary fw-bold btn-sm rounded-pill px-3';
+    });
+    
+    if (btnPrev) btnPrev.addEventListener('click', () => { if (currentViewer) currentViewer.prev(); });
+    if (btnNext) btnNext.addEventListener('click', () => { if (currentViewer) currentViewer.next(); });
+    
+    if (btnAuto) btnAuto.addEventListener('click', (e) => {
+      const button = e.currentTarget;
       if (autoTimer) {
-        clearInterval(autoTimer); autoTimer = null;
-        e.target.innerHTML = '<i class="fa-solid fa-play me-1"></i> Auto Spin';
-        e.target.classList.replace('btn-danger', 'btn-outline-danger');
+        stopAuto();
+        button.innerHTML = '<i class="fa-solid fa-play me-1"></i> Auto Spin';
+        button.classList.replace('btn-danger', 'btn-outline-danger');
       } else {
-        e.target.innerHTML = '<i class="fa-solid fa-pause me-1"></i> Stop Spin';
-        e.target.classList.replace('btn-outline-danger', 'btn-danger');
-        autoTimer = setInterval(() => spinExtViewer.next(), SPIN_INTERVAL_MS);
+        button.innerHTML = '<i class="fa-solid fa-pause me-1"></i> Stop Spin';
+        button.classList.replace('btn-outline-danger', 'btn-danger');
+        startAuto();
       }
+    });
+    if (speedInput) speedInput.addEventListener('input', () => {
+      const v = Number(speedInput.value || 240);
+      SPIN_INTERVAL_MS = Math.max(40, Math.min(1000, v));
+      updateAuto();
+    });
+    
+    // Arrow keys to control spin when turntable view is visible
+    document.addEventListener('keydown', (e) => {
+      const turnVisible = document.getElementById('turntableContent')?.style.display !== 'none';
+      if (!turnVisible) return;
+      if (e.key === 'ArrowLeft') { if (currentViewer) currentViewer.prev(); }
+      if (e.key === 'ArrowRight') { if (currentViewer) currentViewer.next(); }
     });
   }
 </script>
