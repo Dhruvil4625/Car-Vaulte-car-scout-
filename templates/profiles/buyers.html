@@ -14,7 +14,7 @@
   }
   .directory-hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: inherit; animation: cinematicPan 60s ease-in-out infinite; z-index: -1; }
   .directory-hero h1 { font-size: 3rem; font-weight: 900; color: #ffffff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
-  .directory-hero h1 span { color: #3b82f6; /* Blue for Buyers */ }
+  .directory-hero h1 span { color: #e11d48; /* Unified Brand Red */ }
   .directory-hero p { color: #cbd5e1; font-size: 1.15rem; font-weight: 500; }
 
   .directory-wrapper { margin-top: -50px; position: relative; z-index: 10; padding-bottom: 80px; }
@@ -26,17 +26,18 @@
     display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
   }
   .action-bar h3 { margin: 0; font-weight: 800; color: #0f172a; font-size: 1.3rem; display: flex; align-items: center; gap: 10px; }
-  .action-bar h3 i { color: #3b82f6; background: rgba(59, 130, 246, 0.1); padding: 10px; border-radius: 10px; }
-  .btn-create-custom { background-color: #3b82f6; color: #fff; font-weight: 800; padding: 12px 25px; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.3s; text-decoration: none; }
-  .btn-create-custom:hover { background-color: #2563eb; color: #fff; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3); }
+  .action-bar h3 i { color: #e11d48; background: rgba(225, 29, 72, 0.1); padding: 10px; border-radius: 10px; }
+  
+  .btn-create-custom { background-color: #0f172a; color: #fff; font-weight: 800; padding: 12px 25px; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.3s; text-decoration: none; }
+  .btn-create-custom:hover { background-color: #e11d48; color: #fff; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(225, 29, 72, 0.3); }
 
   /* Modern Profile Card */
   .profile-card {
     background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; height: 100%; display: flex; flex-direction: column;
     transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden;
   }
-  .profile-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08); border-color: #bfdbfe; }
-  .card-banner { height: 70px; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); width: 100%; }
+  .profile-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08); border-color: #fca5a5; }
+  .card-banner { height: 70px; background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); width: 100%; }
   
   .card-avatar-wrap { margin-top: -35px; text-align: center; position: relative; }
   .card-avatar { width: 70px; height: 70px; border-radius: 50%; border: 4px solid #ffffff; background: #f8fafc; box-shadow: 0 4px 10px rgba(0,0,0,0.05); object-fit: cover; }
@@ -44,7 +45,7 @@
 
   .card-body-custom { padding: 15px 25px 25px; text-align: center; flex-grow: 1; display: flex; flex-direction: column; }
   .card-name { font-size: 1.2rem; font-weight: 800; color: #0f172a; margin-bottom: 2px; }
-  .card-role { font-size: 0.75rem; color: #3b82f6; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin-bottom: 15px; }
+  .card-role { font-size: 0.75rem; color: #e11d48; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin-bottom: 15px; }
   
   .card-contact { margin-bottom: 20px; font-size: 0.85rem; color: #475569; display: flex; flex-direction: column; gap: 6px; }
   .card-contact i { color: #94a3b8; width: 16px; }
@@ -53,7 +54,7 @@
   .stat-pill i { color: #ef4444; margin-right: 5px; }
 
   .btn-view-card { background: #f1f5f9; color: #0f172a; font-weight: 700; padding: 12px; border-radius: 10px; transition: all 0.3s; text-decoration: none; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.85rem; margin-top: auto; }
-  .profile-card:hover .btn-view-card { background: #0f172a; color: #ffffff; }
+  .profile-card:hover .btn-view-card { background: #e11d48; color: #ffffff; }
 
   .empty-state { background: #ffffff; border: 2px dashed #cbd5e1; border-radius: 16px; padding: 80px 20px; text-align: center; }
 </style>
@@ -77,11 +78,11 @@
         <a href="{% url 'buyers_detail' b.user.user_id %}" class="profile-card reveal" style="transition-delay: 0.{{ forloop.counter0|add:2 }}s; text-decoration: none;">
           <div class="card-banner"></div>
           <div class="card-avatar-wrap">
-            <img src="https://ui-avatars.com/api/?name={{ b.user.name|default:b.user.email }}&background=0D8ABC&color=fff&size=128" class="card-avatar" alt="Avatar">
+            <img src="https://ui-avatars.com/api/?name={{ b.user.name|default:b.user.email }}&background=E11D48&color=fff&size=128" class="card-avatar" alt="Avatar">
             <div class="status-dot"></div>
           </div>
           <div class="card-body-custom">
-            <h4 class="card-name">{{ b.user.name|default:b.user.email }}</h4>
+            <h4 class="card-name text-truncate">{{ b.user.name|default:b.user.email }}</h4>
             <div class="card-role">Active Buyer</div>
             <div class="card-contact">
               <span class="text-truncate"><i class="fa-regular fa-envelope"></i> {{ b.user.email }}</span>
