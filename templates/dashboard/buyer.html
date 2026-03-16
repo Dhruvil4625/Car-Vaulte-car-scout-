@@ -298,17 +298,6 @@
       </div>
 
       <div class="row g-4 mb-4">
-        <div class="col-lg-12">
-          <div class="dash-card reveal" style="transition-delay: 0.15s;">
-            <div class="dash-card-header">
-              <i class="fa-solid fa-chart-line"></i> Purchases by Month
-            </div>
-            <canvas id="buyerPurchasesChart" height="160"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <div class="row g-4 mb-4">
         
         <div class="col-lg-6">
           <div class="dash-card reveal" style="transition-delay: 0.2s;">
@@ -374,69 +363,6 @@
 
       </div>
 
-      <div class="row g-4 mb-4">
-        <div class="col-lg-6">
-          <div class="dash-card reveal" style="transition-delay: 0.25s;">
-            <div class="dash-card-header">
-              <i class="fa-solid fa-heart text-danger"></i> Saved Vehicles
-            </div>
-            <div class="dash-list">
-              {% for f in favorites %}
-                <div class="dash-list-item">
-                  <div class="dash-list-icon" style="background: rgba(225,29,72,0.1); color:#e11d48;">
-                    <i class="fa-solid fa-car-side"></i>
-                  </div>
-                  <div class="dash-list-content">
-                    <h6>{{ f.listing.car.make }} {{ f.listing.car.model }} ({{ f.listing.car.year }})</h6>
-                    <p>Saved on {{ f.created_at }}</p>
-                  </div>
-                  <div class="dash-list-meta">
-                    <a href="{% url 'listing_detail' f.listing.listing_id %}" class="btn btn-outline-dark dash-btn-sm">View</a>
-                  </div>
-                </div>
-              {% empty %}
-                <div class="dash-empty">
-                  <i class="fa-regular fa-heart"></i>
-                  <h6 class="fw-bold mt-2" style="color: var(--dash-text);">No saved vehicles yet.</h6>
-                  <p class="mb-0" style="font-size: 0.9rem;">Tap the heart on a listing to save it.</p>
-                </div>
-              {% endfor %}
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-6">
-          <div class="dash-card reveal" style="transition-delay: 0.3s;">
-            <div class="dash-card-header">
-              <i class="fa-regular fa-bookmark"></i> Saved Searches
-            </div>
-            <div class="dash-list">
-              {% for s in saved_searches %}
-                <div class="dash-list-item">
-                  <div class="dash-list-icon" style="background: rgba(59,130,246,0.1); color:#3b82f6;">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                  </div>
-                  <div class="dash-list-content">
-                    <h6>{{ s.name|default:"Saved Search" }}</h6>
-                    <p>{{ s.created_at }}</p>
-                  </div>
-                  <div class="dash-list-meta">
-                    {% if s.params %}
-                    <a href="{% url 'cars' %}?{% for k,v in s.params.items %}{{ k }}={{ v|urlencode }}{% if not forloop.last %}&{% endif %}{% endfor %}" class="btn btn-outline-dark dash-btn-sm">Run</a>
-                    {% endif %}
-                  </div>
-                </div>
-              {% empty %}
-                <div class="dash-empty">
-                  <i class="fa-regular fa-bookmark"></i>
-                  <h6 class="fw-bold mt-2" style="color: var(--dash-text);">No saved searches yet.</h6>
-                  <p class="mb-0" style="font-size: 0.9rem;">Use filters and tap “Save This Search”.</p>
-                </div>
-              {% endfor %}
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div class="row g-4">
         <div class="col-12">
           <div class="dash-card reveal" style="transition-delay: 0.4s;">
@@ -487,23 +413,4 @@
     </div>
   </div>
 </section>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-  (function(){
-    const labels = {{ monthly_labels|default:'[]'|safe }};
-    const counts = {{ monthly_counts|default:'[]'|safe }};
-    const amounts = {{ monthly_amount|default:'[]'|safe }};
-    const ctx = document.getElementById('buyerPurchasesChart')?.getContext('2d');
-    if (ctx) {
-      new Chart(ctx, {
-        type: 'bar',
-        data: { labels, datasets: [
-          { label: 'Purchases', data: counts, backgroundColor: 'rgba(59,130,246,0.6)' },
-          { label: 'Amount (₹)', data: amounts, type: 'line', yAxisID: 'y1', borderColor: 'rgba(225,29,72,0.9)', tension: 0.2 }
-        ]},
-        options: { scales: { y: { beginAtZero: true }, y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } } } }
-      });
-    }
-  })();
-</script>
 {% endblock %}
