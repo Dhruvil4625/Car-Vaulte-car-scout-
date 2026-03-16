@@ -11,13 +11,14 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from django.utils.html import strip_tags
 from django.contrib.auth import get_user_model
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.core.mail import send_mail
 from django.conf import settings
 from django.urls import reverse
 from django.db import transaction
 from django.core.cache import cache
 from django.utils import timezone
+import csv
 
 from core.email_utils import send_email_html, send_email_html_async
 from .forms import UserSignupForm, CarListingForm, CarForm, UpcomingArrivalForm, UserLoginForm, InspectionForm
@@ -511,6 +512,14 @@ def ListingDetailView(request, listing_id):
     except Exception:
         pass
         
+    # Increment view count
+    try:
+        from django.db import models as dj_models
+        CarListing.objects.filter(listing_id=listing.listing_id).update(views_count=dj_models.F("views_count") + 1)
+        listing.views_count += 1
+    except Exception:
+        pass
+        
     is_buyer = request.user.is_authenticated and request.user.role == User.Role.BUYER
     try:
         inspection = listing.inspections.order_by("-inspection_date").first()
@@ -647,13 +656,71 @@ def ListingDetailView(request, listing_id):
         "city_prices": city_prices,
     })
 
+@login_required
+def toggle_favorite(request):
+    if request.method != "POST" or request.user.role != User.Role.BUYER:
+        return JsonResponse({"ok": False, "error": "Not allowed"}, status=403)
+    from .models import Favorite
+    listing_id = request.POST.get("listing_id")
+    try:
+        lst = CarListing.objects.get(listing_id=listing_id)
+    except CarListing.DoesNotExist:
+        return JsonResponse({"ok": False, "error": "Listing not found"}, status=404)
+    fav, created = Favorite.objects.get_or_create(user=request.user, listing=lst)
+    if not created:
+        fav.delete()
+        delta = -1
+        liked = False
+    else:
+        delta = 1
+        liked = True
+    # update buyer.favorite_count
+    try:
+        b, _ = Buyer.objects.get_or_create(user=request.user)
+        b.favorite_count = max(0, int(getattr(b, "favorite_count", 0) or 0) + delta)
+        b.save(update_fields=["favorite_count"])
+    except Exception:
+        pass
+    return JsonResponse({"ok": True, "liked": liked})
+
+@login_required
+def save_search(request):
+    if request.method != "POST" or request.user.role != User.Role.BUYER:
+        return JsonResponse({"ok": False, "error": "Not allowed"}, status=403)
+    from .models import SavedSearch
+    name = (request.POST.get("name") or "").strip()
+    params_json = request.POST.get("params") or "{}"
+    try:
+        import json
+        params = json.loads(params_json)
+    except Exception:
+        params = {}
+    ss = SavedSearch.objects.create(user=request.user, name=name or "", params=params)
+    return JsonResponse({"ok": True, "id": str(ss.saved_search_id)})
 
 @login_required
 def ListingMessageView(request, listing_id):
     listing = CarListing.objects.select_related("car", "seller").get(listing_id=listing_id)
     content = strip_tags(request.POST.get("content") or "").strip()
     if content:
-        Message.objects.create(sender=request.user, receiver=listing.seller, listing=listing, content=content)
+        m = Message.objects.create(sender=request.user, receiver=listing.seller, listing=listing, content=content)
+        try:
+            ctx = {
+                "sender": request.user,
+                "receiver": listing.seller,
+                "listing": listing,
+                "content": content,
+                "sent_at": timezone.now(),
+                "thread_url": request.build_absolute_uri(reverse("messages")),
+            }
+            send_email_html_async(
+                subject="New Inquiry on Your Listing – Car Scout",
+                template_name="emails/message_notification.html",
+                context=ctx,
+                recipients=[listing.seller.email],
+            )
+        except Exception:
+            pass
         return redirect("listing_detail", listing_id=listing.listing_id)
     return redirect("listing_detail", listing_id=listing.listing_id)
 
@@ -679,12 +746,29 @@ def ReplyToMessageView(request, message_id):
     message = get_object_or_404(Message.objects.select_related("sender", "listing"), message_id=message_id, receiver=request.user)
     content = strip_tags(request.POST.get("content") or "").strip()
     if content:
-        Message.objects.create(
+        reply = Message.objects.create(
             sender=request.user,
             receiver=message.sender,
             listing=message.listing,
             content=content,
         )
+        try:
+            ctx = {
+                "sender": request.user,
+                "receiver": message.sender,
+                "listing": message.listing,
+                "content": content,
+                "sent_at": timezone.now(),
+                "thread_url": request.build_absolute_uri(reverse("messages")),
+            }
+            send_email_html_async(
+                subject="You Have a New Reply – Car Scout",
+                template_name="emails/message_notification.html",
+                context=ctx,
+                recipients=[message.sender.email],
+            )
+        except Exception:
+            pass
     return redirect(request.POST.get("next") or "messages")
 
 
@@ -718,6 +802,22 @@ def AcceptDealView(request, message_id):
             "status": Transaction.Status.PENDING,
         },
     )
+    try:
+        ctx = {
+            "listing": listing,
+            "buyer": buyer,
+            "seller": seller,
+            "sent_at": timezone.now(),
+            "booking_url": request.build_absolute_uri(f"/booking/?listing_id={listing.listing_id}"),
+        }
+        send_email_html_async(
+            subject="Deal Accepted – Proceed to Booking",
+            template_name="emails/message_notification.html",
+            context=ctx,
+            recipients=[buyer.email, seller.email],
+        )
+    except Exception:
+        pass
     
     return redirect(f"/booking/?listing_id={listing.listing_id}")
 
@@ -995,7 +1095,24 @@ def RequestSellToSellerView(request, user_id):
             except CarListing.DoesNotExist:
                 listing = None
         if content:
-            Message.objects.create(sender=request.user, receiver=seller.user, listing=listing, content=content)
+            m = Message.objects.create(sender=request.user, receiver=seller.user, listing=listing, content=content)
+            try:
+                ctx = {
+                    "sender": request.user,
+                    "receiver": seller.user,
+                    "listing": listing,
+                    "content": content,
+                    "sent_at": timezone.now(),
+                    "thread_url": request.build_absolute_uri(reverse("messages")),
+                }
+                send_email_html_async(
+                    subject="New Seller Approach – Car Scout",
+                    template_name="emails/message_notification.html",
+                    context=ctx,
+                    recipients=[seller.user.email],
+                )
+            except Exception:
+                pass
             return redirect("sellers_detail", user_id=seller.user.user_id)
     return render(request, "profiles/seller_detail.html", {"seller": seller, "listings": listings, "error": "Please add a message"})
 
@@ -1016,7 +1133,24 @@ def RequestBuyToBuyerView(request, user_id):
             except CarListing.DoesNotExist:
                 listing = None
         if content:
-            Message.objects.create(sender=request.user, receiver=buyer.user, listing=listing, content=content)
+            m = Message.objects.create(sender=request.user, receiver=buyer.user, listing=listing, content=content)
+            try:
+                ctx = {
+                    "sender": request.user,
+                    "receiver": buyer.user,
+                    "listing": listing,
+                    "content": content,
+                    "sent_at": timezone.now(),
+                    "thread_url": request.build_absolute_uri(reverse("messages")),
+                }
+                send_email_html_async(
+                    subject="New Offer from Seller – Car Scout",
+                    template_name="emails/message_notification.html",
+                    context=ctx,
+                    recipients=[buyer.user.email],
+                )
+            except Exception:
+                pass
             return redirect("buyers_detail", user_id=buyer.user.user_id)
     return render(request, "profiles/buyer_detail.html", {"buyer": buyer, "listings": listings, "error": "Please add a message"})
 
@@ -1846,3 +1980,74 @@ def verify_payment(request):
         except Exception as e:
             return JsonResponse({"status": "Payment verification failed", "error": str(e)}, status=400)
     return JsonResponse({"error": "Invalid request"}, status=400)
+
+
+@login_required
+def transactions_export(request):
+    from .models import Transaction
+    fmt = (request.GET.get("format") or request.GET.get("fmt") or "csv").lower()
+    if getattr(request.user, "role", None) == User.Role.SELLER:
+        qs = Transaction.objects.filter(seller=request.user).select_related("listing__car", "buyer")
+        filename_base = "sales"
+    else:
+        qs = Transaction.objects.filter(buyer=request.user).select_related("listing__car", "seller")
+        filename_base = "purchases"
+
+    rows = []
+    for t in qs.order_by("-completed_at", "-transaction_id"):
+        car = getattr(getattr(t, "listing", None), "car", None)
+        rows.append({
+            "Date": timezone.localtime(t.completed_at).strftime("%Y-%m-%d %H:%M") if t.completed_at else "",
+            "Make": getattr(car, "make", ""),
+            "Model": getattr(car, "model", ""),
+            "Year": getattr(car, "year", ""),
+            "Price": str(t.final_price),
+            "Status": t.status,
+            "Counterparty": (t.buyer.email if getattr(request.user, "role", None) == User.Role.SELLER else t.seller.email),
+            "PaymentMethod": t.payment_method or "",
+            "TransactionID": str(t.transaction_id),
+        })
+
+    if fmt == "csv":
+        response = HttpResponse(content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = f'attachment; filename="{filename_base}_history.csv"'
+        headers = list(rows[0].keys()) if rows else ["Date","Make","Model","Year","Price","Status","Counterparty","PaymentMethod","TransactionID"]
+        writer = csv.DictWriter(response, fieldnames=headers)
+        writer.writeheader()
+        for r in rows:
+            writer.writerow(r)
+        return response
+    elif fmt == "pdf":
+        try:
+            from reportlab.lib.pagesizes import A4, landscape
+            from reportlab.lib import colors
+            from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+            from reportlab.lib.styles import getSampleStyleSheet
+        except Exception:
+            return HttpResponse("PDF export requires reportlab. Please install it.", status=500)
+        response = HttpResponse(content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="{filename_base}_history.pdf"'
+        doc = SimpleDocTemplate(response, pagesize=landscape(A4), leftMargin=24, rightMargin=24, topMargin=24, bottomMargin=24)
+        elems = []
+        styles = getSampleStyleSheet()
+        elems.append(Paragraph(f"{filename_base.title()} History", styles["Title"]))
+        elems.append(Spacer(1, 12))
+        headers = list(rows[0].keys()) if rows else ["Date","Make","Model","Year","Price","Status","Counterparty","PaymentMethod","TransactionID"]
+        data = [headers]
+        for r in rows:
+            data.append([r.get(h, "") for h in headers])
+        tbl = Table(data, repeatRows=1)
+        tbl.setStyle(TableStyle([
+            ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#f1f5f9")),
+            ("TEXTCOLOR", (0,0), (-1,0), colors.HexColor("#0f172a")),
+            ("ALIGN", (0,0), (-1,-1), "LEFT"),
+            ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
+            ("FONTSIZE", (0,0), (-1,0), 10),
+            ("BOTTOMPADDING", (0,0), (-1,0), 8),
+            ("GRID", (0,0), (-1,-1), 0.25, colors.HexColor("#cbd5e1")),
+        ]))
+        elems.append(tbl)
+        doc.build(elems)
+        return response
+    else:
+        return HttpResponse("Unsupported format", status=400)
