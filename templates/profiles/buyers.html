@@ -4,279 +4,109 @@
 
 {% block content %}
 <style>
-  /* --- Directory Hero Section --- */
+  @keyframes cinematicPan { 0% { transform: scale(1.0) translateX(0); } 50% { transform: scale(1.05) translateX(-1%); } 100% { transform: scale(1.0) translateX(0); } }
+  .reveal { opacity: 0; transform: translateY(30px); transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+  .reveal.active { opacity: 1; transform: translateY(0); }
+
   .directory-hero {
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%), 
-                url('https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
-    padding: 60px 0 80px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    text-align: center;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.98) 100%), url('https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    padding: 80px 0 100px; text-align: center; overflow: hidden; position: relative;
   }
+  .directory-hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: inherit; animation: cinematicPan 60s ease-in-out infinite; z-index: -1; }
+  .directory-hero h1 { font-size: 3rem; font-weight: 900; color: #ffffff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  .directory-hero h1 span { color: #3b82f6; /* Blue for Buyers */ }
+  .directory-hero p { color: #cbd5e1; font-size: 1.15rem; font-weight: 500; }
 
-  .directory-hero h1 {
-    font-size: 2.8rem;
-    font-weight: 800;
-    color: #ffffff;
-    margin-bottom: 5px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-
-  .directory-hero h1 span {
-    color: #ef4444; /* Vibrant Red Accent */
-  }
-
-  .directory-hero p {
-    color: #94a3b8;
-    font-size: 1.1rem;
-    margin: 0;
-  }
-
-  /* --- Layout & Action Bar --- */
-  .directory-wrapper {
-    margin-top: -40px;
-    position: relative;
-    z-index: 10;
-    padding-bottom: 80px;
-  }
+  .directory-wrapper { margin-top: -50px; position: relative; z-index: 10; padding-bottom: 80px; }
 
   .action-bar {
-    background: #ffffff;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-    padding: 20px 25px;
-    margin-bottom: 30px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 15px;
+    background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
+    border-radius: 16px; border: 1px solid rgba(255,255,255,0.5);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05); padding: 20px 30px; margin-bottom: 40px;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
   }
+  .action-bar h3 { margin: 0; font-weight: 800; color: #0f172a; font-size: 1.3rem; display: flex; align-items: center; gap: 10px; }
+  .action-bar h3 i { color: #3b82f6; background: rgba(59, 130, 246, 0.1); padding: 10px; border-radius: 10px; }
+  .btn-create-custom { background-color: #3b82f6; color: #fff; font-weight: 800; padding: 12px 25px; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.3s; text-decoration: none; }
+  .btn-create-custom:hover { background-color: #2563eb; color: #fff; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3); }
 
-  .action-bar h3 {
-    margin: 0;
-    font-weight: 800;
-    color: #0f172a;
-    font-size: 1.25rem;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+  /* Modern Profile Card */
+  .profile-card {
+    background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; height: 100%; display: flex; flex-direction: column;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden;
   }
+  .profile-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08); border-color: #bfdbfe; }
+  .card-banner { height: 70px; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); width: 100%; }
+  
+  .card-avatar-wrap { margin-top: -35px; text-align: center; position: relative; }
+  .card-avatar { width: 70px; height: 70px; border-radius: 50%; border: 4px solid #ffffff; background: #f8fafc; box-shadow: 0 4px 10px rgba(0,0,0,0.05); object-fit: cover; }
+  .status-dot { position: absolute; width: 14px; height: 14px; background: #10b981; border: 2px solid #fff; border-radius: 50%; bottom: 5px; right: calc(50% - 30px); }
 
-  .action-bar h3 i {
-    color: #ef4444;
-  }
+  .card-body-custom { padding: 15px 25px 25px; text-align: center; flex-grow: 1; display: flex; flex-direction: column; }
+  .card-name { font-size: 1.2rem; font-weight: 800; color: #0f172a; margin-bottom: 2px; }
+  .card-role { font-size: 0.75rem; color: #3b82f6; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin-bottom: 15px; }
+  
+  .card-contact { margin-bottom: 20px; font-size: 0.85rem; color: #475569; display: flex; flex-direction: column; gap: 6px; }
+  .card-contact i { color: #94a3b8; width: 16px; }
+  
+  .stat-pill { background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px 15px; border-radius: 10px; font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 20px; }
+  .stat-pill i { color: #ef4444; margin-right: 5px; }
 
-  .btn-create-custom {
-    background-color: #ef4444;
-    color: #fff;
-    font-weight: 700;
-    padding: 10px 24px;
-    border-radius: 8px;
-    border: none;
-    transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-  }
+  .btn-view-card { background: #f1f5f9; color: #0f172a; font-weight: 700; padding: 12px; border-radius: 10px; transition: all 0.3s; text-decoration: none; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.85rem; margin-top: auto; }
+  .profile-card:hover .btn-view-card { background: #0f172a; color: #ffffff; }
 
-  .btn-create-custom:hover {
-    background-color: #dc2626;
-    color: #fff;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 15px rgba(239, 68, 68, 0.2);
-  }
-
-  /* --- Buyer Cards --- */
-  .buyer-card {
-    background: #ffffff;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    padding: 20px;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    transition: all 0.3s ease;
-    text-decoration: none;
-  }
-
-  .buyer-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
-    border-color: rgba(239, 68, 68, 0.3);
-  }
-
-  .buyer-header {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 15px;
-    padding-bottom: 15px;
-    border-bottom: 1px dashed #e2e8f0;
-  }
-
-  .buyer-avatar {
-    width: 50px;
-    height: 50px;
-    background: rgba(59, 130, 246, 0.1); /* Soft blue for buyers */
-    color: #2563eb;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.4rem;
-    flex-shrink: 0;
-  }
-
-  .buyer-name {
-    font-size: 1.15rem;
-    font-weight: 800;
-    color: #0f172a;
-    margin: 0 0 2px 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .buyer-role {
-    font-size: 0.75rem;
-    color: #64748b;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 600;
-  }
-
-  .buyer-details {
-    margin-bottom: 20px;
-  }
-
-  .buyer-details p {
-    margin: 0 0 8px 0;
-    font-size: 0.9rem;
-    color: #475569;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    word-break: break-all;
-  }
-
-  .buyer-details i {
-    color: #94a3b8;
-    width: 16px;
-    text-align: center;
-  }
-
-  .stat-badge {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #334155;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .stat-badge i {
-    color: #ef4444;
-  }
-
-  .btn-view-profile {
-    background: transparent;
-    border: 1px solid #cbd5e1;
-    color: #475569;
-    font-weight: 600;
-    padding: 10px 15px;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    text-align: center;
-    text-decoration: none;
-    width: 100%;
-    display: block;
-    margin-top: auto;
-  }
-
-  .buyer-card:hover .btn-view-profile {
-    background: #0f172a;
-    border-color: #0f172a;
-    color: #ffffff;
-  }
-
-  /* --- Empty State --- */
-  .empty-state {
-    background: #ffffff;
-    border: 2px dashed #cbd5e1;
-    border-radius: 12px;
-    padding: 60px 20px;
-    text-align: center;
-    color: #64748b;
-  }
+  .empty-state { background: #ffffff; border: 2px dashed #cbd5e1; border-radius: 16px; padding: 80px 20px; text-align: center; }
 </style>
 
 <section class="directory-hero">
   <div class="container">
-    <h1>Buyer <span>Directory</span></h1>
-    <p>Connect with active buyers and pitch your available inventory.</p>
+    <h1 class="reveal">Buyer <span>Directory</span></h1>
+    <p class="reveal" style="transition-delay: 0.1s;">Connect with active buyers and pitch your available inventory.</p>
   </div>
 </section>
 
 <section class="container directory-wrapper">
-  
-  <div class="action-bar">
+  <div class="action-bar reveal" style="transition-delay: 0.2s;">
     <h3><i class="fa-solid fa-users-viewfinder"></i> Registered Buyers</h3>
-    <a href="{% url 'signup' %}?role=Buyer" class="btn-create-custom">
-      <i class="fa-solid fa-user-plus me-2"></i> Add New Buyer
-    </a>
+    <a href="{% url 'signup' %}?role=Buyer" class="btn-create-custom"><i class="fa-solid fa-user-plus me-2"></i> Add Buyer</a>
   </div>
 
   <div class="row g-4">
     {% for b in buyers %}
       <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-        <div class="buyer-card">
-          
-          <div class="buyer-header">
-            <div class="buyer-avatar">
-              <img src="https://www.iconpacks.net/icons/2/free-user-icon-3296-thumb.png" alt="User" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
-            </div>
-            <div style="overflow: hidden;">
-              <h4 class="buyer-name">{{ b.user.name|default:b.user.email }}</h4>
-              <div class="buyer-role">Active Buyer</div>
-            </div>
+        <a href="{% url 'buyers_detail' b.user.user_id %}" class="profile-card reveal" style="transition-delay: 0.{{ forloop.counter0|add:2 }}s; text-decoration: none;">
+          <div class="card-banner"></div>
+          <div class="card-avatar-wrap">
+            <img src="https://ui-avatars.com/api/?name={{ b.user.name|default:b.user.email }}&background=0D8ABC&color=fff&size=128" class="card-avatar" alt="Avatar">
+            <div class="status-dot"></div>
           </div>
-
-          <div class="buyer-details">
-            <p><i class="fa-regular fa-envelope"></i> {{ b.user.email }}</p>
-            <p><i class="fa-solid fa-phone"></i> {{ b.user.phone|default:"<em class='text-muted'>Not provided</em>" }}</p>
-          </div>
-
-          <div class="mb-4">
-            <div class="stat-badge">
-              <i class="fa-solid fa-heart"></i> {{ b.favorite_count }} Saved Vehicles
+          <div class="card-body-custom">
+            <h4 class="card-name">{{ b.user.name|default:b.user.email }}</h4>
+            <div class="card-role">Active Buyer</div>
+            <div class="card-contact">
+              <span class="text-truncate"><i class="fa-regular fa-envelope"></i> {{ b.user.email }}</span>
+              <span><i class="fa-solid fa-phone"></i> {{ b.user.phone|default:"<em class='text-muted'>Not provided</em>" }}</span>
             </div>
+            <div class="stat-pill"><i class="fa-solid fa-heart"></i> {{ b.favorite_count }} Saved Vehicles</div>
+            <div class="btn-view-card">View Profile</div>
           </div>
-
-          <a href="{% url 'buyers_detail' b.user.user_id %}" class="btn-view-profile">
-            View Profile & Offer <i class="fa-solid fa-arrow-right ms-1"></i>
-          </a>
-
-        </div>
+        </a>
       </div>
     {% empty %}
-      <div class="col-12">
+      <div class="col-12 reveal">
         <div class="empty-state">
           <i class="fa-solid fa-users-slash fs-1 mb-3 text-muted"></i>
           <h4 class="text-secondary fw-bold">No Buyers Found</h4>
-          <p class="mb-0">There are currently no registered buyers on the platform.</p>
         </div>
       </div>
     {% endfor %}
   </div>
-
 </section>
 
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if(entry.isIntersecting) entry.target.classList.add('active'); }); }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(reveal => observer.observe(reveal));
+  });
+</script>
 {% endblock %}
