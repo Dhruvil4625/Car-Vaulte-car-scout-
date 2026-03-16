@@ -36,6 +36,17 @@ RAZORPAY_KEY_SECRET = "qxO9IL2TRTQutK6HWIdhXExR"
 razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
 
 
+def _marketing_brochure_attachments(user=None):
+    try:
+        from core.pdf_utils import build_brochure_pdf
+        brochure = build_brochure_pdf(user=user, base_dir=getattr(settings, "BASE_DIR", None))
+        if brochure:
+            return [("CarScout_Marketing_Brochure.pdf", brochure, "application/pdf")]
+    except Exception:
+        pass
+    return None
+
+
 def _rating_stats_for_user(user):
     stats = DealRating.objects.filter(rated_user=user).aggregate(avg=Avg("score"), count=Count("rating_id"))
     avg = stats.get("avg") or 0
@@ -611,6 +622,7 @@ def ListingDetailView(request, listing_id):
         pano_interior = None
         model_3d_url = None
         
+    sess_recs = []
     try:
         candidates = CarListing.objects.select_related("car", "seller").prefetch_related("images").exclude(listing_id=listing.listing_id).order_by("-created_at")[:200]
         similar_cars = recommend_similar_listings(listing, candidates, top_k=6)
@@ -914,6 +926,8 @@ def ChatbotView(request):
     ans = chatbot_query(q, listings)
     return JsonResponse({"answer": ans})
 
+def BrochureView(request):
+    return render(request, "marketing/brochure.html")
 
 def CitiesIndexView(request):
     cities = [
@@ -1479,6 +1493,7 @@ def UserSignupView(request):
                         context={"user": user, "site_url": site_url, "otp": code},
                         recipients=[user.email],
                         inline_images={"hero": img_path},
+                        attachments=_marketing_brochure_attachments(user),
                     )
                 except Exception:
                     pass
@@ -1617,9 +1632,19 @@ def UserLoginView(request):
                             context={"user": user, "site_url": site_url},
                             recipients=[user.email],
                             inline_images={"hero": img_path},
+                            attachments=_marketing_brochure_attachments(user),
                         )
                     except Exception:
-                        pass
+                        try:
+                            send_email_html_async(
+                                subject="Welcome back to Car Scout",
+                                template_name="emails/login_user.html",
+                                context={"user": user, "site_url": site_url},
+                                recipients=[user.email],
+                                inline_images={"hero": img_path},
+                            )
+                        except Exception:
+                            pass
                     next_url = request.GET.get('next') or request.POST.get('next')
                     return redirect(next_url or 'dashboard')
                     
@@ -1637,6 +1662,7 @@ def UserLoginView(request):
                             context={"user": user, "site_url": site_url, "otp": code},
                             recipients=[user.email],
                             inline_images={"hero": img_path},
+                            attachments=_marketing_brochure_attachments(user),
                         )
                     except Exception:
                         pass
@@ -1660,9 +1686,19 @@ def UserLoginView(request):
                         context={"user": user, "site_url": site_url},
                         recipients=[user.email],
                         inline_images={"hero": img_path},
+                        attachments=_marketing_brochure_attachments(user),
                     )
                 except Exception:
-                    pass
+                    try:
+                        send_email_html_async(
+                            subject="Welcome back to Car Scout",
+                            template_name="emails/login_user.html",
+                            context={"user": user, "site_url": site_url},
+                            recipients=[user.email],
+                            inline_images={"hero": img_path},
+                        )
+                    except Exception:
+                        pass
                 next_url = request.GET.get('next') or request.POST.get('next')
                 return redirect(next_url or 'dashboard')
                 
@@ -1721,6 +1757,7 @@ def ResendOtpView(request):
                 context={"user": user, "site_url": site_url, "otp": code},
                 recipients=[user.email],
                 inline_images={"hero": img_path},
+                attachments=_marketing_brochure_attachments(user),
             )
         except Exception:
             pass
@@ -1914,26 +1951,36 @@ def create_razorpay_order(request):
                             emi_amount = P * r * ((1 + r) ** n) / (((1 + r) ** n) - 1)
                 except Exception:
                     emi_amount = None
-                    
-                Transaction.objects.create(
-                    listing=listing,
-                    buyer=request.user,
-                    seller=listing.seller,
-                    final_price=(amount / 100.0),
-                    status=Transaction.Status.PENDING,
-                    razorpay_order_id=razorpay_order.get("id"),
-                    payment_method=payment_mode,
-                    shipping_name=shipping_name or (getattr(request.user, "name", "") or request.user.email),
-                    shipping_phone=shipping_phone or (getattr(request.user, "phone", "") or ""),
-                    shipping_address=shipping_address or "",
-                    shipping_city=shipping_city or "",
-                    shipping_state=shipping_state or "",
-                    shipping_postcode=shipping_postcode or "",
-                    shipping_country=shipping_country or "India",
-                    emi_months=emi_months,
-                    emi_rate=emi_rate,
-                    emi_amount=emi_amount
-                )
+
+                txn_kwargs = {
+                    "listing": listing,
+                    "buyer": request.user,
+                    "seller": listing.seller,
+                    "final_price": (amount / 100.0),
+                    "status": Transaction.Status.PENDING,
+                    "razorpay_order_id": razorpay_order.get("id"),
+                    "payment_method": payment_mode,
+                }
+
+                # Backward/forward compatible extras: include only if model supports them.
+                optional_txn_kwargs = {
+                    "shipping_name": shipping_name or (getattr(request.user, "name", "") or request.user.email),
+                    "shipping_phone": shipping_phone or (getattr(request.user, "phone", "") or ""),
+                    "shipping_address": shipping_address or "",
+                    "shipping_city": shipping_city or "",
+                    "shipping_state": shipping_state or "",
+                    "shipping_postcode": shipping_postcode or "",
+                    "shipping_country": shipping_country or "India",
+                    "emi_months": emi_months,
+                    "emi_rate": emi_rate,
+                    "emi_amount": emi_amount,
+                }
+                existing_txn_fields = {f.name for f in Transaction._meta.get_fields()}
+                for key, val in optional_txn_kwargs.items():
+                    if key in existing_txn_fields:
+                        txn_kwargs[key] = val
+
+                Transaction.objects.create(**txn_kwargs)
             except Exception as e:
                 return JsonResponse({"error": str(e)}, status=400)
         return JsonResponse(razorpay_order)
