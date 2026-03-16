@@ -1,5 +1,5 @@
 /* ==========================================================================
-   CAR SCOUT - MASTER JAVASCRIPT
+  VEHICLE VAULT - MASTER JAVASCRIPT
    Premium UI Interactions & Animations
    ========================================================================== */
 
