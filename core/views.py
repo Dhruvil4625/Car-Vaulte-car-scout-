@@ -1,27 +1,28 @@
+import os
+import random
+from datetime import timedelta
+import razorpay
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q, Count, Avg
-from .forms import UserSignupForm, CarListingForm, CarForm, UpcomingArrivalForm
-from .models import Car, CarListing, Message, TestDrive, Buyer, Seller, CarListingImage, Showroom, UpcomingArrival, CarListingAsset, DealRating
 from django.contrib.auth import login as auth_login
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from django.utils.html import strip_tags
 from django.contrib.auth import get_user_model
-from .forms import UserLoginForm, InspectionForm
 from django.http import JsonResponse
 from django.core.mail import send_mail
 from django.conf import settings
 from django.urls import reverse
-from core.email_utils import send_email_html, send_email_html_async
 from django.db import transaction
-import os
 from django.core.cache import cache
-from .ai_utils import recommend_similar_listings, dealer_matches_for_buyer, image_condition_score, chatbot_query, price_fairness_info
 from django.utils import timezone
-from datetime import timedelta
-import random
-import razorpay
+
+from core.email_utils import send_email_html, send_email_html_async
+from .forms import UserSignupForm, CarListingForm, CarForm, UpcomingArrivalForm, UserLoginForm, InspectionForm
+from .models import Car, CarListing, Message, TestDrive, Buyer, Seller, CarListingImage, Showroom, UpcomingArrival, CarListingAsset, DealRating
+from .ai_utils import recommend_similar_listings, dealer_matches_for_buyer, image_condition_score, chatbot_query, price_fairness_info
 
 User = get_user_model()
 
@@ -50,6 +51,7 @@ def _sync_seller_rating(user):
     seller.rating = stats["avg"]
     seller.save(update_fields=["rating"])
 
+
 def _apply_ai_estimates_to_listings(listings):
     groups = {}
     for l in listings:
@@ -64,6 +66,7 @@ def _apply_ai_estimates_to_listings(listings):
         if p:
             groups[key]["sum"] += p
             groups[key]["cnt"] += 1
+            
     imported_brands = {"BMW", "Mercedes-Benz", "Audi", "Volkswagen", "Skoda", "Porsche", "Volvo", "Jaguar", "Land Rover"}
     for l in listings:
         car = getattr(l, "car", None)
@@ -100,6 +103,7 @@ def _apply_ai_estimates_to_listings(listings):
         except Exception:
             l.ai_deal_label = None
 
+
 def _apply_ai_estimates_to_cars(cars):
     imported_brands = {"BMW", "Mercedes-Benz", "Audi", "Volkswagen", "Skoda", "Porsche", "Volvo", "Jaguar", "Land Rover"}
     for c in cars:
@@ -120,11 +124,13 @@ def _apply_ai_estimates_to_cars(cars):
         except Exception:
             c.ai_total = None
 
+
 def CompareCarsView(request):
     vin1 = (request.GET.get("vin1") or "").strip()
     vin2 = (request.GET.get("vin2") or "").strip()
     car1 = None
     car2 = None
+    
     if vin1:
         try:
             car1 = Car.objects.get(vin=vin1)
@@ -135,6 +141,7 @@ def CompareCarsView(request):
                 car1 = lst.car
             except Exception:
                 car1 = None
+                
     if vin2:
         try:
             car2 = Car.objects.get(vin=vin2)
@@ -144,8 +151,10 @@ def CompareCarsView(request):
                 car2 = lst.car
             except Exception:
                 car2 = None
+
     def _norm(s):
         return (s or "").strip().lower()
+
     FUEL_RANK = {"electric": 5, "ev": 5, "hybrid": 4, "petrol": 3, "gasoline": 3, "diesel": 2, "cng": 1}
     TRANS_RANK = {
         "automatic": 4,
@@ -157,10 +166,12 @@ def CompareCarsView(request):
         "manual": 1,
     }
     BODY_RANK = {"suv": 5, "sedan": 4, "hatchback": 3, "mpv": 3, "coupe": 2, "pickup": 3}
+
     def _fuel_score(car):
         if not car:
             return 0
         return FUEL_RANK.get(_norm(getattr(car, "fuel_type", None)), 0)
+
     def _trans_score(car):
         if not car:
             return 0
@@ -168,10 +179,12 @@ def CompareCarsView(request):
         if t.startswith("automatic"):
             return 4
         return TRANS_RANK.get(t, 0)
+
     def _body_score(car):
         if not car:
             return 0
         return BODY_RANK.get(_norm(getattr(car, "body_type", None)), 0)
+
     def _year_score(car):
         if not car:
             return 0
@@ -179,6 +192,7 @@ def CompareCarsView(request):
             return int(getattr(car, "year", 0) or 0)
         except Exception:
             return 0
+
     def _mileage_score(car):
         if not car:
             return 0
@@ -187,6 +201,7 @@ def CompareCarsView(request):
             return -int(m or 0)
         except Exception:
             return 0
+
     dom = {
         "fuel": 1 if _fuel_score(car1) > _fuel_score(car2) else (2 if _fuel_score(car2) > _fuel_score(car1) else 0),
         "trans": 1 if _trans_score(car1) > _trans_score(car2) else (2 if _trans_score(car2) > _trans_score(car1) else 0),
@@ -194,14 +209,18 @@ def CompareCarsView(request):
         "year": 1 if _year_score(car1) > _year_score(car2) else (2 if _year_score(car2) > _year_score(car1) else 0),
         "mileage": 1 if _mileage_score(car1) > _mileage_score(car2) else (2 if _mileage_score(car2) > _mileage_score(car1) else 0),
     }
+    
     cars = Car.objects.all().prefetch_related("listings").order_by("make", "model", "year")
     return render(request, "cars/compare.html", {"cars": cars, "car1": car1, "car2": car2, "vin1": vin1, "vin2": vin2, "dom": dom})
+
+
 def HomeView(request):
     top_listings = CarListing.objects.select_related("car", "seller").prefetch_related("images").order_by("-created_at")[:8]
     try:
         _apply_ai_estimates_to_listings(top_listings)
     except Exception:
         pass
+        
     makes = list(Car.objects.values_list("make", flat=True).distinct())
     logos = {
         "BMW": "https://cdn-icons-png.flaticon.com/512/732/732221.png",
@@ -217,8 +236,10 @@ def HomeView(request):
         "Honda": "https://cdn-icons-png.flaticon.com/512/882/882716.png",
     }
     domestic = {"Maruti Suzuki", "Hyundai", "Kia", "Tata", "Mahindra"}
+
     def slugify_brand(s):
         return (s or "").strip().lower().replace(" ", "-")
+
     brands = []
     for m in makes:
         brands.append({
@@ -227,9 +248,11 @@ def HomeView(request):
             "logo": logos.get(m, "https://cdn-icons-png.flaticon.com/512/741/741407.png"),
             "is_domestic": m in domestic,
         })
+        
     ints = [b for b in brands if not b["is_domestic"]]
     doms = [b for b in brands if b["is_domestic"]]
     return render(request, "home/index.html", {"listings": top_listings, "brands_international": ints, "brands_domestic": doms})
+
 
 def CarsListView(request):
     qs = Car.objects.all().prefetch_related("listings__images").order_by("-year", "make", "model")
@@ -238,6 +261,7 @@ def CarsListView(request):
     brand = request.GET.get("brand") or ""
     model = request.GET.get("model") or ""
     body = request.GET.get("body") or request.GET.get("body_type") or ""
+    
     synonyms = {
         "mercedes": "Mercedes-Benz",
         "mercedies": "Mercedes-Benz",
@@ -255,6 +279,7 @@ def CarsListView(request):
         "honda": "Honda",
         "audi": "Audi",
     }
+    
     bnorm = (brand or "").strip().lower()
     if bnorm in synonyms:
         brand = synonyms[bnorm]
@@ -268,11 +293,14 @@ def CarsListView(request):
         qs = qs.filter(model__icontains=model)
     if body:
         qs = qs.filter(body_type__icontains=body)
+        
     try:
         _apply_ai_estimates_to_cars(qs)
     except Exception:
         pass
+        
     return render(request, "cars/list.html", {"cars": qs, "fuel": fuel, "brand": brand, "model": model, "q": q, "body": body})
+
 
 def BrandView(request, brand_slug):
     synonyms = {
@@ -286,17 +314,21 @@ def BrandView(request, brand_slug):
     }
     raw = (brand_slug or "").lower()
     brand = synonyms.get(raw, raw.replace("-", " ").title())
+    
     qs = CarListing.objects.select_related("car", "seller").prefetch_related("images").filter(car__make__iexact=brand)
     ec_min = 100000
     ec_max = 2000000
     md_max = 4000000
+    
     economy = qs.filter(price__gte=ec_min, price__lt=ec_max).order_by("price")[:24]
     moderate = qs.filter(price__gte=ec_max, price__lt=md_max).order_by("price")[:24]
     premium = qs.filter(price__gte=md_max).order_by("-price")[:24]
     arrivals = qs.order_by("-created_at")[:24]
     all_list = qs.order_by("-created_at")[:48]
+    
     models = list(Car.objects.filter(make__iexact=brand).values_list("model", flat=True).distinct()[:12])
     logo = None
+    
     try:
         _apply_ai_estimates_to_listings(economy)
         _apply_ai_estimates_to_listings(moderate)
@@ -305,7 +337,9 @@ def BrandView(request, brand_slug):
         _apply_ai_estimates_to_listings(all_list)
     except Exception:
         pass
+        
     return render(request, "cars/brand.html", {"brand": brand, "logo": logo, "top_models": models, "premium": premium, "economy": economy, "moderate": moderate, "arrivals": arrivals, "listings": all_list})
+
 
 def AllCarsListView(request):
     qs = CarListing.objects.select_related("car", "seller").prefetch_related("images").order_by("-created_at")
@@ -315,8 +349,10 @@ def AllCarsListView(request):
     trans = request.GET.getlist("trans")
     cats = request.GET.getlist("category")
     brand = request.GET.get("brand") or ""
+    
     if brand:
         qs = qs.filter(car__make__icontains=brand)
+        
     for r in price_ranges:
         try:
             if r.endswith("+"):
@@ -327,6 +363,7 @@ def AllCarsListView(request):
                 qs = qs.filter(price__gte=float(a), price__lte=float(b))
         except Exception:
             pass
+            
     if fuels:
         qs = qs.filter(car__fuel_type__in=fuels)
     if bodies:
@@ -348,16 +385,20 @@ def AllCarsListView(request):
                 qcat |= _Q(price__gte=md_max)
         if qcat:
             qs = qs.filter(qcat)
+            
     listings = qs.distinct()[:60]
+    
     try:
         _apply_ai_estimates_to_listings(listings)
     except Exception:
         pass
+        
     price_options = ["0-500000", "500000-1500000", "1500000+"]
     fuel_options = ["EV", "Petrol", "Diesel", "Hybrid"]
     body_options = ["SUV", "Sedan", "Hatchback", "Luxury"]
     trans_options = ["Manual", "Automatic", "AMT", "CVT", "DCT"]
     category_options = ["Economy", "Moderate", "Premium"]
+    
     ctx = {
         "listings": listings,
         "brand": brand,
@@ -374,6 +415,7 @@ def AllCarsListView(request):
     }
     return render(request, "cars/all.html", ctx)
 
+
 def ListingsListView(request):
     qs = CarListing.objects.select_related("car", "seller").prefetch_related("images").order_by("-created_at")
     q = request.GET.get("q") or ""
@@ -382,6 +424,7 @@ def ListingsListView(request):
     brand = request.GET.get("brand") or ""
     model = request.GET.get("model") or ""
     city = request.GET.get("city") or ""
+    
     if q:
         qs = qs.filter(Q(car__make__icontains=q) | Q(car__model__icontains=q) | Q(description__icontains=q) | Q(seller__email__icontains=q))
     if brand:
@@ -398,18 +441,23 @@ def ListingsListView(request):
             pass
     if fuel:
         qs = qs.filter(car__fuel_type__iexact=fuel)
+        
     listings = qs[:50]
+    
     try:
         _apply_ai_estimates_to_listings(listings)
     except Exception:
         pass
+        
     try:
         from .models import Showroom
         showrooms = Showroom.objects.all()
         dealer_matches = dealer_matches_for_buyer(city, listings, showrooms, top_k=5)
     except Exception:
         dealer_matches = []
+        
     return render(request, "listings/list.html", {"listings": listings, "q": q, "budget": budget, "fuel": fuel, "brand": brand, "model": model, "dealer_matches": dealer_matches})
+
 
 def ListingDetailView(request, listing_id):
     listing = CarListing.objects.select_related("car", "seller").prefetch_related("images", "inspections").get(listing_id=listing_id)
@@ -417,6 +465,7 @@ def ListingDetailView(request, listing_id):
         _apply_ai_estimates_to_listings([listing])
     except Exception:
         pass
+        
     try:
         P = float(listing.price or 0.0)
         months = int(request.GET.get("emi_months") or 48)
@@ -433,6 +482,7 @@ def ListingDetailView(request, listing_id):
         }
     except Exception:
         emi = {"amount": 0, "months": 48, "rate": 9.8}
+        
     try:
         variants = list(CarListing.objects.select_related("car").filter(
             car__make__iexact=getattr(listing.car, "make", ""),
@@ -440,6 +490,7 @@ def ListingDetailView(request, listing_id):
         ).order_by("price")[:6])
     except Exception:
         variants = []
+        
     try:
         cities = ["Bangalore","Mumbai","Pune","Hyderabad","Chennai","Ahmedabad","Lucknow","Jaipur","Patna","Chandigarh"]
         base_total = getattr(listing, "ai_total", None)
@@ -453,20 +504,24 @@ def ListingDetailView(request, listing_id):
         city_prices = [(c, base_total) for c in cities]
     except Exception:
         city_prices = []
+        
     try:
         from .models import ActivityLog
         ActivityLog.objects.create(user=request.user if request.user.is_authenticated else None, action="Viewed listing detail", path=request.path)
     except Exception:
         pass
+        
     is_buyer = request.user.is_authenticated and request.user.role == User.Role.BUYER
     try:
         inspection = listing.inspections.order_by("-inspection_date").first()
     except Exception:
         inspection = None
+        
     pano_exterior = None
     pano_interior = None
     model_3d_url = None
     imgs = []
+    
     try:
         imgs = list(listing.images.all())
         try:
@@ -481,6 +536,7 @@ def ListingDetailView(request, listing_id):
             imgs = filtered
         except Exception:
             pass
+            
         def pick(keys):
             for im in imgs:
                 alt = (getattr(im, "alt", "") or "").lower()
@@ -489,8 +545,10 @@ def ListingDetailView(request, listing_id):
                     if k in alt or k in name:
                         return im.image.url
             return None
+            
         pano_exterior = pick(["360", "exter", "outside", "pano", "equirect"])
         pano_interior = pick(["360", "inter", "inside", "cabin", "dashboard", "pano", "equirect"])
+        
         try:
             if not pano_exterior:
                 aext = listing.assets.filter(kind=CarListingAsset.Kind.PANORAMA_EXTERIOR).first()
@@ -502,6 +560,7 @@ def ListingDetailView(request, listing_id):
                     pano_interior = aint.asset.url
         except Exception:
             pass
+            
         # Fallback: if nothing tagged as panorama, use first/second image so the 360 tab at least shows something
         try:
             if (not pano_exterior) and imgs:
@@ -510,6 +569,7 @@ def ListingDetailView(request, listing_id):
                 pano_interior = imgs[1].image.url
         except Exception:
             pass
+            
         def frames(keys):
             urls = []
             for im in imgs:
@@ -524,8 +584,10 @@ def ListingDetailView(request, listing_id):
                     urls.append(im.image.url)
             urls.sort()
             return urls
+            
         spin_ext = frames(["spin", "exter"])
         spin_int = frames(["spin", "inter"])
+        
         try:
             a = listing.assets.filter(kind=CarListingAsset.Kind.THREE_D).first()
             if a:
@@ -536,13 +598,13 @@ def ListingDetailView(request, listing_id):
         pano_exterior = None
         pano_interior = None
         model_3d_url = None
+        
     try:
         candidates = CarListing.objects.select_related("car", "seller").prefetch_related("images").exclude(listing_id=listing.listing_id).order_by("-created_at")[:200]
         similar_cars = recommend_similar_listings(listing, candidates, top_k=6)
         if request.user.is_authenticated:
             try:
-                sess_recs = session_aware_recs(request.user, listing, candidates, top_k=6)
-                # merge and de-duplicate preferring session-aware first
+                # Merge and de-duplicate preferring session-aware first
                 seen = set()
                 merged = []
                 for c in sess_recs + similar_cars:
@@ -554,16 +616,19 @@ def ListingDetailView(request, listing_id):
                 pass
     except Exception:
         similar_cars = []
+        
     try:
         fairness = price_fairness_info(listing, candidates)
     except Exception:
         fairness = {"label": "Unknown", "median": None, "diff_pct": None}
+        
     try:
         city = getattr(getattr(listing, "showroom", None), "city", "") or ""
         showrooms_qs = Showroom.objects.filter(city__iexact=city)
         dealer_matches = dealer_matches_for_buyer(city, candidates, showrooms_qs, top_k=5)
     except Exception:
         dealer_matches = []
+        
     return render(request, "listings/detail.html", {
         "listing": listing,
         "images": imgs,
@@ -582,6 +647,7 @@ def ListingDetailView(request, listing_id):
         "city_prices": city_prices,
     })
 
+
 @login_required
 def ListingMessageView(request, listing_id):
     listing = CarListing.objects.select_related("car", "seller").get(listing_id=listing_id)
@@ -591,6 +657,7 @@ def ListingMessageView(request, listing_id):
         return redirect("listing_detail", listing_id=listing.listing_id)
     return redirect("listing_detail", listing_id=listing.listing_id)
 
+
 @login_required
 def PurchaseListingView(request, listing_id):
     listing = get_object_or_404(CarListing, listing_id=listing_id)
@@ -598,6 +665,8 @@ def PurchaseListingView(request, listing_id):
         return redirect("listing_detail", listing_id=listing.listing_id)
     
     return redirect(f"/booking/?listing_id={listing.listing_id}")
+
+
 def MessagesInboxView(request):
     inbox = Message.objects.filter(receiver=request.user).select_related("sender").order_by("-sent_at") if request.user.is_authenticated else []
     return render(request, "messages/inbox.html", {"messages": inbox})
@@ -676,6 +745,7 @@ def RateUserView(request, user_id):
     _sync_seller_rating(rated_user)
     return redirect(request.POST.get("next") or "messages")
 
+
 def TestDrivesView(request):
     drives = []
     if request.user.is_authenticated:
@@ -685,14 +755,17 @@ def TestDrivesView(request):
             drives = TestDrive.objects.filter(buyer=request.user).select_related("listing__car", "buyer").order_by("-proposed_date")
     return render(request, "testdrives/list.html", {"drives": drives})
 
+
 def SellStartView(request):
     return render(request, "sell/start.html")
+
 
 def ChatbotView(request):
     q = strip_tags(request.POST.get("q") or request.GET.get("q") or "")
     listings = CarListing.objects.select_related("car").order_by("-created_at")[:300]
     ans = chatbot_query(q, listings)
     return JsonResponse({"answer": ans})
+
 
 def CitiesIndexView(request):
     cities = [
@@ -744,6 +817,7 @@ def CitiesIndexView(request):
     for c in cities:
         c["slug"] = c["name"].lower().replace(" ", "-")
     return render(request, "cities/index.html", {"cities": cities})
+
 
 def CityShowroomsView(request, city_slug):
     city = city_slug.replace("-", " ")
@@ -820,6 +894,7 @@ def CityShowroomsView(request, city_slug):
             {"name": "Nexa Showroom", "city": city.title(), "state": "", "address": "", "map_query": f"Nexa Showroom {city.title()}"},
             {"name": "Hyundai Showroom", "city": city.title(), "state": "", "address": "", "map_query": f"Hyundai Showroom {city.title()}"},
         ])
+        
         # Convert curated dicts to lightweight objects for template iteration
         class Cur:
             def __init__(self, d): self.__dict__.update(d)
@@ -828,6 +903,7 @@ def CityShowroomsView(request, city_slug):
     # Map sellers to showrooms by rough location/name match
     seller_users = [s.user for s in sellers]
     qs = CarListing.objects.select_related("car", "seller", "showroom").prefetch_related("images").filter(Q(showroom__city__iexact=city) | Q(seller__in=seller_users)).order_by("-created_at")
+    
     if brand:
         qs = qs.filter(Q(car__make__icontains=brand) | Q(car__model__icontains=brand))
     if fuel:
@@ -856,7 +932,9 @@ def CityShowroomsView(request, city_slug):
         _apply_ai_estimates_to_listings(qs)
     except Exception:
         pass
+        
     return render(request, "cities/city.html", {"city": city.title(), "sellers": sellers, "showrooms": showrooms, "listings": qs, "arrivals": arrivals, "brand": brand, "fuel": fuel, "budget": budget, "body": body, "trans": trans, "sort": sort, "gmaps_key": gmaps_key})
+
 
 @login_required
 def UpcomingArrivalCreateView(request):
@@ -870,13 +948,16 @@ def UpcomingArrivalCreateView(request):
             return redirect("city_showrooms", city_slug=(showroom.city.lower().replace(" ", "-") if showroom else "cities"))
     return render(request, "cities/arrival_new.html", {"form": form})
 
+
 def BuyersListView(request):
     buyers = Buyer.objects.select_related("user").order_by("user__name", "user__email")
     return render(request, "profiles/buyers.html", {"buyers": buyers})
 
+
 def SellersListView(request):
     sellers = Seller.objects.select_related("user").order_by("user__name", "user__email")
     return render(request, "profiles/sellers.html", {"sellers": sellers})
+
 
 def BuyerDetailView(request, user_id):
     buyer = Buyer.objects.select_related("user").get(user__user_id=user_id)
@@ -889,6 +970,7 @@ def BuyerDetailView(request, user_id):
         current_user_rating = DealRating.objects.filter(rater=request.user, rated_user=buyer.user).first()
     return render(request, "profiles/buyer_detail.html", {"buyer": buyer, "listings": listings, "rating_stats": rating_stats, "current_user_rating": current_user_rating})
 
+
 def SellerDetailView(request, user_id):
     seller = Seller.objects.select_related("user").get(user__user_id=user_id)
     listings = CarListing.objects.select_related("car").filter(seller=seller.user, status=CarListing.Status.ACTIVE)
@@ -897,6 +979,7 @@ def SellerDetailView(request, user_id):
     if request.user.is_authenticated and request.user != seller.user:
         current_user_rating = DealRating.objects.filter(rater=request.user, rated_user=seller.user).first()
     return render(request, "profiles/seller_detail.html", {"seller": seller, "listings": listings, "rating_stats": rating_stats, "current_user_rating": current_user_rating})
+
 
 @login_required
 def RequestSellToSellerView(request, user_id):
@@ -915,6 +998,7 @@ def RequestSellToSellerView(request, user_id):
             Message.objects.create(sender=request.user, receiver=seller.user, listing=listing, content=content)
             return redirect("sellers_detail", user_id=seller.user.user_id)
     return render(request, "profiles/seller_detail.html", {"seller": seller, "listings": listings, "error": "Please add a message"})
+
 
 @login_required
 def RequestBuyToBuyerView(request, user_id):
@@ -935,6 +1019,7 @@ def RequestBuyToBuyerView(request, user_id):
             Message.objects.create(sender=request.user, receiver=buyer.user, listing=listing, content=content)
             return redirect("buyers_detail", user_id=buyer.user.user_id)
     return render(request, "profiles/buyer_detail.html", {"buyer": buyer, "listings": listings, "error": "Please add a message"})
+
 
 @login_required
 def ListingCreateView(request):
@@ -1008,6 +1093,7 @@ def ListingCreateView(request):
                 return redirect("cars")
     return render(request, "listings/new.html", {"car_form": car_form, "listing_form": listing_form})
 
+
 @login_required
 def TestDriveCreateView(request):
     if not request.user.is_staff:
@@ -1028,6 +1114,7 @@ def TestDriveCreateView(request):
         except Exception:
             pass
     return render(request, "testdrives/new.html", {"listings": listings, "buyers": buyers, "preselected_listing_id": preselected_listing_id})
+
 
 @login_required
 def InspectionCreateView(request):
@@ -1051,6 +1138,7 @@ def InspectionCreateView(request):
             return redirect("listing_detail", listing_id=insp.listing.listing_id)
     return render(request, "inspections/new.html", {"form": form})
 
+
 @login_required
 def TestDriveUpdateView(request, test_drive_id):
     if not request.user.is_staff:
@@ -1068,6 +1156,7 @@ def TestDriveUpdateView(request, test_drive_id):
         drive.save()
         return redirect("testdrives")
     return render(request, "testdrives/edit.html", {"drive": drive})
+
 
 @login_required
 def ListingUpdateView(request, listing_id):
@@ -1131,6 +1220,7 @@ def ListingUpdateView(request, listing_id):
         form = CarListingForm(instance=listing)
     return render(request, "listings/edit.html", {"form": form, "listing": listing})
 
+
 @login_required
 def ListingDeleteView(request, listing_id):
     listing = CarListing.objects.select_related("car", "seller").get(listing_id=listing_id)
@@ -1140,6 +1230,7 @@ def ListingDeleteView(request, listing_id):
         listing.delete()
         return redirect("listings")
     return render(request, "listings/delete_confirm.html", {"listing": listing})
+
 
 @login_required
 def CarUpdateView(request, vin):
@@ -1155,6 +1246,7 @@ def CarUpdateView(request, vin):
         form = CarForm(instance=car)
     return render(request, "cars/edit.html", {"form": form, "car": car})
 
+
 @login_required
 def CarDeleteView(request, vin):
     if not (request.user.is_staff or request.user.is_superuser):
@@ -1164,11 +1256,7 @@ def CarDeleteView(request, vin):
         car.delete()
         return redirect("cars")
     return render(request, "cars/delete_confirm.html", {"car": car})
-    
-from django.shortcuts import render, redirect
-from django.conf import settings
-from django.core.mail import send_mail
-from django.contrib.auth import get_user_model
+
 
 @ensure_csrf_cookie
 def UserSignupView(request):
@@ -1200,6 +1288,7 @@ def UserSignupView(request):
 
             site_url = request.build_absolute_uri("/")
             img_path = os.path.join(settings.BASE_DIR, "static", "img", "bmw-m4-hero.jpg")
+            
             def _send():
                 try:
                     send_email_html_async(
@@ -1223,6 +1312,7 @@ def UserSignupView(request):
 
     return render(request, 'core/signup.html', {'form': form})
 
+
 @login_required
 def AccountSettingsView(request):
     user = request.user
@@ -1241,6 +1331,7 @@ def AccountSettingsView(request):
             user.phone = request.POST.get('phone') or user.phone
             user.save()
             return redirect('account_settings')
+            
     msgs_in = Message.objects.filter(receiver=user).select_related("sender", "listing__car").order_by("-sent_at")
     msgs_out = Message.objects.filter(sender=user).select_related("receiver", "listing__car").order_by("-sent_at")
     listings = []
@@ -1255,6 +1346,7 @@ def AccountSettingsView(request):
     messages_total = 0
     drives_total = 0
     sales_total = 0
+    
     if user.role == User.Role.SELLER:
         listings = CarListing.objects.select_related("car").filter(seller=user).order_by("-created_at")
         from .models import Transaction
@@ -1271,6 +1363,7 @@ def AccountSettingsView(request):
         drives_count = TestDrive.objects.filter(buyer=user).count()
         listings_count = 0
         sales_total = 0
+        
     if user.is_staff or user.is_superuser:
         users_count = User.objects.count()
         buyers_count = Buyer.objects.count()
@@ -1281,6 +1374,7 @@ def AccountSettingsView(request):
         drives_total = TestDrive.objects.count()
         sales_total = Transaction.objects.filter(status__in=["Paid", "Completed"]).count()
         inspections_total = Inspection.objects.count()
+        
     return render(request, 'account/settings.html', {
         'user': user,
         'msgs_in': msgs_in,
@@ -1303,9 +1397,11 @@ def AccountSettingsView(request):
         'inspections_total': inspections_total if (user.is_staff or user.is_superuser) else 0,
     })
 
+
 def LogoutViewCustom(request):
     auth_logout(request)
     return redirect('login')
+
 
 @ensure_csrf_cookie
 def UserLoginView(request):
@@ -1344,6 +1440,7 @@ def UserLoginView(request):
                         pass
                     next_url = request.GET.get('next') or request.POST.get('next')
                     return redirect(next_url or 'dashboard')
+                    
                 if status == "Inactive":
                     code = f"{random.randint(0, 999999):06d}"
                     user.otp_code = code
@@ -1362,10 +1459,12 @@ def UserLoginView(request):
                     except Exception:
                         pass
                     return render(request, 'core/login.html', {'form': form, 'otp_required': True, 'email': user.email, 'next': next_url})
+                    
                 if status == "Blocked":
                     return render(request, 'core/login.html', {'form': form, 'error': 'Your account is blocked.'})
                 if status == "Deleted":
                     return render(request, 'core/login.html', {'form': form, 'error': 'This account is deleted.'})
+                    
                 try:
                     auth_login(request, user, backend=settings.AUTHENTICATION_BACKENDS[0])
                 except Exception:
@@ -1384,7 +1483,9 @@ def UserLoginView(request):
                     pass
                 next_url = request.GET.get('next') or request.POST.get('next')
                 return redirect(next_url or 'dashboard')
+                
     return render(request, 'core/login.html', {'form': form, 'next': request.GET.get('next', '')})
+
 
 def VerifyOtpView(request):
     if request.method != "POST":
@@ -1413,6 +1514,7 @@ def VerifyOtpView(request):
     form = UserLoginForm()
     return render(request, "core/login.html", {"form": form, "otp_required": True, "email": email, "error": "Invalid or expired OTP."})
 
+
 def ResendOtpView(request):
     if request.method != "POST":
         return JsonResponse({"ok": False, "error": "Method not allowed"}, status=405)
@@ -1423,6 +1525,7 @@ def ResendOtpView(request):
             return JsonResponse({"ok": False, "error": "Account already verified"}, status=400)
         if getattr(user, "is_staff", False) or getattr(user, "is_superuser", False) or (user.email or "").lower() == "admin@example.com":
             return JsonResponse({"ok": False, "error": "Admin does not require OTP"}, status=400)
+            
         code = f"{random.randint(0, 999999):06d}"
         user.otp_code = code
         user.otp_expires = timezone.now() + timedelta(minutes=15)
@@ -1442,6 +1545,7 @@ def ResendOtpView(request):
         return JsonResponse({"ok": True})
     except User.DoesNotExist:
         return JsonResponse({"ok": False, "error": "User not found"}, status=404)
+
 
 @login_required
 def ActivityTodosView(request):
@@ -1472,6 +1576,7 @@ def ActivityTodosView(request):
             except Exception:
                 pass
             return redirect("activity_todos")
+            
     todos = []
     try:
         from .models import Todo as T
@@ -1479,6 +1584,7 @@ def ActivityTodosView(request):
     except Exception:
         todos = []
     return render(request, "activity/todos.html", {"todos": todos})
+
 
 @login_required
 def ActivityMeetingView(request):
@@ -1489,6 +1595,7 @@ def ActivityMeetingView(request):
         pass
     return render(request, "activity/meeting.html")
 
+
 @login_required
 def ActivityHistoryView(request):
     logs = []
@@ -1498,6 +1605,7 @@ def ActivityHistoryView(request):
     except Exception:
         logs = []
     return render(request, "activity/history.html", {"logs": logs})
+
 
 @login_required
 def EmailStatusView(request):
@@ -1518,6 +1626,7 @@ def EmailStatusView(request):
         "password_len": pwd_len,
         "from_email": getattr(settings, "DEFAULT_FROM_EMAIL", ""),
     }
+    
     if request.GET.get("send") == "1":
         to = request.GET.get("to") or request.user.email
         try:
@@ -1532,6 +1641,7 @@ def EmailStatusView(request):
             return JsonResponse(status, status=500)
     return JsonResponse(status)
 
+
 def booking(request):
     preselected_id = request.GET.get("listing_id")
     listings = CarListing.objects.select_related("car").filter(status=CarListing.Status.ACTIVE)
@@ -1541,19 +1651,47 @@ def booking(request):
         "preselected_id": preselected_id
     })
 
+
 def booke(request):
     return render(request, "core/booke.html", {"key_id": RAZORPAY_KEY_ID})
+
 
 @login_required
 @csrf_exempt
 def create_razorpay_order(request):
     if request.method == "POST":
-        try:
-            amount = int(max(1.0, float(request.POST.get("amount", 500))) * 100)
-        except Exception:
-            return JsonResponse({"error": "Invalid amount"}, status=400)
         listing_id = request.POST.get("listing_id")
         currency = "INR"
+        listing = None
+        TOKEN_BOOKING_INR = float(os.environ.get("TOKEN_BOOKING_INR", "500"))
+        try:
+            ORDER_MAX_INR = float(os.environ.get("RAZORPAY_ORDER_MAX_INR", "30000"))
+        except Exception:
+            ORDER_MAX_INR = 30000.0
+            
+        # Prefer server-side price from listing for security
+        if listing_id:
+            from .models import CarListing
+            listing = get_object_or_404(CarListing, listing_id=listing_id)
+            try:
+                price_inr = float(listing.price)
+            except Exception:
+                return JsonResponse({"error": "Invalid listing price"}, status=400)
+            # Fallback to token if exceeding gateway max
+            if price_inr > ORDER_MAX_INR:
+                amount = int(TOKEN_BOOKING_INR * 100)
+                payment_mode = "Token Booking"
+            else:
+                amount = int(price_inr * 100)
+                payment_mode = "Full Payment"
+        else:
+            # Fallback for minimal quick-pay page
+            try:
+                amount = int(max(1.0, float(request.POST.get("amount", 500))) * 100)
+            except Exception:
+                return JsonResponse({"error": "Invalid amount"}, status=400)
+            payment_mode = "Full Payment"
+            
         try:
             razorpay_order = razorpay_client.order.create({
                 "amount": amount,
@@ -1562,22 +1700,63 @@ def create_razorpay_order(request):
             })
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
-        if listing_id:
+            
+        if listing:
             try:
                 from .models import Transaction, CarListing
-                listing = get_object_or_404(CarListing, listing_id=listing_id)
+                # Shipping fields
+                shipping_name = (request.POST.get("shipping_name") or "").strip()
+                shipping_phone = (request.POST.get("shipping_phone") or "").strip()
+                shipping_address = (request.POST.get("shipping_address") or "").strip()
+                shipping_city = (request.POST.get("shipping_city") or "").strip()
+                shipping_state = (request.POST.get("shipping_state") or "").strip()
+                shipping_postcode = (request.POST.get("shipping_postcode") or "").strip()
+                shipping_country = (request.POST.get("shipping_country") or "India").strip()
+                
+                # EMI fields
+                try:
+                    emi_months = int(request.POST.get("emi_months") or 0) or None
+                except Exception:
+                    emi_months = None
+                try:
+                    emi_rate = float(request.POST.get("emi_rate") or 0.0) or None
+                except Exception:
+                    emi_rate = None
+                emi_amount = None
+                try:
+                    if emi_months and emi_rate:
+                        P = float(listing.price or 0.0)
+                        r = float(emi_rate) / 12.0 / 100.0
+                        n = int(emi_months)
+                        if P > 0 and r > 0 and n > 0:
+                            emi_amount = P * r * ((1 + r) ** n) / (((1 + r) ** n) - 1)
+                except Exception:
+                    emi_amount = None
+                    
                 Transaction.objects.create(
                     listing=listing,
                     buyer=request.user,
                     seller=listing.seller,
-                    final_price=float(amount) / 100,
+                    final_price=(amount / 100.0),
                     status=Transaction.Status.PENDING,
-                    razorpay_order_id=razorpay_order.get("id")
+                    razorpay_order_id=razorpay_order.get("id"),
+                    payment_method=payment_mode,
+                    shipping_name=shipping_name or (getattr(request.user, "name", "") or request.user.email),
+                    shipping_phone=shipping_phone or (getattr(request.user, "phone", "") or ""),
+                    shipping_address=shipping_address or "",
+                    shipping_city=shipping_city or "",
+                    shipping_state=shipping_state or "",
+                    shipping_postcode=shipping_postcode or "",
+                    shipping_country=shipping_country or "India",
+                    emi_months=emi_months,
+                    emi_rate=emi_rate,
+                    emi_amount=emi_amount
                 )
             except Exception as e:
                 return JsonResponse({"error": str(e)}, status=400)
         return JsonResponse(razorpay_order)
     return JsonResponse({"error": "Invalid request"}, status=400)
+
 
 @login_required
 @csrf_exempt
@@ -1606,7 +1785,8 @@ def verify_payment(request):
             
             # Update listing status if it was a purchase
             listing = transaction.listing
-            if listing.status != CarListing.Status.SOLD:
+            # Only mark SOLD if full payment was collected
+            if (getattr(transaction, "payment_method", "") == "Full Payment") and listing.status != CarListing.Status.SOLD:
                 listing.status = CarListing.Status.SOLD
                 listing.save()
             
@@ -1632,6 +1812,18 @@ def verify_payment(request):
                     "vehicle_price": f"{float(listing.price):,.2f}",
                     "booking_amount": f"{float(transaction.final_price):,.2f}",
                     "year": timezone.now().year,
+                    # shipping details
+                    "shipping_name": getattr(transaction, "shipping_name", None),
+                    "shipping_phone": getattr(transaction, "shipping_phone", None),
+                    "shipping_address": getattr(transaction, "shipping_address", None),
+                    "shipping_city": getattr(transaction, "shipping_city", None),
+                    "shipping_state": getattr(transaction, "shipping_state", None),
+                    "shipping_postcode": getattr(transaction, "shipping_postcode", None),
+                    "shipping_country": getattr(transaction, "shipping_country", None),
+                    # emi details
+                    "emi_months": getattr(transaction, "emi_months", None),
+                    "emi_rate": getattr(transaction, "emi_rate", None),
+                    "emi_amount": getattr(transaction, "emi_amount", None),
                 }
                 send_email_html_async(
                     subject="Payment Receipt – Car Scout",
