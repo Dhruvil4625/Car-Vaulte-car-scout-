@@ -12,7 +12,7 @@
     padding: 80px 0 100px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   }
   .profile-hero h1 { font-size: 3rem; font-weight: 900; color: #ffffff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
-  .profile-hero h1 span { color: #3b82f6; }
+  .profile-hero h1 span { color: #e11d48; /* Unified Brand Red */ }
   .profile-hero p { color: #94a3b8; font-size: 1.1rem; }
 
   .crm-wrapper { margin-top: -60px; position: relative; z-index: 10; padding-bottom: 80px; }
@@ -22,14 +22,14 @@
 
   /* Left Profile Styles */
   .profile-head { text-align: center; margin-bottom: 30px; }
-  .avatar-lg { width: 100px; height: 100px; border-radius: 50%; border: 4px solid #eff6ff; box-shadow: 0 8px 20px rgba(59, 130, 246, 0.2); margin-bottom: 15px; }
+  .avatar-lg { width: 100px; height: 100px; border-radius: 50%; border: 4px solid #fff1f2; box-shadow: 0 8px 20px rgba(225, 29, 72, 0.2); margin-bottom: 15px; }
   .profile-name { font-size: 1.6rem; font-weight: 900; color: #0f172a; margin-bottom: 5px; }
-  .profile-badge { display: inline-block; background: #eff6ff; color: #2563eb; font-size: 0.75rem; font-weight: 800; padding: 6px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; }
+  .profile-badge { display: inline-block; background: #0f172a; color: #ffffff; font-size: 0.75rem; font-weight: 800; padding: 6px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; }
 
   .contact-list { list-style: none; padding: 0; margin: 0 0 30px; }
   .contact-list li { display: flex; align-items: center; gap: 15px; color: #334155; font-size: 0.95rem; font-weight: 600; padding: 12px 0; border-bottom: 1px dashed #e2e8f0; }
   .contact-list li:last-child { border-bottom: none; }
-  .contact-list i { color: #3b82f6; font-size: 1.2rem; width: 20px; text-align: center; background: #eff6ff; padding: 8px; border-radius: 8px; }
+  .contact-list i { color: #e11d48; font-size: 1.2rem; width: 20px; text-align: center; background: #fff1f2; padding: 8px; border-radius: 8px; }
 
   /* Dashboard Stat Grid */
   .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
@@ -46,11 +46,11 @@
   
   .crm-form label { font-size: 0.85rem; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block; }
   .crm-form .form-control, .crm-form .form-select { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 10px; padding: 14px 18px; font-size: 1rem; font-weight: 500; transition: all 0.3s; }
-  .crm-form .form-control:focus, .crm-form .form-select:focus { background: #fff; border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); outline: none; }
+  .crm-form .form-control:focus, .crm-form .form-select:focus { background: #fff; border-color: #e11d48; box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.1); outline: none; }
   .crm-form textarea { min-height: 150px; resize: vertical; }
 
-  .btn-primary-custom { background: #3b82f6; color: #fff; font-weight: 800; padding: 14px 25px; border-radius: 10px; border: none; transition: all 0.3s; text-transform: uppercase; letter-spacing: 1px; flex: 2; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); }
-  .btn-primary-custom:hover { background: #2563eb; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4); }
+  .btn-primary-custom { background: #e11d48; color: #fff; font-weight: 800; padding: 14px 25px; border-radius: 10px; border: none; transition: all 0.3s; text-transform: uppercase; letter-spacing: 1px; flex: 2; box-shadow: 0 4px 15px rgba(225, 29, 72, 0.3); }
+  .btn-primary-custom:hover { background: #be123c; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(225, 29, 72, 0.4); }
   .btn-cancel-custom { background: transparent; color: #0f172a; border: 2px solid #cbd5e1; font-weight: 800; padding: 12px 25px; border-radius: 10px; transition: all 0.3s; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; display: flex; align-items: center; justify-content: center; flex: 1; }
   .btn-cancel-custom:hover { background: #0f172a; color: #fff; border-color: #0f172a; }
 </style>
@@ -68,7 +68,7 @@
     <div class="col-lg-4">
       <div class="premium-card sticky-card reveal" style="transition-delay: 0.2s;">
         <div class="profile-head">
-          <img src="https://ui-avatars.com/api/?name={{ buyer.user.name|default:buyer.user.email }}&background=0D8ABC&color=fff&size=150" class="avatar-lg" alt="User">
+          <img src="https://ui-avatars.com/api/?name={{ buyer.user.name|default:buyer.user.email }}&background=E11D48&color=fff&size=150" class="avatar-lg" alt="User">
           <h2 class="profile-name">{{ buyer.user.name|default:buyer.user.email }}</h2>
           <div class="profile-badge">Registered Buyer</div>
         </div>
@@ -136,7 +136,7 @@
                 <option value="{{ l.listing_id }}">{{ l.car.make }} {{ l.car.model }} ({{ l.car.year }}) - {{ l.price }}</option>
               {% endfor %}
             </select>
-            <small class="text-muted mt-2 d-block fw-bold"><i class="fa-solid fa-link text-primary me-1"></i> Selecting a car attaches a secure button to your message.</small>
+            <small class="text-muted mt-2 d-block fw-bold"><i class="fa-solid fa-link text-danger me-1"></i> Selecting a car attaches a secure button to your message.</small>
           </div>
           {% endif %}
 
