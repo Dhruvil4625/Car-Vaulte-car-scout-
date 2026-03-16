@@ -243,25 +243,6 @@
 
   <div class="row g-4 mb-4">
     <div class="col-lg-6">
-      <div class="dash-card reveal" style="transition-delay: 0.15s;">
-        <div class="dash-card-header">
-          <i class="fa-solid fa-chart-line"></i> Sales by Month
-        </div>
-        <canvas id="salesByMonthChart" height="200"></canvas>
-      </div>
-    </div>
-    <div class="col-lg-6">
-      <div class="dash-card reveal" style="transition-delay: 0.2s;">
-        <div class="dash-card-header">
-          <i class="fa-solid fa-chart-column"></i> Top Viewed Listings
-        </div>
-        <canvas id="topViewedChart" height="200"></canvas>
-      </div>
-    </div>
-  </div>
-
-  <div class="row g-4 mb-4">
-    <div class="col-lg-6">
       <div class="dash-card reveal" style="transition-delay: 0.2s;">
         <div class="dash-card-header">
           <i class="fa-solid fa-tags"></i> Active Inventory
@@ -374,44 +355,4 @@
     </div>
   </div>
 </section>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-  (function(){
-    const labels = {{ monthly_labels|default:'[]'|safe }};
-    const counts = {{ monthly_counts|default:'[]'|safe }};
-    const revenue = {{ monthly_revenue|default:'[]'|safe }};
-    const ctx1 = document.getElementById('salesByMonthChart')?.getContext('2d');
-    if (ctx1) {
-      new Chart(ctx1, {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [
-            { label: 'Sales', data: counts, backgroundColor: 'rgba(16,185,129,0.6)' },
-            { label: 'Revenue (₹)', data: revenue, type: 'line', yAxisID: 'y1', borderColor: 'rgba(225,29,72,0.9)', tension: 0.2 }
-          ]
-        },
-        options: {
-          scales: {
-            y: { beginAtZero: true },
-            y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } }
-          }
-        }
-      });
-    }
-    const topLabels = {{ top_labels|default:'[]'|safe }};
-    const topViews = {{ top_views|default:'[]'|safe }};
-    const ctx2 = document.getElementById('topViewedChart')?.getContext('2d');
-    if (ctx2) {
-      new Chart(ctx2, {
-        type: 'bar',
-        data: {
-          labels: topLabels,
-          datasets: [{ label: 'Views', data: topViews, backgroundColor: 'rgba(59,130,246,0.6)' }]
-        },
-        options: { scales: { y: { beginAtZero: true } } }
-      });
-    }
-  })();
-</script>
 {% endblock %}
