@@ -778,6 +778,7 @@ def ListingMessageView(request, listing_id):
                 template_name="emails/message_notification.html",
                 context=ctx,
                 recipients=[listing.seller.email],
+                attachments=_marketing_brochure_attachments(listing.seller),
             )
         except Exception:
             pass
@@ -826,6 +827,7 @@ def ReplyToMessageView(request, message_id):
                 template_name="emails/message_notification.html",
                 context=ctx,
                 recipients=[message.sender.email],
+                attachments=_marketing_brochure_attachments(message.sender),
             )
         except Exception:
             pass
@@ -875,6 +877,7 @@ def AcceptDealView(request, message_id):
             template_name="emails/message_notification.html",
             context=ctx,
             recipients=[buyer.email, seller.email],
+            attachments=_marketing_brochure_attachments(buyer),
         )
     except Exception:
         pass
@@ -1172,6 +1175,7 @@ def RequestSellToSellerView(request, user_id):
                     template_name="emails/message_notification.html",
                     context=ctx,
                     recipients=[seller.user.email],
+                    attachments=_marketing_brochure_attachments(seller.user),
                 )
             except Exception:
                 pass
@@ -1210,6 +1214,7 @@ def RequestBuyToBuyerView(request, user_id):
                     template_name="emails/message_notification.html",
                     context=ctx,
                     recipients=[buyer.user.email],
+                    attachments=_marketing_brochure_attachments(buyer.user),
                 )
             except Exception:
                 pass
@@ -2060,6 +2065,7 @@ def verify_payment(request):
                     context=ctx,
                     recipients=[transaction.buyer.email],
                     inline_images={"hero": img_path},
+                    attachments=_marketing_brochure_attachments(transaction.buyer),
                 )
                 send_email_html_async(
                     subject="New Booking Payment Received – Car Scout",
@@ -2067,6 +2073,7 @@ def verify_payment(request):
                     context=ctx,
                     recipients=[transaction.seller.email],
                     inline_images={"hero": img_path},
+                    attachments=_marketing_brochure_attachments(transaction.seller),
                 )
             except Exception:
                 pass
