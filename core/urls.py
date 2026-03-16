@@ -51,6 +51,13 @@ from .views import (
     transactions_export,
     toggle_favorite,
     save_search,
+    geo_states,
+    geo_cities,
+    # saved items and exports pages
+    saved_items,
+    account_exports,
+    favorite_delete,
+    saved_search_delete,
 )
 
 urlpatterns = [
@@ -111,6 +118,12 @@ urlpatterns = [
     path("transactions/export/", transactions_export, name="transactions_export"),
     path("favorites/toggle/", toggle_favorite, name="toggle_favorite"),
     path("searches/save/", save_search, name="save_search"),
+    path("geo/states/", geo_states, name="geo_states"),
+    path("geo/cities/", geo_cities, name="geo_cities"),
+    path("account/saved/", saved_items, name="saved_items"),
+    path("account/exports/", account_exports, name="account_exports"),
+    path("favorites/delete/<uuid:favorite_id>/", favorite_delete, name="favorite_delete"),
+    path("searches/delete/<uuid:saved_search_id>/", saved_search_delete, name="saved_search_delete"),
     path("password_reset/", auth_views.PasswordResetView.as_view(
         html_email_template_name="messages/password_reset.html",
         email_template_name="messages/password_reset_email.txt",
