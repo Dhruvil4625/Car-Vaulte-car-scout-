@@ -113,6 +113,9 @@
       <a href="{% url 'activity_history' %}" class="list-group-item list-group-item-action {% if cur == 'activity_history' %}active{% endif %}">
         <i class="fa-solid fa-clock-rotate-left"></i> {% trans "Action History" %}
       </a>
+      <a href="{% url 'account_exports' %}" class="list-group-item list-group-item-action {% if cur == 'account_exports' %}active{% endif %}">
+        <i class="fa-solid fa-file-export"></i> {% trans "My Exports" %}
+      </a>
     </div>
 
   {% else %}
@@ -146,6 +149,12 @@
       </a>
       <a href="{% url 'activity_history' %}" class="list-group-item list-group-item-action {% if cur == 'activity_history' %}active{% endif %}">
         <i class="fa-solid fa-clock-rotate-left"></i> {% trans "Action History" %}
+      </a>
+      <a href="{% url 'saved_items' %}" class="list-group-item list-group-item-action {% if cur == 'saved_items' %}active{% endif %}">
+        <i class="fa-solid fa-heart"></i> {% trans "Saved Items" %}
+      </a>
+      <a href="{% url 'account_exports' %}" class="list-group-item list-group-item-action {% if cur == 'account_exports' %}active{% endif %}">
+        <i class="fa-solid fa-file-export"></i> {% trans "My Exports" %}
       </a>
     </div>
   {% endif %}
