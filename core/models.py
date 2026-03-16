@@ -299,6 +299,21 @@ class Transaction(models.Model):
         return f"Transaction {self.transaction_id} - {self.status}"
 
 
+@receiver(post_save, sender=Transaction)
+def _set_listing_sold_on_payment(sender, instance, created, **kwargs):
+    try:
+        if instance.status in (Transaction.Status.PAID, Transaction.Status.COMPLETED):
+            listing = instance.listing
+            if listing and listing.status != CarListing.Status.SOLD:
+                listing.status = CarListing.Status.SOLD
+                try:
+                    listing.save(update_fields=["status", "updated_at"])
+                except Exception:
+                    listing.save()
+    except Exception:
+        # Avoid blocking transactions on signal errors
+        pass
+
 class Showroom(models.Model):
     showroom_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=120)
