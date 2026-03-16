@@ -1,4 +1,4 @@
-# Car Vault (Car Scout) - Setup Guide
+# Car Vault (Vehicle Vault) - Setup Guide
 
 This guide will help you run the project in VS Code and connect it to a PostgreSQL database.
 
@@ -14,7 +14,7 @@ This guide will help you run the project in VS Code and connect it to a PostgreS
 
 ### 1. Open the Project
 - Open VS Code.
-- Go to `File` > `Open Folder` and select the `Car Vault (Car scout)` folder.
+- Go to `File` > `Open Folder` and select the `Car Vault (Vehicle Vault)` folder.
 
 ### 2. Install Dependencies
 You need to install libraries for both the Server (Backend) and Client (Frontend).
