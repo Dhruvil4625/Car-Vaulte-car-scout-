@@ -58,6 +58,7 @@ from .views import (
     account_exports,
     favorite_delete,
     saved_search_delete,
+    BrochureView,
 )
 
 urlpatterns = [
@@ -124,6 +125,7 @@ urlpatterns = [
     path("account/exports/", account_exports, name="account_exports"),
     path("favorites/delete/<uuid:favorite_id>/", favorite_delete, name="favorite_delete"),
     path("searches/delete/<uuid:saved_search_id>/", saved_search_delete, name="saved_search_delete"),
+    path("brochure/", BrochureView, name="brochure"),
     path("password_reset/", auth_views.PasswordResetView.as_view(
         html_email_template_name="messages/password_reset.html",
         email_template_name="messages/password_reset_email.txt",
