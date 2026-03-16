@@ -1,4 +1,4 @@
-# Contributing to Car Vault (Car Scout)
+# Contributing to Car Vault (Vehicle Vault)
 
 Thanks for your interest in contributing 🎉
 
