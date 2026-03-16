@@ -1,23 +1,268 @@
 {% extends 'base.html' %}
-{% block title %}My Exports | Vehicle Vault{% endblock %}
+{% load static %}
+{% block title %}Data Exports | Car Vault{% endblock %}
+
 {% block content %}
-<section class="container mb-5">
+<style>
+  /* --- Scroll Reveal --- */
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* --- Premium Dashboard Cards --- */
+  .premium-dash-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+    padding: 30px;
+    margin-bottom: 25px;
+  }
+
+  .dash-header-title {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #0f172a;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .dash-header-title i {
+    color: #e11d48;
+    background: rgba(225, 29, 72, 0.1);
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 1.2rem;
+  }
+
+  /* --- Export Option Cards --- */
+  .export-card {
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 30px 25px;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .export-card:hover {
+    background: #ffffff;
+    border-color: #e11d48;
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(225, 29, 72, 0.1);
+  }
+
+  .export-icon-wrap {
+    width: 70px;
+    height: 70px;
+    background: #ffffff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin-bottom: 20px;
+    border: 2px solid #e2e8f0;
+    transition: all 0.3s ease;
+  }
+
+  .export-card.csv:hover .export-icon-wrap {
+    color: #10b981; /* Green for CSV/Excel */
+    border-color: #10b981;
+    background: #ecfdf5;
+  }
+
+  .export-card.pdf:hover .export-icon-wrap {
+    color: #e11d48; /* Red for PDF */
+    border-color: #e11d48;
+    background: #fff1f2;
+  }
+
+  .export-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .export-desc {
+    font-size: 0.9rem;
+    color: #64748b;
+    line-height: 1.5;
+    margin-bottom: 25px;
+    font-weight: 500;
+  }
+
+  .btn-export {
+    margin-top: auto;
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+  }
+
+  .export-card.csv .btn-export {
+    background: #0f172a;
+    color: #ffffff;
+    border: none;
+  }
+  .export-card.csv:hover .btn-export {
+    background: #10b981;
+  }
+
+  .export-card.pdf .btn-export {
+    background: #0f172a;
+    color: #ffffff;
+    border: none;
+  }
+  .export-card.pdf:hover .btn-export {
+    background: #e11d48;
+  }
+
+  /* --- Configuration Form (Visual Add-on) --- */
+  .config-section {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px dashed #cbd5e1;
+  }
+  
+  .form-label {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  
+  .form-select, .form-control {
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #0f172a;
+  }
+  .form-select:focus, .form-control:focus {
+    border-color: #e11d48;
+    box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.1);
+  }
+</style>
+
+<section class="container my-5 py-4">
   <div class="row g-4">
+    
     <aside class="col-lg-3 d-none d-lg-block">
       {% include 'users/sidebar.html' %}
     </aside>
+
     <div class="col-lg-9">
-      <div class="dash-card reveal" style="transition-delay:0.1s;">
-        <div class="dash-header d-flex justify-content-between align-items-center">
-          <h5 class="mb-0"><i class="fa-solid fa-file-export me-2"></i> My Exports</h5>
-        </div>
-        <p class="text-muted">Download your {% if role == 'Seller' %}sales{% else %}purchase{% endif %} history.</p>
-        <div class="d-flex gap-2">
-          <a href="{% url 'transactions_export' %}?format=csv" class="btn btn-outline-dark"><i class="fa-solid fa-file-csv me-1"></i> Export CSV</a>
-          <a href="{% url 'transactions_export' %}?format=pdf" class="btn btn-outline-dark"><i class="fa-solid fa-file-pdf me-1"></i> Export PDF</a>
+      
+      <div class="premium-dash-card reveal" style="transition-delay: 0.1s;">
+        <h2 class="dash-header-title"><i class="fa-solid fa-cloud-arrow-down"></i> Data & Reports</h2>
+        <p class="text-muted mb-0 fs-6">Generate and download secure records of your complete {% if role == 'Seller' %}sales inventory and revenue{% else %}purchase history and transactions{% endif %}.</p>
+      </div>
+
+      <div class="premium-dash-card reveal" style="transition-delay: 0.2s;">
+        <h5 class="fw-bold text-dark mb-3" style="font-size: 1.1rem;"><i class="fa-solid fa-sliders me-2 text-muted"></i> Report Configuration</h5>
+        <div class="config-section">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Date Range</label>
+              <select class="form-select">
+                <option>All Time</option>
+                <option>This Month</option>
+                <option>Last 6 Months</option>
+                <option>Current Financial Year</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Status Filter</label>
+              <select class="form-select">
+                <option>All Transactions</option>
+                <option>Completed Only</option>
+                <option>Pending Only</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Report Security</label>
+              <div class="form-control bg-white text-success fw-bold d-flex align-items-center">
+                <i class="fa-solid fa-shield-check me-2"></i> 256-bit Encrypted
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+
+      <div class="row g-4">
+        
+        <div class="col-md-6 reveal" style="transition-delay: 0.3s;">
+          <a href="{% url 'transactions_export' %}?format=csv" class="export-card csv">
+            <div class="export-icon-wrap text-secondary">
+              <i class="fa-solid fa-file-csv"></i>
+            </div>
+            <h3 class="export-title">Raw Data (CSV)</h3>
+            <p class="export-desc">Download a raw spreadsheet of your data. Best for importing into Excel, Google Sheets, or custom accounting software.</p>
+            <div class="btn-export">
+              <i class="fa-solid fa-download me-2"></i> Generate CSV
+            </div>
+          </a>
+        </div>
+
+        <div class="col-md-6 reveal" style="transition-delay: 0.4s;">
+          <a href="{% url 'transactions_export' %}?format=pdf" class="export-card pdf">
+            <div class="export-icon-wrap text-secondary">
+              <i class="fa-solid fa-file-pdf"></i>
+            </div>
+            <h3 class="export-title">Formal Report (PDF)</h3>
+            <p class="export-desc">Download a beautifully formatted, print-ready document. Best for official records, tax filing, and physical archives.</p>
+            <div class="btn-export">
+              <i class="fa-solid fa-download me-2"></i> Generate PDF
+            </div>
+          </a>
+        </div>
+
+      </div>
+
     </div>
   </div>
 </section>
+
+<script>
+  // --- Intersection Observer for Scroll Reveals ---
+  document.addEventListener("DOMContentLoaded", () => {
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if(entry.isIntersecting) {
+          entry.target.classList.add('active');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    reveals.forEach(reveal => observer.observe(reveal));
+  });
+</script>
 {% endblock %}
