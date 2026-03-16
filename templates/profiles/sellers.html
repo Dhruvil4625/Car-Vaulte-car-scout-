@@ -8,7 +8,7 @@
   .reveal { opacity: 0; transform: translateY(30px); transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
   .reveal.active { opacity: 1; transform: translateY(0); }
 
-  /* --- Fixed Hero: Opacity lowered so the image is beautifully visible --- */
+  /* --- Fixed Hero --- */
   .directory-hero {
     background: linear-gradient(135deg, rgba(15, 23, 42, 0.65) 0%, rgba(15, 23, 42, 0.95) 100%), url('https://images.unsplash.com/photo-1562624475-96c2c78dfdf6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
     padding: 80px 0 100px; text-align: center; overflow: hidden; position: relative;
@@ -26,8 +26,19 @@
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05); padding: 20px 30px; margin-bottom: 40px;
     display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
   }
-  .action-bar h3 { margin: 0; font-weight: 800; color: #0f172a; font-size: 1.3rem; display: flex; align-items: center; gap: 10px; }
-  .action-bar h3 i { color: #e11d48; background: rgba(225, 29, 72, 0.1); padding: 10px; border-radius: 10px; }
+  .action-bar h3 { margin: 0; font-weight: 800; color: #0f172a; font-size: 1.3rem; display: flex; align-items: center; gap: 12px; }
+  
+  /* --- NEW: Verified Badge Styles --- */
+  .badge-icon-lg {
+    height: 40px; width: 40px; object-fit: cover; border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .badge-icon-sm {
+    height: 18px; width: 18px; object-fit: cover; border-radius: 50%;
+    vertical-align: middle; margin-left: 5px; margin-top: -3px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+
   .btn-create-custom { background-color: #0f172a; color: #fff; font-weight: 800; padding: 12px 25px; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.3s; text-decoration: none; }
   .btn-create-custom:hover { background-color: #e11d48; color: #fff; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(225, 29, 72, 0.3); }
 
@@ -38,7 +49,6 @@
   }
   .profile-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08); border-color: #fca5a5; }
   
-  /* --- NEW: Photographic Cover Banner --- */
   .card-banner { 
     height: 85px; 
     background: linear-gradient(to bottom, rgba(15,23,42,0.1), rgba(15,23,42,0.6)), url('https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=600&q=80') center/cover; 
@@ -50,7 +60,9 @@
   .status-dot { position: absolute; width: 16px; height: 16px; background: #10b981; border: 3px solid #fff; border-radius: 50%; bottom: 5px; right: calc(50% - 32px); }
 
   .card-body-custom { padding: 15px 25px 25px; text-align: center; flex-grow: 1; display: flex; flex-direction: column; }
-  .card-name { font-size: 1.2rem; font-weight: 800; color: #0f172a; margin-bottom: 2px; }
+  
+  .card-name { font-size: 1.15rem; font-weight: 800; color: #0f172a; margin-bottom: 2px; display: flex; align-items: center; justify-content: center; }
+  
   .card-role { font-size: 0.75rem; color: #e11d48; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin-bottom: 15px; }
   
   .card-contact { margin-bottom: 20px; font-size: 0.85rem; color: #475569; display: flex; flex-direction: column; gap: 6px; }
@@ -73,8 +85,12 @@
 </section>
 
 <section class="container directory-wrapper">
+  
   <div class="action-bar reveal" style="transition-delay: 0.2s;">
-    <h3><i class="fa-solid fa-store"></i> Verified Sellers</h3>
+    <h3>
+      <img src="https://img.freepik.com/premium-vector/trusted-seller-logo-label-badge-with-gold-check-mark-symbol-stars-vector-design-verified-pr_2825-398.jpg" alt="Trusted Seller" class="badge-icon-lg"> 
+      Verified Sellers
+    </h3>
     <a href="{% url 'signup' %}?role=Seller" class="btn-create-custom"><i class="fa-solid fa-building-circle-check me-2"></i> Register Seller</a>
   </div>
 
@@ -88,8 +104,13 @@
             <img src="https://ui-avatars.com/api/?name={{ s.user.name|default:s.user.email }}&background=E11D48&color=fff&size=128" class="card-avatar" alt="Avatar">
             <div class="status-dot"></div>
           </div>
+          
           <div class="card-body-custom">
-            <h4 class="card-name text-truncate">{{ s.user.name|default:s.user.email }}</h4>
+            <h4 class="card-name text-truncate">
+              {{ s.user.name|default:s.user.email }}
+              <img src="https://img.freepik.com/premium-vector/trusted-seller-logo-label-badge-with-gold-check-mark-symbol-stars-vector-design-verified-pr_2825-398.jpg" alt="Verified" class="badge-icon-sm" title="Verified Trusted Seller">
+            </h4>
+            
             <div class="card-role text-truncate">{{ s.dealership_name|default:"Independent Seller" }}</div>
             <div class="card-contact">
               <span class="text-truncate"><i class="fa-solid fa-location-dot"></i> {{ s.location|default:"Unverified Location" }}</span>
