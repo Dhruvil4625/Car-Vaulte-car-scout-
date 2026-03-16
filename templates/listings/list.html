@@ -451,10 +451,11 @@
         </select>
       </div>
       
-      <div class="col-sm-12 col-md-3">
-        <button class="btn-search-custom" type="submit">
-          <i class="fa-solid fa-filter me-2"></i> Apply Filters
-        </button>
+      <div class="col-sm-12 col-md-3 d-grid gap-2">
+        <button class="btn-search-custom" type="submit"><i class="fa-solid fa-filter me-2"></i> Apply Filters</button>
+        {% if request.user.is_authenticated and request.user.role == 'Buyer' %}
+        <button type="button" id="saveSearchBtn" class="btn btn-outline-dark fw-bold" style="border-radius:10px;"><i class="fa-regular fa-bookmark me-1"></i> Save This Search</button>
+        {% endif %}
       </div>
 
     </form>
@@ -667,5 +668,33 @@
     });
     
   });
+
+  // Save search (buyer)
+  (function(){
+    const btn = document.getElementById('saveSearchBtn');
+    if (!btn) return;
+    function getCsrf(){
+      const m = document.cookie.match(/csrftoken=([^;]+)/);
+      return m ? m[1] : '';
+    }
+    btn.addEventListener('click', async () => {
+      try {
+        const qs = Object.fromEntries(new URLSearchParams(window.location.search));
+        const payload = new URLSearchParams();
+        payload.append('params', JSON.stringify(qs));
+        payload.append('name', (qs.brand || qs.model || qs.fuel || qs.budget) ? [qs.brand, qs.model, qs.fuel, qs.budget].filter(Boolean).join(' • ') : 'Saved Search');
+        const res = await fetch('{% url "save_search" %}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': getCsrf() },
+          body: payload.toString()
+        });
+        const j = await res.json();
+        if (j.ok) {
+          btn.innerHTML = '<i class="fa-solid fa-bookmark me-1 text-danger"></i> Saved';
+          btn.disabled = true;
+        }
+      } catch(e) {}
+    });
+  })();
 </script>
 {% endblock %}
