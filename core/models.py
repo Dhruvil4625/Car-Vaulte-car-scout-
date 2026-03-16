@@ -331,3 +331,27 @@ class ActivityLog(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.action}"
+
+class Favorite(models.Model):
+    favorite_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="favorites")
+    listing = models.ForeignKey(CarListing, on_delete=models.CASCADE, related_name="favorited_by")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["user", "listing"], name="unique_favorite_user_listing")
+        ]
+
+    def __str__(self):
+        return f"{self.user.email} ♥ {self.listing}"
+
+class SavedSearch(models.Model):
+    saved_search_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="saved_searches")
+    name = models.CharField(max_length=120, blank=True)
+    params = models.JSONField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Search by {self.user.email} - {self.name or self.saved_search_id}"
