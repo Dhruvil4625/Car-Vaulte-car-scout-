@@ -2,360 +2,212 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Vehicle Vault – Premium Brochure</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
-    :root {
-      --bg-dark: #07132a;
-      --card-bg: #122240;
-      --cyan: #00d4ff;
-      --yellow: #fde047;
-      --white: #ffffff;
+    /* --- 1. CRITICAL PRINT OVERRIDES --- */
+    * {
+      box-sizing: border-box;
+      margin: 0; 
+      padding: 0;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    
+    @page {
+      size: A4 portrait;
+      margin: 0 !important; /* Removes default browser white borders */
+    }
+
     body {
       font-family: 'Inter', sans-serif;
       background-color: #030914; 
-      color: var(--white);
-      -webkit-font-smoothing: antialiased;
       display: flex;
       justify-content: center;
-      padding: 40px 20px;
+      padding: 40px 0;
     }
 
-    /* --- The A4 Canvas --- */
-    /* This forces the web view to perfectly mimic an A4 piece of paper */
-    .brochure-wrap {
-      background-color: var(--bg-dark);
-      width: 800px; /* Fixed width for perfect print scaling */
-      height: 1131px; /* Exact A4 aspect ratio (1:1.414) */
-      border-radius: 20px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    /* THE MAGIC HACK: This forces backgrounds to print even if settings are wrong */
+    .bg-dark-force { background-color: #07132a !important; box-shadow: inset 0 0 0 5000px #07132a !important; color: white !important; }
+    .bg-card-force { background-color: #ffffff !important; box-shadow: inset 0 0 0 5000px #ffffff !important; color: #0f172a !important; }
+    .bg-tech-force { background-color: #122240 !important; box-shadow: inset 0 0 0 5000px #122240 !important; color: white !important; }
+
+    /* --- 2. EXACT A4 CANVAS --- */
+    .a4-canvas {
+      width: 794px !important; /* Exact A4 width at 96dpi */
+      height: 1122px !important; /* Exact A4 height at 96dpi */
       position: relative;
       overflow: hidden;
       display: flex;
       flex-direction: column;
     }
 
-    /* Floating Download Button */
-    .download-btn {
-      position: absolute;
-      top: 30px;
-      right: 30px;
-      background: var(--cyan);
-      color: #000;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 30px;
-      font-weight: 800;
-      font-size: 0.9rem;
-      cursor: pointer;
-      z-index: 100;
-      box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
-      transition: all 0.3s ease;
-    }
-    .download-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(0, 212, 255, 0.5);
+    /* Hide web elements during print */
+    @media print {
+      body { padding: 0; background-color: #07132a !important; }
+      .no-print { display: none !important; }
+      .a4-canvas { box-shadow: none !important; border-radius: 0 !important; }
     }
 
-    /* --- Hero Section --- */
+    /* --- 3. HERO SECTION --- */
     .hero {
-      position: relative;
-      padding: 70px 40px 40px;
+      height: 420px;
+      padding: 60px 40px 40px;
       text-align: center;
-      /* Linear gradient over a city background */
-      background: linear-gradient(180deg, rgba(7, 19, 42, 0.3) 0%, var(--bg-dark) 100%), 
-                  url('https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover;
-      height: 38%;
+      position: relative;
+    }
+    
+    /* Background Image Wrapper for safe printing */
+    .hero-bg {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1;
+      background: url('https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover;
+      opacity: 0.3;
+    }
+    .hero-content { position: relative; z-index: 2; }
+
+    .hero-title { font-family: 'Montserrat', sans-serif; font-size: 4.8rem; font-weight: 900; line-height: 0.95; letter-spacing: -1px; margin-bottom: 5px; }
+    .cyan-glow { color: #00d4ff !important; }
+    
+    .cyan-line { height: 3px; width: 250px; background: #00d4ff !important; box-shadow: inset 0 0 0 100px #00d4ff !important; margin: 20px auto; }
+    
+    .hero-subtitle { font-size: 1.4rem; font-weight: 600; margin-bottom: 20px; }
+    .hero-tagline { color: #00d4ff !important; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 30px; }
+    
+    .hero-badges { display: flex; justify-content: center; gap: 25px; color: #fde047 !important; font-size: 0.95rem; font-weight: 700; }
+    .hero-badges i { margin-right: 6px; }
+
+    /* --- 4. FEATURES GRID (FLEXBOX) --- */
+    .features-section { padding: 30px 40px; flex-grow: 1; }
+    
+    .features-flex {
       display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-
-    .hero-title {
-      font-family: 'Montserrat', sans-serif;
-      font-size: 4.5rem;
-      font-weight: 900;
-      line-height: 0.95;
-      letter-spacing: -1px;
-      margin-bottom: 5px;
-      text-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
-
-    .cyan-glow {
-      color: var(--cyan);
-      text-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
-    }
-
-    .cyan-line {
-      height: 3px;
-      width: 250px;
-      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
-      margin: 15px auto;
-    }
-
-    .hero-subtitle {
-      font-size: 1.3rem;
-      font-weight: 600;
-      margin-bottom: 15px;
-    }
-
-    .hero-tagline {
-      color: var(--cyan);
-      font-size: 1.05rem;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      margin-bottom: 25px;
-    }
-
-    .hero-badges {
-      display: flex;
-      justify-content: center;
-      gap: 25px;
-      color: var(--yellow);
-      font-size: 0.9rem;
-      font-weight: 700;
-    }
-
-    /* --- Features Grid --- */
-    .features-section {
-      padding: 30px 40px;
-      flex-grow: 1;
-    }
-
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 20px 0;
     }
 
     .feature-card {
-      background: var(--white);
-      color: #0f172a;
+      width: 31.5%; /* 3 columns */
       border-radius: 16px;
-      padding: 25px 20px;
+      padding: 25px 15px;
       text-align: center;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-      /* Prevent page breaks inside cards during print */
-      page-break-inside: avoid; 
+      border: 1px solid #e2e8f0;
     }
 
     .icon-circle {
-      width: 55px;
-      height: 55px;
-      background: linear-gradient(135deg, #00d4ff 0%, #0066ff 100%);
+      width: 55px; height: 55px;
+      background: #00d4ff !important; box-shadow: inset 0 0 0 100px #00d4ff !important;
       border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
-      color: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; color: #ffffff !important;
       margin: 0 auto 15px;
-      box-shadow: 0 8px 15px rgba(0, 102, 255, 0.3);
     }
 
-    .feature-title {
-      font-family: 'Montserrat', sans-serif;
-      font-size: 0.95rem;
-      font-weight: 800;
-      margin-bottom: 8px;
-    }
+    .feature-title { font-family: 'Montserrat', sans-serif; font-size: 0.95rem; font-weight: 800; margin-bottom: 8px; color: #0f172a !important; }
+    .feature-desc { font-size: 0.8rem; color: #475569 !important; line-height: 1.4; font-weight: 600; }
 
-    .feature-desc {
-      font-size: 0.8rem;
-      color: #475569;
-      line-height: 1.4;
-      font-weight: 600;
-    }
-
-    /* --- Bottom Section (Steps & Tech) --- */
+    /* --- 5. BOTTOM SECTION --- */
     .bottom-section {
-      padding: 0 40px 50px;
-      display: grid;
-      grid-template-columns: 1.1fr 0.9fr;
+      padding: 0 40px 40px;
+      display: flex;
+      justify-content: space-between;
       gap: 30px;
     }
 
-    .steps-wrapper h3 {
-      font-family: 'Montserrat', sans-serif;
-      font-size: 1.6rem;
-      font-weight: 900;
-      margin-bottom: 20px;
-    }
+    .col-left { width: 55%; }
+    .col-right { width: 42%; }
 
+    .steps-wrapper h3 { font-family: 'Montserrat', sans-serif; font-size: 1.6rem; font-weight: 900; margin-bottom: 20px; color: white !important;}
+    
     .step-item {
-      background: var(--card-bg);
-      border: 1px solid rgba(255,255,255,0.05);
-      padding: 12px 15px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      margin-bottom: 12px;
-      font-weight: 600;
-      font-size: 0.85rem;
+      padding: 12px 15px; border-radius: 12px;
+      display: flex; align-items: center; gap: 15px; margin-bottom: 12px;
+      font-weight: 600; font-size: 0.85rem;
+      border: 1px solid rgba(255,255,255,0.1);
     }
-
+    
     .step-num {
-      background: var(--yellow);
-      color: #000;
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 900;
-      font-size: 0.85rem;
-      flex-shrink: 0;
+      background: #fde047 !important; box-shadow: inset 0 0 0 100px #fde047 !important;
+      color: #000000 !important; width: 24px; height: 24px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.85rem; flex-shrink: 0;
     }
 
-    .tech-wrapper {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
+    .tech-title { color: #fde047 !important; font-weight: 800; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; text-align: center; margin-bottom: 10px; }
+    
+    .tech-box { padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px; }
+    .tech-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; font-weight: 700; font-size: 0.75rem; }
+    .tech-grid span { width: 30%; text-align: center; }
 
-    .tech-title {
-      color: var(--yellow);
-      font-weight: 800;
-      font-size: 0.9rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      text-align: center;
-    }
+    .credits-box { padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
+    .dev-name { font-weight: 700; font-size: 0.85rem; margin-bottom: 4px; }
+    .dev-meta { color: #00d4ff !important; font-size: 0.75rem; font-weight: 600; }
 
-    .tech-box {
-      background: var(--card-bg);
-      border: 1px solid rgba(255,255,255,0.05);
-      border-radius: 12px;
-      padding: 20px;
-    }
-
-    .tech-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 15px 10px;
-      text-align: center;
-      font-weight: 700;
-      font-size: 0.75rem;
-    }
-
-    .credits-box {
-      background: var(--card-bg);
-      border: 1px solid rgba(255,255,255,0.05);
-      border-radius: 12px;
-      padding: 15px;
-      text-align: center;
-    }
-
-    .credits-box .dev-name { font-weight: 700; font-size: 0.85rem; margin-bottom: 4px; }
-    .credits-box .dev-meta { color: var(--cyan); font-size: 0.75rem; font-weight: 600; }
-
-    /* =======================================================
-       CRITICAL PRINT STYLES - THIS FIXES THE DISTORTION
-       ======================================================= */
-    @media print {
-      @page {
-        size: A4 portrait; /* Force physical paper size */
-        margin: 0; /* Remove physical margins */
-      }
-      body {
-        margin: 0;
-        padding: 0;
-        background-color: var(--bg-dark); /* Ensure paper isn't white */
-      }
-      .brochure-wrap {
-        width: 100% !important;
-        height: 100vh !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
-        margin: 0 !important;
-      }
-      .download-btn {
-        display: none !important; /* Hide button on physical paper */
-      }
-      
-      /* FORCE BROWSERS TO PRINT COLORS, GRADIENTS, AND SHADOWS */
-      * {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-      }
-    }
-
-    /* Small screen web scaling */
-    @media (max-width: 850px) {
-      body { padding: 10px; }
-      .brochure-wrap { transform: scale(0.85); transform-origin: top center; margin-bottom: -15%; }
-    }
-    @media (max-width: 600px) {
-      .brochure-wrap { transform: scale(0.45); transform-origin: top center; margin-bottom: -55%; }
-    }
+    /* Web Button */
+    .download-btn { position: absolute; top: 30px; right: 30px; background: #00d4ff; color: #000; border: none; padding: 12px 24px; border-radius: 30px; font-weight: 800; cursor: pointer; z-index: 100; }
   </style>
 </head>
 <body>
 
-  <div class="brochure-wrap">
+  <div class="a4-canvas bg-dark-force">
     
-    <button class="download-btn" onclick="window.print()">
-      <i class="fa-solid fa-download me-1"></i> Download PDF
+    <button class="download-btn no-print" onclick="window.print()">
+      <i class="fa-solid fa-print me-1"></i> Print / Save PDF
     </button>
 
     <header class="hero">
-      <h1 class="hero-title">VEHICLE<br><span class="cyan-glow">VAULT</span></h1>
-      <div class="cyan-line"></div>
-      <h2 class="hero-subtitle">India's Smartest Way to Buy & Sell Cars</h2>
-      <h3 class="hero-tagline">Discover • Negotiate • Own — With Intelligence & Trust</h3>
-      
-      <div class="hero-badges">
-        <span><i class="fa-solid fa-robot"></i> AI-Powered</span>
-        <span><i class="fa-solid fa-shield-check"></i> Secure</span>
-        <span><i class="fa-solid fa-sparkles"></i> Made in India</span>
+      <div class="hero-bg"></div>
+      <div class="hero-content">
+        <h1 class="hero-title">VEHICLE<br><span class="cyan-glow">VAULT</span></h1>
+        <div class="cyan-line"></div>
+        <h2 class="hero-subtitle">India's Smartest Way to Buy & Sell Cars</h2>
+        <h3 class="hero-tagline">Discover • Negotiate • Own — With Intelligence & Trust</h3>
+        
+        <div class="hero-badges">
+          <span><i class="fa-solid fa-robot"></i> AI-Powered</span>
+          <span><i class="fa-solid fa-shield-check"></i> Secure</span>
+          <span><i class="fa-solid fa-sparkles"></i> Made in India</span>
+        </div>
       </div>
     </header>
 
     <section class="features-section">
-      <div class="features-grid">
+      <div class="features-flex">
         
-        <div class="feature-card">
+        <div class="feature-card bg-card-force">
           <div class="icon-circle"><i class="fa-solid fa-eye"></i></div>
           <h4 class="feature-title">Immersive 360° Views</h4>
           <p class="feature-desc">Turntable spins & 3D models for complete car visualization</p>
         </div>
 
-        <div class="feature-card">
+        <div class="feature-card bg-card-force">
           <div class="icon-circle"><i class="fa-regular fa-comment-dots"></i></div>
           <h4 class="feature-title">Secure In-App Chat</h4>
           <p class="feature-desc">Smart negotiation with built-in buyer-seller messaging</p>
         </div>
 
-        <div class="feature-card">
+        <div class="feature-card bg-card-force">
           <div class="icon-circle"><i class="fa-solid fa-brain"></i></div>
           <h4 class="feature-title">AI Recommendations</h4>
           <p class="feature-desc">Real-time price fairness and intelligent car matching</p>
         </div>
 
-        <div class="feature-card">
+        <div class="feature-card bg-card-force">
           <div class="icon-circle"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
           <h4 class="feature-title">Sentiment Intelligence</h4>
           <p class="feature-desc">Message sentiment analysis for better, safer communication</p>
         </div>
 
-        <div class="feature-card">
+        <div class="feature-card bg-card-force">
           <div class="icon-circle"><i class="fa-solid fa-camera"></i></div>
           <h4 class="feature-title">AI Condition Scoring</h4>
           <p class="feature-desc">Automated, AI-powered car condition scoring from photos</p>
         </div>
 
-        <div class="feature-card">
+        <div class="feature-card bg-card-force">
           <div class="icon-circle"><i class="fa-solid fa-credit-card"></i></div>
           <h4 class="feature-title">Razorpay Integration</h4>
           <p class="feature-desc">UPI, cards & EMI options — fast & secure checkouts</p>
@@ -366,40 +218,32 @@
 
     <section class="bottom-section">
       
-      <div class="steps-wrapper">
+      <div class="col-left steps-wrapper">
         <h3>Simple. Smart. Secure.</h3>
-        
-        <div class="step-item">
-          <div class="step-num">1</div>
-          <span>Search & Discover with AI Guidance</span>
+        <div class="step-item bg-tech-force">
+          <div class="step-num">1</div><span>Search & Discover with AI Guidance</span>
         </div>
-        <div class="step-item">
-          <div class="step-num">2</div>
-          <span>Explore Details & Get AI Insights</span>
+        <div class="step-item bg-tech-force">
+          <div class="step-num">2</div><span>Explore Details & Get AI Insights</span>
         </div>
-        <div class="step-item">
-          <div class="step-num">3</div>
-          <span>Chat, Negotiate & Schedule Test Drive</span>
+        <div class="step-item bg-tech-force">
+          <div class="step-num">3</div><span>Chat, Negotiate & Schedule Test Drive</span>
         </div>
       </div>
 
-      <div class="tech-wrapper">
+      <div class="col-right">
         <h4 class="tech-title">POWERED BY</h4>
         
-        <div class="tech-box">
+        <div class="tech-box bg-tech-force">
           <div class="tech-grid">
-            <span>Django</span>
-            <span>PostgreSQL</span>
-            <span>Razorpay</span>
-            <span>Google Maps</span>
-            <span>Hugging Face</span>
-            <span>Python</span>
+            <span>Django</span><span>PostgreSQL</span><span>Razorpay</span>
+            <span>Google Maps</span><span>Hugging Face</span><span>Python</span>
           </div>
         </div>
 
-        <div class="credits-box">
+        <div class="credits-box bg-tech-force">
           <div class="dev-name">Developed by Dhruvil</div>
-          <div class="text-muted" style="font-size: 0.75rem; margin-bottom: 4px;">as Internship Project</div>
+          <div class="text-muted" style="font-size: 0.75rem; margin-bottom: 4px; color:#cbd5e1 !important;">as Internship Project</div>
           <div class="dev-meta">Vadodara, Gujarat • 2025–2026</div>
         </div>
       </div>
