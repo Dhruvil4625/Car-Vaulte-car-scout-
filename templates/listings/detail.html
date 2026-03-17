@@ -109,8 +109,20 @@
   .btn-outline-dark { border: 2px solid #e2e8f0; color: #0f172a; font-weight: 800; padding: 15px; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.3s; }
   .btn-outline-dark:hover { background: #0f172a; color: #ffffff; border-color: #0f172a; }
 
+  /* --- Premium Modal Upgrades --- */
+  .modal-content { border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.15); }
+  .spec-search-bar { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 8px; font-weight: 600; padding: 10px 15px; color: #0f172a; }
+  .spec-search-bar:focus { background: #ffffff; border-color: #e11d48; box-shadow: none; outline: none; }
+  .spec-tabs .btn { border-radius: 8px; padding: 8px 16px; margin-right: 5px; margin-bottom: 5px; }
+  .spec-tabs .btn-outline-dark { border-color: #cbd5e1; color: #475569; }
+  .spec-tabs .btn-outline-dark:hover { background: #f1f5f9; border-color: #94a3b8; color: #0f172a; }
+
   /* Mobile Adjustments */
   @media (max-width: 991px) { .pros-cons { grid-template-columns: 1fr; } .media-stage { height: 350px; } .main-price { font-size: 2.5rem; } }
+  .chart-loading { position:absolute; inset:0; background:rgba(255,255,255,0.85); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; flex-direction:column; z-index:5; opacity:0; pointer-events:none; transition:opacity .3s; border-radius:12px; }
+  .chart-loading.active { opacity:1; pointer-events:auto; }
+  .spinner { width: 36px; height: 36px; border: 4px solid #f1f5f9; border-top: 4px solid #e11d48; border-radius: 50%; animation: spin 1s linear infinite; }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 </style>
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css">
@@ -127,21 +139,30 @@
 <div class="modal fade" id="specsModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content" style="border-radius: 16px;">
-      <div class="modal-header border-bottom-0 pb-0">
-        <h5 class="modal-title fw-bold fs-4"><i class="fa-solid fa-list-check text-danger me-2"></i> All Specifications</h5>
+      <div class="modal-header border-bottom-0 pb-0 pt-4 px-4">
+        <h5 class="modal-title fw-bold fs-4 text-dark"><i class="fa-solid fa-list-check text-danger me-2"></i> All Specifications</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body pt-3">
-        <div class="d-flex align-items-center gap-2 mb-3">
-          <input type="text" id="specSearch" class="form-control" placeholder="Search specification…" style="max-width: 260px;">
-          <div class="btn-group ms-auto" role="group" aria-label="Units">
-            <button type="button" class="btn btn-dark btn-sm fw-bold" id="unitMetric">Metric</button>
-            <button type="button" class="btn btn-outline-dark btn-sm fw-bold" id="unitImperial">Imperial</button>
+      <div class="modal-body p-4 pt-3">
+        
+        <div class="d-flex flex-wrap align-items-center gap-3 mb-4 p-3 rounded-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+          <div class="position-relative flex-grow-1" style="max-width: 300px;">
+            <i class="fa-solid fa-magnifying-glass position-absolute text-muted" style="left: 15px; top: 14px;"></i>
+            <input type="text" id="specSearch" class="form-control spec-search-bar w-100" placeholder="Search spec..." style="padding-left: 40px;">
           </div>
-          <a href="{% url 'listing_specs_pdf' listing.listing_id %}" target="_blank" class="btn btn-outline-secondary btn-sm fw-bold"><i class="fa-solid fa-file-pdf me-1"></i> Export PDF</a>
-          <button type="button" class="btn btn-outline-secondary btn-sm fw-bold" id="copySpecs"><i class="fa-solid fa-copy me-1"></i> Copy</button>
+          
+          <div class="btn-group ms-auto" role="group" aria-label="Units">
+            <button type="button" class="btn btn-dark btn-sm fw-bold px-3" id="unitMetric">Metric</button>
+            <button type="button" class="btn btn-outline-dark btn-sm fw-bold px-3" id="unitImperial" style="border-color: #cbd5e1; color:#475569;">Imperial</button>
+          </div>
+          
+          <div class="d-flex gap-2">
+            <a href="{% url 'listing_specs_pdf' listing.listing_id %}" target="_blank" class="btn btn-outline-secondary btn-sm fw-bold" style="border-radius: 8px;"><i class="fa-solid fa-file-pdf me-1 text-danger"></i> PDF</a>
+            <button type="button" class="btn btn-outline-secondary btn-sm fw-bold" id="copySpecs" style="border-radius: 8px;"><i class="fa-solid fa-copy me-1"></i> Copy</button>
+          </div>
         </div>
-        <div class="btn-group btn-group-sm mb-3" role="group" id="specTabs">
+
+        <div class="spec-tabs mb-4" id="specTabs">
           <button type="button" class="btn btn-dark fw-bold" data-spec-target="specPerf">Performance</button>
           <button type="button" class="btn btn-outline-dark fw-bold" data-spec-target="specDrive">Drivetrain</button>
           <button type="button" class="btn btn-outline-dark fw-bold" data-spec-target="specDims">Dimensions</button>
@@ -183,6 +204,7 @@
             </tbody>
           </table>
         </div>
+
       </div>
     </div>
   </div>
@@ -306,7 +328,11 @@
       </div>
 
       <div class="cd-card reveal" style="transition-delay: 0.15s;">
-        <div class="cd-title"><i class="fa-solid fa-microchip"></i> Technical Specifications</div>
+        <div class="d-flex align-items-center justify-content-between mb-4">
+          <div class="cd-title mb-0"><i class="fa-solid fa-microchip"></i> Quick Specifications</div>
+          <a href="#" class="btn btn-dark btn-sm fw-bold rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#specsModal">View All Specs</a>
+        </div>
+        
         <div class="cd-spec-grid">
           <div class="cd-spec">
             <div class="cd-spec-label"><i class="fa-solid fa-engine-warning"></i> Engine</div>
@@ -333,11 +359,10 @@
             <div class="cd-spec-val">{{ listing.car.fuel_type|default:"Petrol" }}</div>
           </div>
         </div>
-        <div class="mt-4"><a href="#" class="cd-link" data-bs-toggle="modal" data-bs-target="#specsModal"><i class="fa-solid fa-list me-1"></i> View All Dimensions & Specs</a></div>
       </div>
 
       <div class="cd-card reveal" style="transition-delay: 0.18s;">
-        <div class="cd-title"><i class="fa-solid fa-tags"></i> Available Variants & Market Prices</div>
+        <div class="cd-title"><i class="fa-solid fa-tags"></i> Variants & Pricing Estimates</div>
         <table class="cd-table mt-3">
           <thead><tr><th>Variant Configuration</th><th class="text-end">Ex-Showroom Estimate</th></tr></thead>
           <tbody>
@@ -366,8 +391,40 @@
         </table>
       </div>
 
+      <div class="cd-card reveal" style="transition-delay: 0.19s;">
+        <div class="cd-title"><i class="fa-solid fa-chart-line"></i> Market Price Intelligence</div>
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="text-muted fw-bold">Brand</span>
+          <input type="text" id="chartBrand" class="form-control" style="max-width:180px;" value="{{ listing.car.make }}" readonly>
+          <span class="text-muted fw-bold">Year</span>
+          <input type="text" id="chartYear" class="form-control" style="max-width:120px;" value="{{ listing.car.year }}" readonly>
+          <span class="text-muted fw-bold">Model</span>
+          <input type="text" id="chartModel" class="form-control" style="max-width:180px;" value="{{ listing.car.model }}" readonly>
+          <a href="{% url 'pricing_analytics' %}" class="btn btn-outline-dark btn-sm ms-auto"><i class="fa-solid fa-chart-column me-1"></i> Full Analytics</a>
+        </div>
+        <div class="d-flex flex-wrap gap-2 mb-2">
+          <button class="btn btn-dark btn-sm fw-bold rounded-pill px-3" data-dchart="trend">Trend</button>
+          <button class="btn btn-outline-dark btn-sm fw-bold rounded-pill px-3" data-dchart="dist">Distribution</button>
+          <button class="btn btn-outline-dark btn-sm fw-bold rounded-pill px-3" data-dchart="regions">Regions</button>
+        </div>
+        <div id="chartWrapTrend" style="position:relative; height:300px; display:block;">
+          <div class="chart-loading active" id="detailLoaderTrend"><div class="spinner"></div><div class="mt-2 fw-bold text-dark">Loading</div></div>
+          <canvas id="detailTrendChart" role="img" aria-label="Average price trend by month"></canvas>
+        </div>
+        <div id="chartWrapDist" style="position:relative; height:300px; display:none;">
+          <div class="chart-loading active" id="detailLoaderDist"><div class="spinner"></div><div class="mt-2 fw-bold text-dark">Loading</div></div>
+          <canvas id="detailPriceChart" role="img" aria-label="Average price by model"></canvas>
+        </div>
+        <div id="chartWrapRegions" style="position:relative; height:300px; display:none;">
+          <div class="chart-loading active" id="detailLoaderRegions"><div class="spinner"></div><div class="mt-2 fw-bold text-dark">Loading</div></div>
+          <canvas id="detailRegionsChart" role="img" aria-label="Regional price variation"></canvas>
+        </div>
+      </div>
+
       <div class="cd-card reveal" style="transition-delay: 0.2s;">
         <div class="cd-title"><i class="fa-solid fa-scale-balanced"></i> Feature Comparison</div>
+        <p class="text-muted fw-bold mb-4">See how the {{ listing.car.make }} {{ listing.car.model }} stacks up against market competitors.</p>
+        
         <div class="cmp-wrapper">
           <table class="cmp-table">
             <thead>
@@ -505,7 +562,7 @@
 </section>
 
 <script>
-  // Expert Review Read More Expand (Clean CSS Class Toggle)
+  // Expert Review Read More Expand
   document.addEventListener("DOMContentLoaded", () => {
     const btn = document.getElementById('readMoreBtn');
     const wrap = document.getElementById('expertReview');
@@ -583,35 +640,98 @@
       else el.textContent = fmt(val, unit);
     };
     const applyUnits = (mode) => {
-      const cells = specTable ? Array.from(specTable.querySelectorAll('.spec-val')) : [];
+      const cells = document.querySelectorAll('.spec-val');
       cells.forEach(el => mode === 'imperial' ? toImperial(el) : toMetric(el));
+      
       if (unitMetric && unitImperial) {
-        if (mode === 'imperial') { unitImperial.classList.add('btn-dark'); unitImperial.classList.remove('btn-outline-dark'); unitMetric.classList.remove('btn-dark'); unitMetric.classList.add('btn-outline-dark'); }
-        else { unitMetric.classList.add('btn-dark'); unitMetric.classList.remove('btn-outline-dark'); unitImperial.classList.remove('btn-dark'); unitImperial.classList.add('btn-outline-dark'); }
+        if (mode === 'imperial') { 
+          unitImperial.classList.add('btn-dark'); unitImperial.classList.remove('btn-outline-dark'); 
+          unitImperial.style.color = '#fff';
+          unitMetric.classList.remove('btn-dark'); unitMetric.classList.add('btn-outline-dark'); 
+          unitMetric.style.color = '#475569';
+        } else { 
+          unitMetric.classList.add('btn-dark'); unitMetric.classList.remove('btn-outline-dark'); 
+          unitMetric.style.color = '#fff';
+          unitImperial.classList.remove('btn-dark'); unitImperial.classList.add('btn-outline-dark'); 
+          unitImperial.style.color = '#475569';
+        }
       }
     };
+    
     if (unitMetric && unitImperial) {
       unitMetric.addEventListener('click', () => applyUnits('metric'));
       unitImperial.addEventListener('click', () => applyUnits('imperial'));
       applyUnits('metric');
     }
-    if (specSearch && specTable) {
-      specSearch.addEventListener('input', () => {
-        const q = specSearch.value.trim().toLowerCase();
-        const rows = Array.from(specTable.querySelectorAll('tbody tr'));
-        rows.forEach(r => {
-          const txt = r.textContent.toLowerCase();
-          r.style.display = q && !txt.includes(q) ? 'none' : '';
-        });
-      });
-    }
-    if (copySpecs && specTable) {
+
+    // Modal Copy Specs
+    if (copySpecs) {
       copySpecs.addEventListener('click', async () => {
-        const rows = Array.from(specTable.querySelectorAll('tbody tr'));
+        const activePane = document.querySelector('.spec-pane[style=""]');
+        if(!activePane) return;
+        const rows = Array.from(activePane.querySelectorAll('tbody tr'));
         const lines = rows.filter(r => r.style.display !== 'none').map(r => r.cells[0].textContent.trim() + ': ' + r.cells[1].textContent.trim());
-        try { await navigator.clipboard.writeText(lines.join('\n')); copySpecs.classList.add('btn-success'); setTimeout(() => copySpecs.classList.remove('btn-success'), 800); } catch (_) {}
+        try { 
+          await navigator.clipboard.writeText(lines.join('\n')); 
+          copySpecs.innerHTML = '<i class="fa-solid fa-check me-1 text-success"></i> Copied';
+          setTimeout(() => copySpecs.innerHTML = '<i class="fa-solid fa-copy me-1"></i> Copy', 1500); 
+        } catch (_) {}
       });
     }
+  })();
+
+  (function(){
+    const brand = document.getElementById('chartBrand').value;
+    const year = document.getElementById('chartYear').value;
+    const model = document.getElementById('chartModel').value;
+    function formatINR(v){ return new Intl.NumberFormat('en-IN', { style:'currency', currency:'INR', maximumFractionDigits:0 }).format(v||0); }
+    function ensureChart(cb){
+      if (window.Chart) return cb();
+      const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js'; s.onload = cb; document.head.appendChild(s);
+    }
+    function showTab(name){
+      document.querySelectorAll('[data-dchart]').forEach(b=>{
+        const is = b.getAttribute('data-dchart')===name;
+        b.classList.toggle('btn-dark', is);
+        b.classList.toggle('btn-outline-dark', !is);
+      });
+      document.getElementById('chartWrapTrend').style.display = name==='trend' ? 'block' : 'none';
+      document.getElementById('chartWrapDist').style.display = name==='dist' ? 'block' : 'none';
+      document.getElementById('chartWrapRegions').style.display = name==='regions' ? 'block' : 'none';
+    }
+    document.querySelectorAll('[data-dchart]').forEach(b=> b.addEventListener('click', ()=> showTab(b.getAttribute('data-dchart')) ));
+    ensureChart(async ()=>{
+      try{
+        const tparams = new URLSearchParams({ brand, model, year });
+        const dparams = new URLSearchParams({ brand, year });
+        const [trendRes, distRes] = await Promise.all([
+          fetch('{% url "price_trend_data" %}?'+tparams.toString(), { headers: {'X-Requested-With':'XMLHttpRequest'} }),
+          fetch('{% url "price_chart_data" %}?'+dparams.toString(), { headers: {'X-Requested-With':'XMLHttpRequest'} }),
+        ]);
+        const trend = await trendRes.json();
+        const dist = await distRes.json();
+        const tl = trend.trend.map(p=>p.month);
+        const tv = trend.trend.map(p=>p.avg_price);
+        const ctxT = document.getElementById('detailTrendChart');
+        window.__detailTrend = new Chart(ctxT, { type:'line', data:{ labels:tl, datasets:[{ label:'Avg Price', data:tv, borderColor:'#0f172a', backgroundColor:'rgba(15,23,42,0.1)', tension:0.3 }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:(c)=> formatINR(c.raw) } } }, scales:{ y:{ ticks:{ callback:(v)=> new Intl.NumberFormat('en-IN').format(v) } } } } });
+        document.getElementById('detailLoaderTrend').classList.remove('active');
+        const dl = dist.points.map(p=>p.model);
+        const dv = dist.points.map(p=>p.avg_price);
+        const ctxD = document.getElementById('detailPriceChart');
+        window.__detailDist = new Chart(ctxD, { type:'bar', data:{ labels:dl, datasets:[{ label:'Avg Price', data:dv, backgroundColor:'#0f172a', hoverBackgroundColor:'#e11d48', borderRadius:6, borderSkipped:false }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:(c)=> formatINR(c.raw) } } }, scales:{ y:{ ticks:{ callback:(v)=> new Intl.NumberFormat('en-IN').format(v) } } } } });
+        document.getElementById('detailLoaderDist').classList.remove('active');
+        const rl = trend.regions.map(r=>r.city);
+        const rv = trend.regions.map(r=>r.avg_price);
+        const ctxR = document.getElementById('detailRegionsChart');
+        window.__detailRegions = new Chart(ctxR, { type:'bar', data:{ labels:rl, datasets:[{ label:'Avg Price', data:rv, backgroundColor:'#e11d48' }] }, options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:(c)=> formatINR(c.raw) } } }, scales:{ x:{ ticks:{ callback:(v)=> new Intl.NumberFormat('en-IN').format(v) } } } } });
+        document.getElementById('detailLoaderRegions').classList.remove('active');
+        showTab('trend');
+      } catch(e){
+        document.getElementById('detailLoaderTrend').classList.remove('active');
+        document.getElementById('detailLoaderDist').classList.remove('active');
+        document.getElementById('detailLoaderRegions').classList.remove('active');
+      }
+    });
   })();
 
   // Specs grouped tabs + search binding
@@ -619,9 +739,8 @@
     const tabBar = document.getElementById('specTabs');
     const panes = Array.from(document.querySelectorAll('.spec-pane'));
     const specSearch = document.getElementById('specSearch');
-    const unitMetric = document.getElementById('unitMetric');
-    const unitImperial = document.getElementById('unitImperial');
     let currentPane = panes[0] || null;
+    
     function showPane(id){
       panes.forEach(p => p.style.display = (p.id === id) ? '' : 'none');
       currentPane = document.getElementById(id);
@@ -630,18 +749,12 @@
           const tgt = b.getAttribute('data-spec-target');
           b.classList.toggle('btn-dark', tgt === id);
           b.classList.toggle('btn-outline-dark', tgt !== id);
+          b.style.color = (tgt === id) ? '#fff' : '#475569';
         });
       }
-      // reapply unit mode to visible pane
-      const mode = unitImperial && unitImperial.classList.contains('btn-dark') ? 'imperial' : 'metric';
-      const cells = currentPane ? Array.from(currentPane.querySelectorAll('.spec-val')) : [];
-      cells.forEach(el => {
-        const ev = new Event('click');
-        if (mode === 'imperial') { unitImperial.dispatchEvent(ev); } else { unitMetric.dispatchEvent(ev); }
-      });
-      // reapply search to visible pane
       filterRows();
     }
+    
     function filterRows(){
       if (!specSearch || !currentPane) return;
       const q = specSearch.value.trim().toLowerCase();
@@ -651,17 +764,54 @@
         r.style.display = q && !txt.includes(q) ? 'none' : '';
       });
     }
+    
     if (tabBar){
       tabBar.querySelectorAll('button').forEach(btn => {
         btn.addEventListener('click', () => showPane(btn.getAttribute('data-spec-target')));
       });
     }
-    if (specSearch){
-      specSearch.addEventListener('input', filterRows);
-    }
-    showPane(panes[0] ? panes[0].id : 'specPerf');
+    if (specSearch) { specSearch.addEventListener('input', filterRows); }
+    if(panes.length > 0) { showPane(panes[0].id); }
   })();
+
+  // Favorite toggle logic
+  (function(){
+    const fav = document.getElementById('favBtn');
+    if (!fav) return;
+    let liked = false;
+    function getCsrf(){
+      const meta = document.querySelector('meta[name="csrf-token"]');
+      if (meta && meta.content) return meta.content;
+      const c = document.cookie.match(/csrftoken=([^;]+)/);
+      if (c) return c[1];
+      const inp = document.querySelector('input[name="csrfmiddlewaretoken"]');
+      return inp ? inp.value : '';
+    }
+    fav.addEventListener('click', async () => {
+      try {
+        const body = new URLSearchParams();
+        body.append('listing_id', '{{ listing.listing_id }}');
+        const res = await fetch('{% url "toggle_favorite" %}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': getCsrf() },
+          credentials: 'same-origin',
+          body: body.toString()
+        });
+        const j = await res.json();
+        if (!j.ok) throw new Error(j.error || 'Failed');
+        liked = !!j.liked;
+        fav.innerHTML = liked ? '<i class="fa-solid fa-heart me-1 text-danger"></i> Saved' : '<i class="fa-regular fa-heart me-1"></i> Save to Garage';
+      } catch(e) { console.log(e); }
+    });
+  })();
+
+  // Initialize scroll reveals
+  document.addEventListener("DOMContentLoaded", () => {
+    const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if(entry.isIntersecting) entry.target.classList.add('active'); }); }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(reveal => observer.observe(reveal));
+  });
 
   // (Keep the rest of your original JS functions for Pano and Spin here)
 </script>
 {% endblock %}
+can you add ai chart to understand overall market price by car brand and perticullar year and car model like that based upon my this given python
