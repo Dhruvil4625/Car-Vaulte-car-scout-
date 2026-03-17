@@ -1,5 +1,6 @@
 from django import template
 from core.models import CarListing
+import math
 
 register = template.Library()
 
@@ -23,11 +24,12 @@ def car_image(make=None, model=None, size="600x400"):
     m = (make or "").lower().strip()
     mdl = (model or "").lower().strip()
     base = f"/static/img/placeholder.svg"
+    seed = str((sum(ord(c) for c in (mdl or m)) % 997) if (mdl or m) else 0)
     if m and mdl:
-        return f"https://source.unsplash.com/{size}/?{make},{model},car"
+        return f"https://source.unsplash.com/{size}/?{make},{model},car&sig={seed}"
     if m:
         syn = SYN.get(m, m)
-        return f"https://source.unsplash.com/{size}/?{syn},car"
+        return f"https://source.unsplash.com/{size}/?{syn},car&sig={seed}"
     return base
 
 @register.simple_tag
@@ -50,7 +52,13 @@ def listing_main_image(listing, size="600x400"):
     try:
         imgs = getattr(listing, "images").all()
         if imgs:
-            return imgs[0].image.url
+            im = imgs[0]
+            name = str(getattr(im.image, "name", "")).lower()
+            url = getattr(im.image, "url", None)
+            if "listing_images/generated/" in name:
+                return car_image(getattr(listing.car, "make", None), getattr(listing.car, "model", None), size)
+            if url:
+                return url
     except Exception:
         pass
     return car_image(getattr(listing.car, "make", None), getattr(listing.car, "model", None), size)
@@ -62,7 +70,13 @@ def car_main_image(car, size="600x400"):
         if lst:
             imgs = lst.images.all()
             if imgs:
-                return imgs[0].image.url
+                im = imgs[0]
+                name = str(getattr(im.image, "name", "")).lower()
+                url = getattr(im.image, "url", None)
+                if "listing_images/generated/" in name:
+                    return car_image(getattr(car, "make", None), getattr(car, "model", None), size)
+                if url:
+                    return url
     except Exception:
         pass
     return car_image(getattr(car, "make", None), getattr(car, "model", None), size)
