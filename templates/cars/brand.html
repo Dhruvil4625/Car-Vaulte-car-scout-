@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load currency %}{% load static %}
+{% load currency %}{% load static %}{% load images %}
 {% block title %}{{ brand }} Cars | Vehicle Vault{% endblock %}
 
 {% block content %}
@@ -434,11 +434,7 @@
     {% for l in listings %}
     <a href="{% url 'listing_detail' l.listing_id %}" class="modern-card reveal" style="transition-delay: 0.{{ forloop.counter0|add:2 }}s;">
       <div class="card-img">
-        {% if l.images.all %}
-          <img src="{{ l.images.all.0.image.url }}" alt="{{ l.car.make }} {{ l.car.model }}">
-        {% else %}
-          <img src="{% static 'img/placeholder.svg' %}" alt="Car">
-        {% endif %}
+        <img src="{% listing_main_image l '600x400' %}" alt="{{ l.car.make }} {{ l.car.model }}" onerror="this.onerror=null;this.src='{% static 'img/placeholder.svg' %}';">
         {% if l.ai_deal_label %}
         <div class="ai-badge {% if l.ai_deal_label == 'Good Deal' %}good{% elif l.ai_deal_label == 'Fair Price' %}fair{% elif l.ai_deal_label == 'Expensive' %}exp{% endif %}">
           {{ l.ai_deal_label }}
@@ -511,7 +507,7 @@
     {% for l in economy %}
     <a href="{% url 'listing_detail' l.listing_id %}" class="modern-card">
       <div class="card-img">
-        {% if l.images.all %}<img src="{{ l.images.all.0.image.url }}" alt="{{ l.car.make }} {{ l.car.model }}">{% else %}<img src="{% static 'img/placeholder.svg' %}" alt="Car">{% endif %}
+        {% if l.images.all %}<img src="{{ l.images.all.0.image.url }}" alt="{{ l.car.make }} {{ l.car.model }}" onerror="if(!this.dataset.fbk){this.dataset.fbk='1';this.src='{% car_image l.car.make l.car.model '600x400' %}';}else{this.onerror=null;this.src='{% static 'img/placeholder.svg' %}';}">{% else %}<img src="{% car_image l.car.make l.car.model '600x400' %}" alt="{{ l.car.make }} {{ l.car.model }}" onerror="this.onerror=null;this.src='{% static 'img/placeholder.svg' %}';">{% endif %}
         {% if l.ai_deal_label %}
         <div class="ai-badge {% if l.ai_deal_label == 'Good Deal' %}good{% elif l.ai_deal_label == 'Fair Price' %}fair{% elif l.ai_deal_label == 'Expensive' %}exp{% endif %}">
           {{ l.ai_deal_label }}
@@ -555,7 +551,7 @@
     {% for l in moderate %}
     <a href="{% url 'listing_detail' l.listing_id %}" class="modern-card">
       <div class="card-img">
-        {% if l.images.all %}<img src="{{ l.images.all.0.image.url }}" alt="{{ l.car.make }} {{ l.car.model }}">{% else %}<img src="{% static 'img/placeholder.svg' %}" alt="Car">{% endif %}
+        {% if l.images.all %}<img src="{{ l.images.all.0.image.url }}" alt="{{ l.car.make }} {{ l.car.model }}" onerror="if(!this.dataset.fbk){this.dataset.fbk='1';this.src='{% car_image l.car.make l.car.model '600x400' %}';}else{this.onerror=null;this.src='{% static 'img/placeholder.svg' %}';}">{% else %}<img src="{% car_image l.car.make l.car.model '600x400' %}" alt="{{ l.car.make }} {{ l.car.model }}" onerror="this.onerror=null;this.src='{% static 'img/placeholder.svg' %}';">{% endif %}
         {% if l.ai_deal_label %}
         <div class="ai-badge {% if l.ai_deal_label == 'Good Deal' %}good{% elif l.ai_deal_label == 'Fair Price' %}fair{% elif l.ai_deal_label == 'Expensive' %}exp{% endif %}">
           {{ l.ai_deal_label }}
@@ -599,7 +595,7 @@
     {% for l in premium %}
     <a href="{% url 'listing_detail' l.listing_id %}" class="modern-card">
       <div class="card-img">
-        {% if l.images.all %}<img src="{{ l.images.all.0.image.url }}" alt="{{ l.car.make }} {{ l.car.model }}">{% else %}<img src="{% static 'img/placeholder.svg' %}" alt="Car">{% endif %}
+        {% if l.images.all %}<img src="{{ l.images.all.0.image.url }}" alt="{{ l.car.make }} {{ l.car.model }}" onerror="if(!this.dataset.fbk){this.dataset.fbk='1';this.src='{% car_image l.car.make l.car.model '600x400' %}';}else{this.onerror=null;this.src='{% static 'img/placeholder.svg' %}';}">{% else %}<img src="{% car_image l.car.make l.car.model '600x400' %}" alt="{{ l.car.make }} {{ l.car.model }}" onerror="this.onerror=null;this.src='{% static 'img/placeholder.svg' %}';">{% endif %}
         {% if l.ai_deal_label %}
         <div class="ai-badge {% if l.ai_deal_label == 'Good Deal' %}good{% elif l.ai_deal_label == 'Fair Price' %}fair{% elif l.ai_deal_label == 'Expensive' %}exp{% endif %}">
           {{ l.ai_deal_label }}
@@ -643,7 +639,7 @@
     {% for l in arrivals %}
     <a href="{% url 'listing_detail' l.listing_id %}" class="modern-card">
       <div class="card-img">
-        {% if l.images.all %}<img src="{{ l.images.all.0.image.url }}" alt="{{ l.car.make }} {{ l.car.model }}">{% else %}<img src="{% static 'img/placeholder.svg' %}" alt="Car">{% endif %}
+        {% if l.images.all %}<img src="{{ l.images.all.0.image.url }}" alt="{{ l.car.make }} {{ l.car.model }}" onerror="if(!this.dataset.fbk){this.dataset.fbk='1';this.src='{% car_image l.car.make l.car.model '600x400' %}';}else{this.onerror=null;this.src='{% static 'img/placeholder.svg' %}';}">{% else %}<img src="{% car_image l.car.make l.car.model '600x400' %}" alt="{{ l.car.make }} {{ l.car.model }}" onerror="this.onerror=null;this.src='{% static 'img/placeholder.svg' %}';">{% endif %}
         {% if l.ai_deal_label %}
         <div class="ai-badge {% if l.ai_deal_label == 'Good Deal' %}good{% elif l.ai_deal_label == 'Fair Price' %}fair{% elif l.ai_deal_label == 'Expensive' %}exp{% endif %}">
           {{ l.ai_deal_label }}
