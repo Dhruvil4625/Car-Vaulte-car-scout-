@@ -287,6 +287,8 @@
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     gap: 15px;
     margin-top: 20px;
+    position: relative;
+    user-select: none;
   }
 
   .photo-thumbnail-wrapper {
@@ -304,6 +306,20 @@
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
     transition: transform 0.4s ease;
+  }
+  .photo-thumbnail-wrapper input[type="checkbox"] {
+    position: absolute; top: 8px; left: 8px; width: 18px; height: 18px; z-index: 2;
+  }
+  .photo-thumbnail-wrapper input[type="checkbox"]:checked + img {
+    outline: 3px solid #e11d48;
+    filter: saturate(1.05);
+  }
+  .selection-rect {
+    position: absolute;
+    border: 2px dashed #e11d48;
+    background: rgba(225, 29, 72, 0.1);
+    pointer-events: none;
+    z-index: 100;
   }
 
   .photo-thumbnail-wrapper:hover img { transform: scale(1.1); }
@@ -407,10 +423,14 @@
           <label class="form-label mt-4 mb-2 text-dark fw-bold">Current Live Photos</label>
           <div class="existing-photos-grid">
             {% for img in listing.images.all %}
-              <div class="photo-thumbnail-wrapper">
+              <label class="photo-thumbnail-wrapper" style="cursor:pointer;">
+                <input type="checkbox" name="image_id" value="{{ img.id }}" class="form-check-input">
                 <img src="{{ img.image.url }}" alt="{{ img.alt }}" onerror="this.src='{% static 'img/placeholder.svg' %}'">
-              </div>
+              </label>
             {% endfor %}
+          </div>
+          <div class="d-flex gap-2 mt-3">
+            <button type="button" id="deleteSelectedBtn" class="btn btn-danger fw-bold" data-delete-url="{% url 'listing_images_delete' listing.listing_id %}" style="border-radius:10px;"><i class="fa-solid fa-trash me-1"></i> Delete Selected</button>
           </div>
         {% endif %}
       </div>
@@ -453,6 +473,17 @@
           <label class="form-label d-block text-dark fw-bold mb-1">Upload GLB / GLTF File</label>
           <input type="file" name="asset_3d" accept=".glb,.gltf,model/*" class="form-control smart-file-input" style="border:none; background:transparent; padding:0; box-shadow:none;">
           <small class="text-muted d-block mt-2">Assets will be optimized for the WebGL viewer.</small>
+        </div>
+
+        <div class="upload-zone mt-3">
+          <label class="form-label d-block text-dark fw-bold mb-1">Or paste a Sketchfab model URL <span class="badge bg-secondary ms-1" style="font-size:.65rem;">FREE</span></label>
+          {% with sf_asset=listing.assets.all %}
+            {% for a in sf_asset %}{% if a.kind == 'SKETCHFAB' %}
+              <small class="text-success d-block mb-2"><i class="fa-solid fa-circle-check me-1"></i>Current Sketchfab UID: <code>{{ a.label }}</code></small>
+            {% endif %}{% endfor %}
+          {% endwith %}
+          <small class="text-muted d-block mb-2">e.g. <code>https://sketchfab.com/3d-models/volvo-xc40-affc79b0ef594f5ebaba3a8d1c4e9b1e</code></small>
+          <input type="url" name="sketchfab_url" class="form-control" placeholder="https://sketchfab.com/3d-models/...">
         </div>
       </div>
 
@@ -535,6 +566,116 @@
         }
       });
     });
+
+    const deleteBtn = document.getElementById('deleteSelectedBtn');
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', async () => {
+        const ids = Array.from(document.querySelectorAll('input[name=\"image_id\"]:checked')).map(el => el.value);
+        if (ids.length === 0) return;
+        const url = deleteBtn.getAttribute('data-delete-url');
+        const csrf = document.querySelector('input[name=\"csrfmiddlewaretoken\"]').value;
+        const body = new URLSearchParams();
+        ids.forEach(v => body.append('image_id', v));
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {'X-CSRFToken': csrf, 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded'},
+          body: body.toString()
+        });
+        if (res.ok) {
+          location.reload();
+        }
+      });
+    }
+
+    // --- Multi-select: Shift range and drag marquee ---
+    const grid = document.querySelector('.existing-photos-grid');
+    if (grid) {
+      const items = Array.from(grid.querySelectorAll('.photo-thumbnail-wrapper'));
+      let lastIndex = null;
+
+      // Shift-click range and ctrl/cmd toggle on click
+      items.forEach((label, idx) => {
+        const input = label.querySelector('input[type="checkbox"]');
+        label.addEventListener('click', (e) => {
+          if (e.target.tagName.toLowerCase() === 'input') {
+            lastIndex = idx;
+            return;
+          }
+          e.preventDefault();
+          if (e.shiftKey && lastIndex !== null) {
+            const start = Math.min(lastIndex, idx);
+            const end = Math.max(lastIndex, idx);
+            for (let i = start; i <= end; i++) {
+              const cb = items[i].querySelector('input[type="checkbox"]');
+              cb.checked = true;
+            }
+          } else if (e.ctrlKey || e.metaKey) {
+            input.checked = !input.checked;
+          } else {
+            input.checked = !input.checked;
+          }
+          lastIndex = idx;
+        });
+      });
+
+      // Drag-to-select (rubber band)
+      let selecting = false;
+      let startX = 0, startY = 0;
+      let rectEl = null;
+      let baseSelected = new Set();
+
+      grid.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        if (e.target.tagName.toLowerCase() === 'input') return;
+        selecting = true;
+        startX = e.pageX; startY = e.pageY;
+        rectEl = document.createElement('div');
+        rectEl.className = 'selection-rect';
+        grid.appendChild(rectEl);
+        baseSelected = new Set(items.filter(l => l.querySelector('input').checked));
+        e.preventDefault();
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!selecting) return;
+        const x = Math.min(e.pageX, startX);
+        const y = Math.min(e.pageY, startY);
+        const w = Math.abs(e.pageX - startX);
+        const h = Math.abs(e.pageY - startY);
+        const gridRect = grid.getBoundingClientRect();
+        rectEl.style.left = (x - window.scrollX - gridRect.left) + 'px';
+        rectEl.style.top = (y - window.scrollY - gridRect.top) + 'px';
+        rectEl.style.width = w + 'px';
+        rectEl.style.height = h + 'px';
+
+        const selRect = rectEl.getBoundingClientRect();
+        items.forEach((label) => {
+          const r = label.getBoundingClientRect();
+          const intersects = !(selRect.right < r.left || selRect.left > r.right || selRect.bottom < r.top || selRect.top > r.bottom);
+          const cb = label.querySelector('input[type="checkbox"]');
+          if (e.ctrlKey || e.metaKey) {
+            label.dataset._hit = intersects ? '1' : '';
+          } else {
+            cb.checked = intersects || baseSelected.has(label);
+          }
+        });
+      });
+
+      window.addEventListener('mouseup', (e) => {
+        if (!selecting) return;
+        selecting = false;
+        if (rectEl) { rectEl.remove(); rectEl = null; }
+        if (e.ctrlKey || e.metaKey) {
+          items.forEach((label) => {
+            if (label.dataset._hit === '1') {
+              const cb = label.querySelector('input[type="checkbox"]');
+              cb.checked = !cb.checked;
+            }
+            delete label.dataset._hit;
+          });
+        }
+      });
+    }
 
   });
 </script>
