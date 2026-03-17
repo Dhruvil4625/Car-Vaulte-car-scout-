@@ -10,12 +10,13 @@
     50% { transform: scale(1.05) translateX(-1%); }
     100% { transform: scale(1.0) translateX(0); }
   }
+
   .reveal { opacity: 0; transform: translateY(30px); transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
   .reveal.active { opacity: 1; transform: translateY(0); }
 
   /* --- Inventory Hero Section --- */
   .inventory-hero {
-    position: relative; padding: 80px 0 100px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); overflow: hidden;
+    position: relative; padding: 90px 0 120px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); overflow: hidden;
   }
   .inventory-hero::before {
     content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -24,25 +25,36 @@
   }
   .inventory-hero::after {
     content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(15, 23, 42, 0.98) 100%); z-index: 2;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.6) 0%, rgba(15, 23, 42, 0.98) 100%); z-index: 2;
   }
   .inventory-hero .container { position: relative; z-index: 3; text-align: center; }
-  .inventory-hero h1 { font-size: 3rem; font-weight: 900; color: #ffffff; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+  .inventory-hero h1 { font-size: 3.5rem; font-weight: 900; color: #ffffff; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 4px 20px rgba(0,0,0,0.6); }
   .inventory-hero h1 span { color: #e11d48; }
-  .inventory-hero p { color: #cbd5e1; font-size: 1.15rem; margin: 0; font-weight: 500; letter-spacing: 0.5px; }
+  .inventory-hero p { color: #00d4ff; font-size: 1.15rem; margin: 0; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
 
   /* --- Layout & Spacing --- */
   .inventory-wrapper { margin-top: -60px; position: relative; z-index: 10; padding-bottom: 80px; }
 
-  /* --- Premium Filter Sidebar --- */
+  /* --- Premium Filter Sidebar (NOW SCROLLABLE) --- */
   .filter-sidebar {
     background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.04); padding: 25px; position: sticky; top: 100px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.04); padding: 25px; 
+    position: sticky; 
+    top: 100px;
+    
+    /* Independent Scrolling */
+    max-height: calc(100vh - 120px); 
+    overflow-y: auto; 
   }
+  
+  /* Custom scrollbar for the filter panel to make it look premium */
+  .filter-sidebar::-webkit-scrollbar { width: 6px; }
+  .filter-sidebar::-webkit-scrollbar-track { background: transparent; }
+  .filter-sidebar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+  .filter-sidebar::-webkit-scrollbar-thumb:hover { background: #e11d48; }
 
-  /* Offcanvas styling for mobile filters */
-  @media (max-width: 991.98px) {
-    .filter-sidebar { border-radius: 0; box-shadow: none; border: none; top: 0; }
+  @media (max-width: 991.98px) { 
+    .filter-sidebar { border-radius: 0; box-shadow: none; border: none; top: 0; max-height: 100vh; } 
   }
 
   .filter-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #f1f5f9; }
@@ -73,56 +85,63 @@
   .custom-checkbox-container input:checked ~ .checkmark:after { display: block; }
 
   /* --- Modern Listing Cards --- */
-  .modern-card {
-    background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    display: flex; flex-direction: column; text-decoration: none; height: 100%; position: relative;
-  }
-  .modern-card:hover { box-shadow: 0 25px 50px rgba(0,0,0,0.1); transform: translateY(-8px); border-color: #fca5a5; }
+  .modern-card { background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; text-decoration: none; height: 100%; }
+  .modern-card:hover { box-shadow: 0 20px 40px rgba(0,0,0,0.08); transform: translateY(-8px); border-color: #fca5a5; }
 
   .card-img-wrapper { position: relative; height: 220px; overflow: hidden; background: #0f172a; }
-  .card-img-wrapper img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s ease; }
-  .modern-card:hover .card-img-wrapper img { transform: scale(1.1); }
+  .card-img-wrapper img.main-card-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease, opacity 0.3s ease; }
+  .modern-card:hover .card-img-wrapper img.main-card-img { transform: scale(1.08); }
 
-  .ai-badge { position: absolute; top: 12px; left: 12px; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; z-index: 4; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-  .ai-badge.good { background:#ecfdf5; color:#065f46; border: 1px solid #bbf7d0; }
-  .ai-badge.fair { background:#eff6ff; color:#1e3a8a; border: 1px solid #bfdbfe; }
-  .ai-badge.exp { background:#fef2f2; color:#991b1b; border: 1px solid #fecaca; }
+  .ai-badge { position: absolute; top: 12px; left: 12px; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: .5px; background: #ffffff; border: 1px solid #e2e8f0; color: #0f172a; z-index: 2; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+  .ai-badge.good { background:#ecfdf5; color:#065f46; border-color:#bbf7d0; }
+  .ai-badge.fair { background:#eff6ff; color:#1e3a8a; border-color:#bfdbfe; }
+  .ai-badge.exp { background:#fef2f2; color:#991b1b; border-color:#fecaca; }
 
-  /* Dark Glassmorphism AI Overlay */
-  .ai-overlay {
-    position: absolute; left: 0; right: 0; bottom: 0; padding: 20px 15px;
-    background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px);
-    border-top: 1px solid rgba(255,255,255,0.1); transform: translateY(100%);
-    opacity: 0; transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); z-index: 3;
-  }
-  
-  .modern-card:hover .ai-overlay, .modern-card:focus .ai-overlay { transform: translateY(0); opacity: 1; }
-
-  /* Force partial visibility on touch devices */
-  @media (hover: none) and (pointer: coarse) {
-    .ai-overlay { transform: translateY(70%); opacity: 1; }
-    .ai-title::after { content: ' (Tap to expand)'; font-size: 0.65rem; font-weight: 500; color: #00d4ff; opacity: 0.8; }
-  }
-  
-  .ai-title { font-size: 0.85rem; font-weight: 800; color: #00d4ff; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
-  .ai-overview { font-size: 0.8rem; color: #cbd5e1; margin-bottom: 12px; line-height: 1.4; }
-  
-  .ai-row { display: flex; align-items: center; gap: 10px; margin: 6px 0; font-size: 0.75rem; }
-  .ai-label { width: 60px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-  .ai-bar { flex: 1; height: 6px; background: rgba(255,255,255,0.1); border-radius: 8px; overflow: hidden; position: relative; }
-  .ai-fill { height: 100%; border-radius: 8px; width: 0%; transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1); transition-delay: 0.1s; }
-  .modern-card:hover .ai-fill { width: var(--target-width); }
-  .ai-val { min-width: 80px; text-align: right; font-weight: 800; color: #ffffff; }
+  .card-thumbnails { display: flex; gap: 6px; padding: 12px 15px 0; background: #fff; }
+  .card-thumbnails img { width: calc(25% - 4.5px); height: 55px; object-fit: cover; border-radius: 8px; border: 2px solid transparent; opacity: 0.6; transition: all 0.3s ease; cursor: pointer; }
+  .modern-card:hover .card-thumbnails img { opacity: 0.85; }
+  .card-thumbnails img:hover { opacity: 1 !important; border-color: #e11d48; transform: translateY(-2px); }
 
   .modern-card-body { padding: 20px; display: flex; flex-direction: column; flex-grow: 1; }
-  .car-title { font-size: 1.25rem; font-weight: 900; color: #0f172a; margin-bottom: 8px; line-height: 1.3; }
-  .car-meta-row { font-size: 0.85rem; color: #64748b; font-weight: 700; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .car-meta-row i { color: #94a3b8; }
-  
-  .car-price { font-size: 1.5rem; font-weight: 900; color: #e11d48; margin-top: auto; padding-top: 15px; border-top: 1px dashed #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-  .car-price span { font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+  .car-title { font-size: 1.3rem; font-weight: 900; color: #0f172a; margin-bottom: 12px; line-height: 1.2; }
 
-  .empty-state { grid-column: 1 / -1; background: #ffffff; border: 2px dashed #cbd5e1; border-radius: 16px; padding: 80px 20px; text-align: center; color: #64748b; box-shadow: 0 10px 30px rgba(0,0,0,0.02); }
+  .price-box { background: #f8fafc; border-radius: 12px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border: 1px solid #e2e8f0; transition: all 0.3s ease; }
+  .modern-card:hover .price-box { background: #ffffff; border-color: #fca5a5; box-shadow: 0 4px 15px rgba(225, 29, 72, 0.08); }
+  .price-label { font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+  .car-price { font-size: 1.45rem; font-weight: 900; color: #e11d48; margin: 0; letter-spacing: -0.5px; }
+
+  /* Embedded Inline AI Panel */
+  .ai-panel { margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 10px; background: #ffffff; transition: all 0.3s; }
+  .ai-panel:hover { border-color: #94a3b8; }
+  .ai-panel summary { list-style: none; cursor: pointer; padding: 12px 15px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: .5px; user-select: none; font-size: 0.85rem; background: #f8fafc; border-radius: 10px; }
+  .ai-panel summary i { color: #00d4ff; font-size: 1.1rem; }
+  .ai-panel[open] summary { border-bottom: 1px dashed #e2e8f0; color: #e11d48; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+  .ai-panel .ai-wrap { padding: 15px; background: #ffffff; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; }
+  
+  .ai-overview-text { font-size: 0.8rem; color: #475569; font-weight: 600; line-height: 1.4; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #e2e8f0; }
+  
+  .ai-row { display: flex; align-items:center; gap: 10px; margin: 8px 0; font-size: .75rem; }
+  .ai-label { width: 60px; color: #64748b; font-weight: 800; text-transform: uppercase; }
+  .ai-bar { flex: 1; height: 8px; background: #f1f5f9; border-radius: 8px; overflow: hidden; position: relative; }
+  .ai-fill { height: 100%; width: 0%; border-radius: 8px; transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+  .ai-val { min-width: 80px; text-align: right; font-weight: 900; color: #0f172a; }
+
+  .seller-info { font-size: 0.85rem; color: #64748b; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; font-weight: 700; }
+  .car-meta-grid { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #475569; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed #e2e8f0; font-weight: 700; }
+
+  .primary-actions { display: flex; gap: 10px; margin-top: auto; }
+  .admin-actions { display: flex; gap: 10px; margin-top: 15px; }
+
+  .btn-outline-custom { border: 2px solid #cbd5e1; color: #0f172a; background: transparent; font-weight: 800; border-radius: 8px; transition: all 0.3s ease; flex: 1; text-align: center; padding: 12px; text-decoration: none; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  .btn-outline-custom:hover { border-color: #0f172a; color: #ffffff; background: #0f172a; }
+  .btn-buy-custom { background-color: #e11d48; color: #fff; font-weight: 800; border-radius: 8px; border: none; transition: all 0.3s ease; flex: 1; padding: 12px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 10px rgba(225, 29, 72, 0.2); width: 100%; }
+  .btn-buy-custom:hover { background-color: #be123c; color: #fff; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(225, 29, 72, 0.3); }
+
+  .status-badge { font-size: 0.75rem; font-weight: 900; padding: 6px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .status-active { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+  .status-other { background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; }
+
+  .empty-state { background: #ffffff; border: 2px dashed #cbd5e1; border-radius: 16px; padding: 80px 20px; text-align: center; color: #64748b; box-shadow: 0 10px 30px rgba(0,0,0,0.02); grid-column: 1 / -1; }
 </style>
 
 <section class="inventory-hero reveal">
@@ -155,7 +174,7 @@
 
         <div class="filter-group">
           <h6>Brand</h6>
-          <select name="brand" class="form-select mb-2">
+          <select name="brand" class="form-select mb-2" onchange="this.form.submit()">
             <option value="">All Brands</option>
             {% for m in all_makes %}
             <option value="{{ m }}" {% if brand == m %}selected{% endif %}>{{ m }}</option>
@@ -165,7 +184,7 @@
 
         <div class="filter-group">
           <h6>Model Name</h6>
-          <select name="model" class="form-select mb-2" {% if not brand %}disabled{% endif %}>
+          <select name="model" class="form-select mb-2" onchange="this.form.submit()" {% if not brand %}disabled{% endif %}>
             <option value="">All Models</option>
             {% for m in all_models %}
             <option value="{{ m }}" {% if model == m %}selected{% endif %}>{{ m }}</option>
@@ -175,7 +194,7 @@
 
         <div class="filter-group">
           <h6>Model Year</h6>
-          <select name="year" class="form-select mb-2">
+          <select name="year" class="form-select mb-2" onchange="this.form.submit()">
             <option value="">All Years</option>
             {% for y in all_years %}
             <option value="{{ y }}" {% if year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
@@ -222,54 +241,124 @@
 
     <div class="col-lg-9">
       <div id="results" class="row g-4">
-        {% for l in listings %}
-        <div class="col-md-6 col-xl-4">
-          <a href="{% url 'listing_detail' l.listing_id %}" class="modern-card reveal" style="transition-delay: 0.{{ forloop.counter0|add:2 }}s;">
-            <div class="card-img-wrapper">
-              <img loading="lazy" src="{% listing_main_image l '600x400' %}" alt="{{ l.car.make }} {{ l.car.model }}" onerror="this.onerror=null;this.src='{% static 'img/placeholder.svg' %}';">
+        {% for lst in listings %}
+        <div class="col-md-6 col-xl-6">
+          <article class="modern-card reveal" style="transition-delay: 0.{{ forloop.counter0|add:2 }}s;">
+            
+            <div class="card-img-wrapper" id="img-wrapper-{{ lst.listing_id }}">
+              <img loading="lazy" class="main-card-img" id="main-img-{{ lst.listing_id }}" src="{% listing_main_image lst '600x400' %}" alt="{{ lst.car.make }} {{ lst.car.model }}" onerror="this.onerror=null;this.src='{% static 'img/placeholder.svg' %}';">
               
-              {% if l.ai_deal_label %}
-              <div class="ai-badge {% if l.ai_deal_label == 'Good Deal' %}good{% elif l.ai_deal_label == 'Fair Price' %}fair{% elif l.ai_deal_label == 'Expensive' %}exp{% endif %}">
-                {{ l.ai_deal_label }}
+              {% if lst.ai_deal_label %}
+              <div class="ai-badge {% if lst.ai_deal_label == 'Good Deal' %}good{% elif lst.ai_deal_label == 'Fair Price' %}fair{% elif lst.ai_deal_label == 'Expensive' %}exp{% endif %}">
+                {{ lst.ai_deal_label }}
               </div>
               {% endif %}
-              
-              <div class="ai-overlay">
-                <div class="ai-title"><i class="fa-solid fa-microchip"></i> AI Market Insights</div>
-                <div class="ai-overview">
-                  {% if l.car.expert_overview %}
-                    {{ l.car.expert_overview|striptags|truncatewords:15 }}
-                  {% elif l.description %}
-                    {{ l.description|striptags|truncatewords:15 }}
-                  {% else %}
-                    Intelligent analysis indicates strong market demand and efficiency.
-                  {% endif %}
-                </div>
-                
-                <div class="ai-graph ai-bars" data-market="{{ l.ai_market|default:0 }}" data-tax="{{ l.ai_tax|default:0 }}" data-ins="{{ l.ai_ins|default:0 }}" data-duty="{{ l.ai_duty|default:0 }}">
-                  <div class="ai-row bar-market"><div class="ai-label">Market</div><div class="ai-bar"><div class="ai-fill" style="background:#00d4ff;"></div></div><div class="ai-val">{{ l.ai_market|inr }}</div></div>
-                  <div class="ai-row bar-tax"><div class="ai-label">Tax</div><div class="ai-bar"><div class="ai-fill" style="background:#e11d48;"></div></div><div class="ai-val">{{ l.ai_tax|inr }}</div></div>
-                  <div class="ai-row bar-ins"><div class="ai-label">Ins.</div><div class="ai-bar"><div class="ai-fill" style="background:#22c55e;"></div></div><div class="ai-val">{{ l.ai_ins|inr }}</div></div>
-                  <div class="ai-row"><div class="ai-label text-white">Total</div><div class="ai-bar"><div class="ai-fill" style="--target-width: 100%; background:#fde047;"></div></div><div class="ai-val" style="color: #fde047;">{{ l.ai_total|inr }}</div></div>
-                </div>
-              </div>
+            </div>
+            
+            <div class="card-thumbnails">
+              {% if lst.images.all %}
+                {% for img in lst.images.all|slice:":4" %}
+                  <img loading="lazy" src="{{ img.image.url }}" alt="{{ img.alt }}" onmouseover="document.getElementById('main-img-{{ lst.listing_id }}').src=this.src;" onerror="if(!this.dataset.fbk){this.dataset.fbk='1';this.src='{% car_image lst.car.make lst.car.model '300x200' %}';}else{this.onerror=null;this.src='{% static 'img/placeholder.svg' %}';}">
+                {% endfor %}
+              {% else %}
+                {% car_gallery lst.car.make lst.car.model '300x200' 4 as thumbs %}
+                {% for t in thumbs %}
+                  <img loading="lazy" src="{{ t }}" alt="{{ lst.car.make }} {{ lst.car.model }} image {{ forloop.counter }}" onmouseover="document.getElementById('main-img-{{ lst.listing_id }}').src=this.src;" onerror="this.onerror=null;this.src='{% static 'img/placeholder.svg' %}';">
+                {% endfor %}
+              {% endif %}
             </div>
             
             <div class="modern-card-body">
-              <div class="car-title">{{ l.car.make }} {{ l.car.model }}</div>
-              <div class="car-meta-row">
-                <span><i class="fa-regular fa-calendar"></i> {{ l.car.year }}</span> • 
-                <span><i class="fa-solid fa-gas-pump"></i> {{ l.car.fuel_type|default:'—' }}</span> • 
-                <span><i class="fa-solid fa-gears"></i> {{ l.car.transmission|default:'—' }}</span>
+              <h3 class="car-title">{{ lst.car.make }} {{ lst.car.model }} <span class="text-muted fw-normal" style="font-size: 1rem;">({{ lst.car.year }})</span></h3>
+              
+              <div class="price-box">
+                <span class="price-label">Price</span>
+                <span class="car-price">{{ lst.price|inr }}</span>
               </div>
-              <div class="car-price"><span>Ask Price</span> {{ l.price|inr }}</div>
+
+              <details class="ai-panel">
+                <summary><i class="fa-solid fa-microchip"></i> AI Insights</summary>
+                <div class="ai-wrap">
+                  <div class="ai-overview-text">
+                    {% if lst.car.expert_overview %}
+                      {{ lst.car.expert_overview|striptags|truncatechars:140 }}
+                    {% elif lst.description %}
+                      {{ lst.description|striptags|truncatechars:140 }}
+                    {% else %}
+                      Intelligent analysis indicates strong market demand and efficiency for this model.
+                    {% endif %}
+                  </div>
+                  
+                  <div class="ai-bars" 
+                       data-market="{{ lst.ai_market|default:0 }}"
+                       data-tax="{{ lst.ai_tax|default:0 }}"
+                       data-ins="{{ lst.ai_ins|default:0 }}"
+                       data-duty="{{ lst.ai_duty|default:0 }}">
+                    <div class="ai-row bar-market">
+                      <div class="ai-label">Market</div>
+                      <div class="ai-bar"><div class="ai-fill" style="background:#00d4ff; box-shadow: 0 0 8px rgba(0,212,255,0.4);"></div></div>
+                      <div class="ai-val">{{ lst.ai_market|inr }}</div>
+                    </div>
+                    <div class="ai-row bar-tax">
+                      <div class="ai-label">Tax</div>
+                      <div class="ai-bar"><div class="ai-fill" style="background:#e11d48; box-shadow: 0 0 8px rgba(225,29,72,0.4);"></div></div>
+                      <div class="ai-val">{{ lst.ai_tax|inr }}</div>
+                    </div>
+                    <div class="ai-row bar-ins">
+                      <div class="ai-label">Ins.</div>
+                      <div class="ai-bar"><div class="ai-fill" style="background:#10b981; box-shadow: 0 0 8px rgba(16,185,129,0.4);"></div></div>
+                      <div class="ai-val">{{ lst.ai_ins|inr }}</div>
+                    </div>
+                    <div class="ai-row mt-2 pt-2" style="border-top: 1px dashed #cbd5e1;">
+                      <div class="ai-label" style="color: #0f172a;">Total</div>
+                      <div class="ai-bar"><div class="ai-fill" style="background:#f59e0b; width: 100%;"></div></div>
+                      <div class="ai-val">{{ lst.ai_total|inr }}</div>
+                    </div>
+                  </div>
+                </div>
+              </details>
+              
+              <div class="seller-info">
+                <i class="fa-solid fa-user-circle"></i> {{ lst.seller.email }}
+              </div>
+              
+              <div class="car-meta-grid">
+                <span><i class="fa-solid fa-gauge-high me-1 text-muted"></i> {{ lst.mileage }} km</span>
+                <span class="status-badge {% if lst.status == 'Active' %}status-active{% else %}status-other{% endif %}">
+                  {{ lst.status }}
+                </span>
+              </div>
+              
+              <div class="primary-actions">
+                <a href="{% url 'listing_detail' lst.listing_id %}" class="btn-outline-custom">Details</a>
+                <a href="{% url 'compare' %}?vin1={{ lst.car.vin }}" class="btn-outline-custom"><i class="fa-solid fa-scale-balanced me-1"></i> Compare</a>
+                
+                {% if request.user.is_staff %}
+                  <a href="{% url 'testdrive_new' %}?listing_id={{ lst.listing_id }}" class="btn-outline-custom"><i class="fa-solid fa-key"></i> Drive</a>
+                {% endif %}
+                
+                {% if request.user.is_authenticated and request.user.role == 'Buyer' %}
+                  <form method="post" action="{% url 'listing_purchase' lst.listing_id %}" class="d-flex" style="flex:1;">
+                    {% csrf_token %}
+                    <button class="btn-buy-custom"><i class="fa-solid fa-tag me-1"></i> Buy</button>
+                  </form>
+                {% endif %}
+              </div>
+
+              {% if request.user.is_staff or request.user == lst.seller %}
+              <div class="admin-actions">
+                <a href="{% url 'listing_edit' lst.listing_id %}" class="btn btn-warning flex-fill fw-bold text-dark" style="border-radius: 8px; font-size: 0.85rem; padding: 8px; text-transform: uppercase; letter-spacing: 0.5px;"><i class="fa-solid fa-pen me-1"></i> Edit</a>
+                <a href="{% url 'listing_delete' lst.listing_id %}" class="btn btn-dark flex-fill fw-bold text-white" style="border-radius: 8px; font-size: 0.85rem; padding: 8px; text-transform: uppercase; letter-spacing: 0.5px;"><i class="fa-solid fa-trash me-1"></i> Delete</a>
+              </div>
+              {% endif %}
+
             </div>
-          </a>
+          </article>
         </div>
         {% empty %}
-        <div class="empty-state reveal" style="transition-delay: 0.2s;">
-          <i class="fa-solid fa-car-tunnel fs-1 mb-4 d-block" style="font-size: 4.5rem;"></i>
-          <h3 class="text-dark fw-bold mb-3">No Vehicles Found</h3>
+        <div class="empty-state reveal">
+          <i class="fa-solid fa-car-burst mb-3 d-block" style="font-size: 4rem; color: #cbd5e1;"></i>
+          <h3 class="text-dark fw-bold mb-2">No Vehicles Found</h3>
           <p class="mb-4 fs-5">We couldn't find any cars matching your specific filter criteria.</p>
           <a href="{% url 'cars' %}" class="btn btn-dark fw-bold px-4 py-2 rounded-pill">Reset Filters</a>
         </div>
@@ -282,37 +371,65 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
-    // --- Scroll Reveals ---
-    const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if(entry.isIntersecting) entry.target.classList.add('active'); }); }, { threshold: 0.1 });
-    document.querySelectorAll('.reveal').forEach(reveal => observer.observe(reveal));
+    
+    // --- Intersection Observer for Scroll Reveals ---
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if(entry.isIntersecting) {
+          entry.target.classList.add('active');
+        }
+      });
+    }, { threshold: 0.1 });
+    reveals.forEach(reveal => observer.observe(reveal));
+
+    // --- Smart AI Bar Animation (Fills only when `<details>` is opened) ---
+    const detailsPanels = document.querySelectorAll('.ai-panel');
+    
+    detailsPanels.forEach(panel => {
+      panel.addEventListener('toggle', function() {
+        if (this.open) {
+          const el = this.querySelector('.ai-bars');
+          if(!el) return;
+          
+          const m = Number(el.dataset.market || 0);
+          const t = Number(el.dataset.tax || 0);
+          const i = Number(el.dataset.ins || 0);
+          const d = Number(el.dataset.duty || 0);
+          const max = Math.max(m, t, i, d, 1);
+          
+          const setW = (cls, val) => {
+            const bar = el.querySelector(cls + ' .ai-fill');
+            if (bar) {
+              setTimeout(() => {
+                bar.style.width = Math.min(100, Math.round((val / max) * 100)) + '%';
+              }, 50);
+            }
+          };
+          
+          setW('.bar-market', m);
+          setW('.bar-tax', t);
+          setW('.bar-ins', i);
+          setW('.bar-duty', d);
+        } else {
+          // Reset widths to 0 when closed so it animates again next time
+          const fills = this.querySelectorAll('.ai-fill');
+          fills.forEach(fill => {
+            if(!fill.parentElement.parentElement.textContent.includes('Total')) {
+                fill.style.width = '0%';
+            }
+          });
+        }
+      });
+    });
 
     // --- Filter Form Auto-Submit ---
     const filterForm = document.getElementById('filterForm');
-    if(filterForm){
+    if(filterForm) {
       filterForm.addEventListener('change', () => {
-        // Triggers the submit when ANY checkbox or select menu changes
-        filterForm.submit(); 
+        setTimeout(() => { filterForm.submit(); }, 150);
       });
     }
-
-    // --- Dynamic AI Bar Graph Animation Setup ---
-    document.querySelectorAll('.ai-bars').forEach(el => {
-      const m = Number(el.dataset.market || 0);
-      const t = Number(el.dataset.tax || 0);
-      const i = Number(el.dataset.ins || 0);
-      const d = Number(el.dataset.duty || 0);
-      const max = Math.max(m, t, i, d, 1);
-      
-      const setTarget = (cls, val) => {
-        const fill = el.querySelector(cls + ' .ai-fill');
-        if (fill) fill.style.setProperty('--target-width', Math.min(100, Math.round((val / max) * 100)) + '%');
-      };
-      
-      setTarget('.bar-market', m);
-      setTarget('.bar-tax', t);
-      setTarget('.bar-ins', i);
-      setTarget('.bar-duty', d);
-    });
   });
 </script>
 {% endblock %}
