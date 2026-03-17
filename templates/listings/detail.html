@@ -5,11 +5,8 @@
 {% block content %}
 <style>
   /* --- Ultra-Smooth Cinematic Pan --- */
-  @keyframes cinematicPan { 0% { transform: scale(1.0) translateX(0); } 50% { transform: scale(1.05) translateX(-1%); } 100% { transform: scale(1.0) translateX(0); } }
+  @keyframes cinematicPan { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
   @keyframes pulseRed { 0% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(225, 29, 72, 0); } 100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); } }
-  
-  .reveal { opacity: 0; transform: translateY(30px); transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
-  .reveal.active { opacity: 1; transform: translateY(0); }
 
   /* --- Detail Hero Section --- */
   .detail-hero {
@@ -18,7 +15,7 @@
   .detail-hero::before {
     content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
     background: url("{% if hero_bg_url %}{{ hero_bg_url }}{% else %}{% static 'img/placeholder.svg' %}{% endif %}") center/cover no-repeat;
-    z-index: 1; animation: cinematicPan 60s ease-in-out infinite; will-change: transform;
+    z-index: 1; animation: cinematicPan 40s ease-in-out infinite; transform: scale(1.1);
   }
   .detail-hero::after {
     content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -93,15 +90,13 @@
   .pros .pc-list li::before { content: '✓'; position: absolute; left: 0; color: #16a34a; font-weight: 900; }
   .cons .pc-list li::before { content: '✕'; position: absolute; left: 0; color: #dc2626; font-weight: 900; }
 
-  /* --- Reviews --- */
-  .review-fade { position: relative; max-height: 200px; overflow: hidden; color: #475569; line-height: 1.7; font-weight: 500; font-size: 1.05rem; }
-  .review-fade::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 80px; background: linear-gradient(180deg, rgba(255,255,255,0), #fff); }
+  /* --- Reviews & Clean Read More CSS --- */
+  .review-fade { position: relative; max-height: 200px; overflow: hidden; color: #475569; line-height: 1.7; font-weight: 500; font-size: 1.05rem; transition: max-height 0.5s ease; }
+  .review-fade::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 80px; background: linear-gradient(180deg, rgba(255,255,255,0), #fff); transition: opacity 0.3s ease; }
+  .review-fade.expanded { max-height: 2000px; overflow: visible; }
+  .review-fade.expanded::after { opacity: 0; pointer-events: none; }
   .read-more-btn { position: absolute; right: 10px; bottom: 0px; z-index: 2; }
-  .review-row { display: flex; gap: 20px; overflow-x: auto; scrollbar-width: none; padding-bottom: 15px; }
-  .review-row::-webkit-scrollbar { display: none; }
-  .review-card { min-width: 320px; max-width: 320px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 25px; }
-  .review-stars { color: #f59e0b; font-size: 0.9rem; letter-spacing: 2px; margin-bottom: 10px; }
-
+  
   /* --- Sticky Right Sidebar --- */
   .sticky-sidebar { position: sticky; top: 100px; }
   .price-widget { background: #ffffff; border: 2px solid #e2e8f0; border-radius: 16px; padding: 30px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.08); }
@@ -173,13 +168,19 @@
 
         <div id="galleryContent" class="media-view active-view">
           <div class="media-stage">
-            <button class="nav-arrow prev-arrow" onclick="navigateGallery(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+            {% if images|length > 1 %}
+              <button class="nav-arrow prev-arrow" onclick="navigateGallery(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+            {% endif %}
+            
             {% if images %}
               <img id="mainDisplayImage" src="{{ images.0.image.url }}" alt="{{ listing.car.make }} {{ listing.car.model }}" onerror="this.src='{% static 'img/placeholder.svg' %}'">
             {% else %}
               <img id="mainDisplayImage" src="{% car_image listing.car.make listing.car.model '900x600' %}" alt="{{ listing.car.make }} {{ listing.car.model }}" onerror="this.src='{% static 'img/placeholder.svg' %}'">
             {% endif %}
-            <button class="nav-arrow next-arrow" onclick="navigateGallery(1)"><i class="fa-solid fa-chevron-right"></i></button>
+
+            {% if images|length > 1 %}
+              <button class="nav-arrow next-arrow" onclick="navigateGallery(1)"><i class="fa-solid fa-chevron-right"></i></button>
+            {% endif %}
           </div>
           {% if images %}
           <div class="thumbnail-gallery" id="thumbnailContainer">
@@ -426,6 +427,13 @@
                   <td class="px-0 py-2 border-bottom border-light fw-bold text-muted">{{ c }}</td>
                   <td class="px-0 py-2 border-bottom border-light text-end text-dark fw-900">{{ p|inr }}</td>
                 </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="2" class="text-center py-4 text-muted fw-bold">
+                    <i class="fa-solid fa-calculator mb-2 fs-4"></i><br>
+                    On-road estimates currently unavailable.
+                  </td>
+                </tr>
               {% endfor %}
             </tbody>
           </table>
@@ -439,26 +447,17 @@
 </section>
 
 <script>
-  // Script logic remains exactly the same (Tabs, Gallery Nav, Pano setup, Fav toggle)
+  // Expert Review Read More Expand (Clean CSS Class Toggle)
   document.addEventListener("DOMContentLoaded", () => {
-    const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if(entry.isIntersecting) entry.target.classList.add('active'); }); }, { threshold: 0.1 });
-    document.querySelectorAll('.reveal').forEach(reveal => observer.observe(reveal));
+    const btn = document.getElementById('readMoreBtn');
+    const wrap = document.getElementById('expertReview');
+    if(btn && wrap){ 
+      btn.addEventListener('click', () => { 
+        wrap.classList.add('expanded');
+        btn.style.display = 'none'; 
+      }); 
+    }
   });
-
-  // Expert Review Read More Expand
-  const btn = document.getElementById('readMoreBtn');
-  const wrap = document.getElementById('expertReview');
-  if(btn && wrap){ 
-    btn.addEventListener('click', () => { 
-      wrap.style.maxHeight = '2000px'; 
-      wrap.style.overflow = 'visible'; 
-      wrap.style.setProperty('--after-display', 'none');
-      btn.style.display = 'none'; 
-    }); 
-    const style = document.createElement('style');
-    style.innerHTML = `.review-fade[style*="max-height: 2000px"]::after { display: none; }`;
-    document.head.appendChild(style);
-  }
 
   // --- Segmented Media Tabs Logic ---
   document.querySelectorAll('.media-tabs .btn').forEach(btn => {
