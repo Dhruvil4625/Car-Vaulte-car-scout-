@@ -11,17 +11,6 @@
     100% { transform: scale(1.0) translateX(0); }
   }
 
-  /* --- Scroll Reveal Animations --- */
-  .reveal {
-    opacity: 0;
-    transform: translateY(40px);
-    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .reveal.active {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
   /* --- Listings Hero Section --- */
   .listings-hero {
     position: relative;
@@ -492,7 +481,10 @@
         <article class="modern-card reveal" style="transition-delay: 0.{{ forloop.counter0|add:2 }}s;">
           
           <div class="card-img-wrapper" id="img-wrapper-{{ lst.listing_id }}">
-            <img loading="lazy" class="main-card-img" id="main-img-{{ lst.listing_id }}" src="{% listing_main_image lst '600x400' %}" alt="{{ lst.car.make }} {{ lst.car.model }}" onerror="this.onerror=null;this.src='{% static 'img/placeholder.svg' %}';">
+            <img loading="lazy" class="main-card-img" id="main-img-{{ lst.listing_id }}" 
+                 src="{% listing_main_image lst '600x400' %}" 
+                 alt="{{ lst.car.make }} {{ lst.car.model }}" 
+                 onerror="this.onerror=null; this.src='{% static 'img/placeholder.svg' %}'; this.classList.add('is-placeholder');">
             
             {% if lst.ai_deal_label %}
             <div class="ai-badge {% if lst.ai_deal_label == 'Good Deal' %}good{% elif lst.ai_deal_label == 'Fair Price' %}fair{% elif lst.ai_deal_label == 'Expensive' %}exp{% endif %}">
@@ -504,12 +496,22 @@
           <div class="card-thumbnails">
             {% if lst.images.all %}
               {% for img in lst.images.all|slice:":4" %}
-                <img loading="lazy" src="{{ img.image.url }}" alt="{{ img.alt }}" onmouseover="document.getElementById('main-img-{{ lst.listing_id }}').src=this.src;" onerror="if(!this.dataset.fbk){this.dataset.fbk='1';this.src='{% car_image lst.car.make lst.car.model '300x200' %}';}else{this.onerror=null;this.src='{% static 'img/placeholder.svg' %}';}">
+                {% if img.image %}
+                  <img loading="lazy" 
+                       src="{{ img.image.url }}" 
+                       alt="{{ img.alt|default:lst.car.model }}" 
+                       onmouseover="if(!this.src.includes('placeholder.svg')) { document.getElementById('main-img-{{ lst.listing_id }}').src=this.src; }" 
+                       onerror="if(!this.dataset.fbk){this.dataset.fbk='1'; this.src='{% car_image lst.car.make lst.car.model '300x200' %}';} else{this.onerror=null; this.src='{% static 'img/placeholder.svg' %}';}">
+                {% endif %}
               {% endfor %}
             {% else %}
               {% car_gallery lst.car.make lst.car.model '300x200' 4 as thumbs %}
               {% for t in thumbs %}
-                <img loading="lazy" src="{{ t }}" alt="{{ lst.car.make }} {{ lst.car.model }} image {{ forloop.counter }}" onmouseover="document.getElementById('main-img-{{ lst.listing_id }}').src=this.src;" onerror="this.onerror=null;this.src='{% static 'img/placeholder.svg' %}';">
+                <img loading="lazy" 
+                     src="{{ t }}" 
+                     alt="{{ lst.car.make }} {{ lst.car.model }} image {{ forloop.counter }}" 
+                     onmouseover="if(!this.src.includes('placeholder.svg')) { document.getElementById('main-img-{{ lst.listing_id }}').src=this.src; }" 
+                     onerror="this.onerror=null; this.src='{% static 'img/placeholder.svg' %}';">
               {% endfor %}
             {% endif %}
           </div>
@@ -616,17 +618,6 @@
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     
-    // --- Intersection Observer for Scroll Reveals ---
-    const reveals = document.querySelectorAll('.reveal');
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if(entry.isIntersecting) {
-          entry.target.classList.add('active');
-        }
-      });
-    }, { threshold: 0.1 });
-    reveals.forEach(reveal => observer.observe(reveal));
-
     // --- Smart AI Bar Animation (Fills only when `<details>` is opened) ---
     const detailsPanels = document.querySelectorAll('.ai-panel');
     
