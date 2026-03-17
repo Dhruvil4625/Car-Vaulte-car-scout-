@@ -20,7 +20,7 @@
   }
   .detail-hero::before {
     content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-    background: url('https://images.unsplash.com/photo-1503376712341-ea1c6db88135?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    background: url("{% if hero_bg_url %}{{ hero_bg_url }}{% else %}{% static 'img/placeholder.svg' %}{% endif %}") center/cover no-repeat;
     z-index: 1; animation: cinematicPan 60s ease-in-out infinite; will-change: transform;
   }
   .detail-hero::after {
