@@ -132,16 +132,24 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body pt-3">
-        <table class="cd-table">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <input type="text" id="specSearch" class="form-control" placeholder="Search specification…" style="max-width: 260px;">
+          <div class="btn-group ms-auto" role="group" aria-label="Units">
+            <button type="button" class="btn btn-dark btn-sm fw-bold" id="unitMetric">Metric</button>
+            <button type="button" class="btn btn-outline-dark btn-sm fw-bold" id="unitImperial">Imperial</button>
+          </div>
+          <button type="button" class="btn btn-outline-secondary btn-sm fw-bold" id="copySpecs"><i class="fa-solid fa-copy me-1"></i> Copy</button>
+        </div>
+        <table class="cd-table" id="specsTable">
           <tbody>
-            <tr><th>Engine Capacity</th><td class="text-end">{{ listing.car.engine_cc|default:"—" }}{% if listing.car.engine_cc %} cc{% endif %}</td></tr>
-            <tr><th>Maximum Power</th><td class="text-end">{{ listing.car.power_bhp|default:"—" }}{% if listing.car.power_bhp %} bhp{% endif %}</td></tr>
-            <tr><th>Peak Torque</th><td class="text-end">{{ listing.car.torque_nm|default:"—" }}{% if listing.car.torque_nm %} Nm{% endif %}</td></tr>
+            <tr><th>Engine Capacity</th><td class="text-end spec-val" data-key="engine_cc" data-unit="cc" data-metric="{{ listing.car.engine_cc|default:'' }}">{{ listing.car.engine_cc|default:'—' }}{% if listing.car.engine_cc %} cc{% endif %}</td></tr>
+            <tr><th>Maximum Power</th><td class="text-end spec-val" data-key="power_bhp" data-unit="bhp" data-metric="{{ listing.car.power_bhp|default:'' }}">{{ listing.car.power_bhp|default:'—' }}{% if listing.car.power_bhp %} bhp{% endif %}</td></tr>
+            <tr><th>Peak Torque</th><td class="text-end spec-val" data-key="torque_nm" data-unit="nm" data-metric="{{ listing.car.torque_nm|default:'' }}">{{ listing.car.torque_nm|default:'—' }}{% if listing.car.torque_nm %} Nm{% endif %}</td></tr>
             <tr><th>Fuel Delivery</th><td class="text-end">{{ listing.car.fuel_type|default:"—" }}</td></tr>
             <tr><th>Transmission</th><td class="text-end">{{ listing.car.transmission|default:"—" }}</td></tr>
             <tr><th>Body Configuration</th><td class="text-end">{{ listing.car.body_type|default:"—" }}</td></tr>
             <tr><th>Global NCAP Safety</th><td class="text-end">{{ listing.car.gncap_rating|default:"—" }}</td></tr>
-            <tr><th>Current Odometer</th><td class="text-end">{{ listing.mileage|default:"—" }}{% if listing.mileage %} km{% endif %}</td></tr>
+            <tr><th>Current Odometer</th><td class="text-end spec-val" data-key="mileage" data-unit="km" data-metric="{{ listing.mileage|default:'' }}">{{ listing.mileage|default:'—' }}{% if listing.mileage %} km{% endif %}</td></tr>
           </tbody>
         </table>
       </div>
@@ -514,6 +522,66 @@
     if (nextIndex < 0) nextIndex = thumbnails.length - 1;
     changeMainImage(thumbnails[nextIndex]);
   }
+
+  // Advanced Specs: unit toggles, search, copy
+  (function(){
+    const specTable = document.getElementById('specsTable');
+    const specSearch = document.getElementById('specSearch');
+    const unitMetric = document.getElementById('unitMetric');
+    const unitImperial = document.getElementById('unitImperial');
+    const copySpecs = document.getElementById('copySpecs');
+    const fmt = (x, suf) => (x === null || x === '' || isNaN(Number(x))) ? '—' : (Number(x).toLocaleString('en-IN', {maximumFractionDigits: 2}) + (suf ? ' ' + suf : ''));
+    const toImperial = (el) => {
+      const unit = el.dataset.unit;
+      const val = parseFloat(el.dataset.metric);
+      if (isNaN(val)) { el.textContent = '—'; return; }
+      if (unit === 'cc') { const L = val/1000; const CI = val*0.0610237; el.textContent = `${L.toFixed(2)} L • ${CI.toFixed(0)} cu in`; }
+      else if (unit === 'bhp') { const kW = val*0.7457; el.textContent = `${fmt(val, 'bhp')} • ${kW.toFixed(1)} kW`; }
+      else if (unit === 'nm') { const lbft = val*0.737562; el.textContent = `${fmt(val, 'Nm')} • ${lbft.toFixed(1)} lb·ft`; }
+      else if (unit === 'km') { const mi = val*0.621371; el.textContent = `${fmt(val, 'km')} • ${mi.toFixed(0)} mi`; }
+      else el.textContent = fmt(val, unit);
+    };
+    const toMetric = (el) => {
+      const unit = el.dataset.unit;
+      const val = parseFloat(el.dataset.metric);
+      if (isNaN(val)) { el.textContent = '—'; return; }
+      if (unit === 'cc') { el.textContent = `${fmt(val, 'cc')}`; }
+      else if (unit === 'bhp') { el.textContent = `${fmt(val, 'bhp')}`; }
+      else if (unit === 'nm') { el.textContent = `${fmt(val, 'Nm')}`; }
+      else if (unit === 'km') { el.textContent = `${fmt(val, 'km')}`; }
+      else el.textContent = fmt(val, unit);
+    };
+    const applyUnits = (mode) => {
+      const cells = specTable ? Array.from(specTable.querySelectorAll('.spec-val')) : [];
+      cells.forEach(el => mode === 'imperial' ? toImperial(el) : toMetric(el));
+      if (unitMetric && unitImperial) {
+        if (mode === 'imperial') { unitImperial.classList.add('btn-dark'); unitImperial.classList.remove('btn-outline-dark'); unitMetric.classList.remove('btn-dark'); unitMetric.classList.add('btn-outline-dark'); }
+        else { unitMetric.classList.add('btn-dark'); unitMetric.classList.remove('btn-outline-dark'); unitImperial.classList.remove('btn-dark'); unitImperial.classList.add('btn-outline-dark'); }
+      }
+    };
+    if (unitMetric && unitImperial) {
+      unitMetric.addEventListener('click', () => applyUnits('metric'));
+      unitImperial.addEventListener('click', () => applyUnits('imperial'));
+      applyUnits('metric');
+    }
+    if (specSearch && specTable) {
+      specSearch.addEventListener('input', () => {
+        const q = specSearch.value.trim().toLowerCase();
+        const rows = Array.from(specTable.querySelectorAll('tbody tr'));
+        rows.forEach(r => {
+          const txt = r.textContent.toLowerCase();
+          r.style.display = q && !txt.includes(q) ? 'none' : '';
+        });
+      });
+    }
+    if (copySpecs && specTable) {
+      copySpecs.addEventListener('click', async () => {
+        const rows = Array.from(specTable.querySelectorAll('tbody tr'));
+        const lines = rows.filter(r => r.style.display !== 'none').map(r => r.cells[0].textContent.trim() + ': ' + r.cells[1].textContent.trim());
+        try { await navigator.clipboard.writeText(lines.join('\n')); copySpecs.classList.add('btn-success'); setTimeout(() => copySpecs.classList.remove('btn-success'), 800); } catch (_) {}
+      });
+    }
+  })();
 
   // (Keep the rest of your original JS functions for Pano and Spin here)
 </script>
