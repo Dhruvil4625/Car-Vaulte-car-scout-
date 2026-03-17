@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Pricing Analytics | Vehicle Vault{% endblock %}
+{% block content %}
+<style>
+  .analytics-hero { padding: 70px 0 20px; }
+  .analytics-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,0.04); padding:20px; }
+  .control-row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  .chart-wrap { position:relative; height:420px; }
+</style>
+<section class="container analytics-hero">
+  <h1 class="fw-900">Market Price Intelligence</h1>
+  <p class="text-muted">Brand and model price trends for selected year. Available to buyers and sellers.</p>
+</section>
+<section class="container mb-5">
+  <div class="analytics-card">
+    <div class="control-row mb-3">
+      <div class="d-flex align-items-center gap-2">
+        <label class="fw-bold text-muted">Brand</label>
+        <select id="brandSelect" class="form-select" style="min-width:200px;">
+          <option value="">All</option>
+          {% for b in brands %}<option value="{{ b }}">{{ b }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <label class="fw-bold text-muted">Year</label>
+        <select id="yearSelect" class="form-select" style="min-width:140px;">
+          <option value="">All</option>
+          {% for y in years %}<option value="{{ y }}">{{ y }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="ms-auto d-flex align-items-center gap-2">
+        <span class="badge bg-dark">Market Avg: <span id="marketAvg">—</span></span>
+        <button class="btn btn-outline-dark btn-sm" id="refreshBtn"><i class="fa-solid fa-rotate me-1"></i> Refresh</button>
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="priceChart"></canvas>
+    </div>
+  </div>
+</section>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  async function fetchData() {
+    const brand = document.getElementById('brandSelect').value;
+    const year = document.getElementById('yearSelect').value;
+    const params = new URLSearchParams();
+    if (brand) params.append('brand', brand);
+    if (year) params.append('year', year);
+    const res = await fetch('{% url "price_chart_data" %}?'+params.toString(), { headers: {'X-Requested-With':'XMLHttpRequest'} });
+    return await res.json();
+  }
+  function renderChart(data) {
+    const ctx = document.getElementById('priceChart');
+    const labels = data.points.map(p => p.model);
+    const values = data.points.map(p => p.avg_price);
+    document.getElementById('marketAvg').textContent = new Intl.NumberFormat('en-IN', { style:'currency', currency:'INR', maximumFractionDigits:0 }).format(data.market_avg || 0);
+    if (!window.__chart) {
+      window.__chart = new Chart(ctx, {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'Avg Price', data: values, backgroundColor:'#0f172a' }] },
+        options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ ticks:{ callback: v => new Intl.NumberFormat('en-IN').format(v) } } } }
+      });
+    } else {
+      window.__chart.data.labels = labels;
+      window.__chart.data.datasets[0].data = values;
+      window.__chart.update();
+    }
+  }
+  async function refresh() { try { const d = await fetchData(); renderChart(d); } catch(e){} }
+  document.getElementById('refreshBtn').addEventListener('click', refresh);
+  document.getElementById('brandSelect').addEventListener('change', refresh);
+  document.getElementById('yearSelect').addEventListener('change', refresh);
+  refresh();
+</script>
+{% endblock %}
