@@ -138,20 +138,51 @@
             <button type="button" class="btn btn-dark btn-sm fw-bold" id="unitMetric">Metric</button>
             <button type="button" class="btn btn-outline-dark btn-sm fw-bold" id="unitImperial">Imperial</button>
           </div>
+          <a href="{% url 'listing_specs_pdf' listing.listing_id %}" target="_blank" class="btn btn-outline-secondary btn-sm fw-bold"><i class="fa-solid fa-file-pdf me-1"></i> Export PDF</a>
           <button type="button" class="btn btn-outline-secondary btn-sm fw-bold" id="copySpecs"><i class="fa-solid fa-copy me-1"></i> Copy</button>
         </div>
-        <table class="cd-table" id="specsTable">
-          <tbody>
-            <tr><th>Engine Capacity</th><td class="text-end spec-val" data-key="engine_cc" data-unit="cc" data-metric="{{ listing.car.engine_cc|default:'' }}">{{ listing.car.engine_cc|default:'—' }}{% if listing.car.engine_cc %} cc{% endif %}</td></tr>
-            <tr><th>Maximum Power</th><td class="text-end spec-val" data-key="power_bhp" data-unit="bhp" data-metric="{{ listing.car.power_bhp|default:'' }}">{{ listing.car.power_bhp|default:'—' }}{% if listing.car.power_bhp %} bhp{% endif %}</td></tr>
-            <tr><th>Peak Torque</th><td class="text-end spec-val" data-key="torque_nm" data-unit="nm" data-metric="{{ listing.car.torque_nm|default:'' }}">{{ listing.car.torque_nm|default:'—' }}{% if listing.car.torque_nm %} Nm{% endif %}</td></tr>
-            <tr><th>Fuel Delivery</th><td class="text-end">{{ listing.car.fuel_type|default:"—" }}</td></tr>
-            <tr><th>Transmission</th><td class="text-end">{{ listing.car.transmission|default:"—" }}</td></tr>
-            <tr><th>Body Configuration</th><td class="text-end">{{ listing.car.body_type|default:"—" }}</td></tr>
-            <tr><th>Global NCAP Safety</th><td class="text-end">{{ listing.car.gncap_rating|default:"—" }}</td></tr>
-            <tr><th>Current Odometer</th><td class="text-end spec-val" data-key="mileage" data-unit="km" data-metric="{{ listing.mileage|default:'' }}">{{ listing.mileage|default:'—' }}{% if listing.mileage %} km{% endif %}</td></tr>
-          </tbody>
-        </table>
+        <div class="btn-group btn-group-sm mb-3" role="group" id="specTabs">
+          <button type="button" class="btn btn-dark fw-bold" data-spec-target="specPerf">Performance</button>
+          <button type="button" class="btn btn-outline-dark fw-bold" data-spec-target="specDrive">Drivetrain</button>
+          <button type="button" class="btn btn-outline-dark fw-bold" data-spec-target="specDims">Dimensions</button>
+          <button type="button" class="btn btn-outline-dark fw-bold" data-spec-target="specSafe">Safety</button>
+        </div>
+        
+        <div id="specPerf" class="spec-pane">
+          <table class="cd-table" id="specsTablePerf">
+            <tbody>
+              <tr><th>Engine Capacity</th><td class="text-end spec-val" data-unit="cc" data-metric="{{ listing.car.engine_cc|default:'' }}">{{ listing.car.engine_cc|default:'—' }}{% if listing.car.engine_cc %} cc{% endif %}</td></tr>
+              <tr><th>Maximum Power</th><td class="text-end spec-val" data-unit="bhp" data-metric="{{ listing.car.power_bhp|default:'' }}">{{ listing.car.power_bhp|default:'—' }}{% if listing.car.power_bhp %} bhp{% endif %}</td></tr>
+              <tr><th>Peak Torque</th><td class="text-end spec-val" data-unit="nm" data-metric="{{ listing.car.torque_nm|default:'' }}">{{ listing.car.torque_nm|default:'—' }}{% if listing.car.torque_nm %} Nm{% endif %}</td></tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div id="specDrive" class="spec-pane" style="display:none;">
+          <table class="cd-table" id="specsTableDrive">
+            <tbody>
+              <tr><th>Fuel Delivery</th><td class="text-end">{{ listing.car.fuel_type|default:"—" }}</td></tr>
+              <tr><th>Transmission</th><td class="text-end">{{ listing.car.transmission|default:"—" }}</td></tr>
+              <tr><th>Current Odometer</th><td class="text-end spec-val" data-unit="km" data-metric="{{ listing.mileage|default:'' }}">{{ listing.mileage|default:'—' }}{% if listing.mileage %} km{% endif %}</td></tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div id="specDims" class="spec-pane" style="display:none;">
+          <table class="cd-table" id="specsTableDims">
+            <tbody>
+              <tr><th>Body Configuration</th><td class="text-end">{{ listing.car.body_type|default:"—" }}</td></tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div id="specSafe" class="spec-pane" style="display:none;">
+          <table class="cd-table" id="specsTableSafe">
+            <tbody>
+              <tr><th>Global NCAP Safety</th><td class="text-end">{{ listing.car.gncap_rating|default:"—" }}</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -581,6 +612,54 @@
         try { await navigator.clipboard.writeText(lines.join('\n')); copySpecs.classList.add('btn-success'); setTimeout(() => copySpecs.classList.remove('btn-success'), 800); } catch (_) {}
       });
     }
+  })();
+
+  // Specs grouped tabs + search binding
+  (function(){
+    const tabBar = document.getElementById('specTabs');
+    const panes = Array.from(document.querySelectorAll('.spec-pane'));
+    const specSearch = document.getElementById('specSearch');
+    const unitMetric = document.getElementById('unitMetric');
+    const unitImperial = document.getElementById('unitImperial');
+    let currentPane = panes[0] || null;
+    function showPane(id){
+      panes.forEach(p => p.style.display = (p.id === id) ? '' : 'none');
+      currentPane = document.getElementById(id);
+      if (tabBar){
+        tabBar.querySelectorAll('button').forEach(b => {
+          const tgt = b.getAttribute('data-spec-target');
+          b.classList.toggle('btn-dark', tgt === id);
+          b.classList.toggle('btn-outline-dark', tgt !== id);
+        });
+      }
+      // reapply unit mode to visible pane
+      const mode = unitImperial && unitImperial.classList.contains('btn-dark') ? 'imperial' : 'metric';
+      const cells = currentPane ? Array.from(currentPane.querySelectorAll('.spec-val')) : [];
+      cells.forEach(el => {
+        const ev = new Event('click');
+        if (mode === 'imperial') { unitImperial.dispatchEvent(ev); } else { unitMetric.dispatchEvent(ev); }
+      });
+      // reapply search to visible pane
+      filterRows();
+    }
+    function filterRows(){
+      if (!specSearch || !currentPane) return;
+      const q = specSearch.value.trim().toLowerCase();
+      const rows = Array.from(currentPane.querySelectorAll('tbody tr'));
+      rows.forEach(r => {
+        const txt = r.textContent.toLowerCase();
+        r.style.display = q && !txt.includes(q) ? 'none' : '';
+      });
+    }
+    if (tabBar){
+      tabBar.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => showPane(btn.getAttribute('data-spec-target')));
+      });
+    }
+    if (specSearch){
+      specSearch.addEventListener('input', filterRows);
+    }
+    showPane(panes[0] ? panes[0].id : 'specPerf');
   })();
 
   // (Keep the rest of your original JS functions for Pano and Spin here)
