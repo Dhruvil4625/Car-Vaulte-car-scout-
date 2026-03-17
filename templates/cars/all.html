@@ -10,345 +10,119 @@
     50% { transform: scale(1.05) translateX(-1%); }
     100% { transform: scale(1.0) translateX(0); }
   }
+  .reveal { opacity: 0; transform: translateY(30px); transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+  .reveal.active { opacity: 1; transform: translateY(0); }
 
   /* --- Inventory Hero Section --- */
   .inventory-hero {
-    position: relative;
-    padding: 80px 0 100px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    overflow: hidden;
+    position: relative; padding: 80px 0 100px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); overflow: hidden;
   }
-
   .inventory-hero::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    /* High-performance aggressive stance background */
+    content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
     background: url('https://images.unsplash.com/photo-1580273916550-e323be2ae537?q=80&w=1920&auto=format&fit=crop') center/cover no-repeat;
-    z-index: 1;
-    animation: cinematicPan 60s ease-in-out infinite;
-    will-change: transform;
+    z-index: 1; animation: cinematicPan 60s ease-in-out infinite; will-change: transform;
   }
-
   .inventory-hero::after {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: linear-gradient(135deg, rgba(2, 6, 23, 0.85) 0%, rgba(2, 6, 23, 0.98) 100%);
-    z-index: 2;
+    content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(15, 23, 42, 0.98) 100%); z-index: 2;
   }
-
-  .inventory-hero .container {
-    position: relative;
-    z-index: 3;
-    text-align: center;
-  }
-
-  .inventory-hero h1 {
-    font-size: 3rem;
-    font-weight: 800;
-    color: #ffffff;
-    margin-bottom: 10px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    text-shadow: 0 4px 15px rgba(0,0,0,0.5);
-  }
-
+  .inventory-hero .container { position: relative; z-index: 3; text-align: center; }
+  .inventory-hero h1 { font-size: 3rem; font-weight: 900; color: #ffffff; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 4px 15px rgba(0,0,0,0.5); }
   .inventory-hero h1 span { color: #e11d48; }
-
-  .inventory-hero p {
-    color: #cbd5e1;
-    font-size: 1.15rem;
-    margin: 0;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-  }
+  .inventory-hero p { color: #cbd5e1; font-size: 1.15rem; margin: 0; font-weight: 500; letter-spacing: 0.5px; }
 
   /* --- Layout & Spacing --- */
-  .inventory-wrapper {
-    margin-top: -60px;
-    position: relative;
-    z-index: 10;
-    padding-bottom: 80px;
-  }
+  .inventory-wrapper { margin-top: -60px; position: relative; z-index: 10; padding-bottom: 80px; }
 
   /* --- Premium Filter Sidebar --- */
   .filter-sidebar {
-    background: #ffffff;
-    border-radius: 16px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.04);
-    padding: 25px;
-    position: sticky;
-    top: 100px;
+    background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.04); padding: 25px; position: sticky; top: 100px;
   }
 
-  .filter-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid #f1f5f9;
+  /* Offcanvas styling for mobile filters */
+  @media (max-width: 991.98px) {
+    .filter-sidebar { border-radius: 0; box-shadow: none; border: none; top: 0; }
   }
 
-  .filter-header h5 {
-    font-size: 1.1rem;
-    font-weight: 800;
-    color: #0f172a;
-    margin: 0;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
+  .filter-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #f1f5f9; }
+  .filter-header h5 { font-size: 1.2rem; font-weight: 900; color: #0f172a; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; }
+  .filter-header i { color: #e11d48; }
+  
+  .btn-reset { color: #64748b; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; text-decoration: none; padding: 6px 12px; border-radius: 6px; background: #f1f5f9; transition: all 0.2s; }
+  .btn-reset:hover { background: #e2e8f0; color: #0f172a; }
 
-  .filter-header i {
-    color: #e11d48;
-  }
+  .filter-group { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px dashed #e2e8f0; }
+  .filter-group:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+  .filter-group h6 { font-size: 0.85rem; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
 
-  .filter-group {
-    margin-bottom: 20px;
-    padding-bottom: 20px;
-    border-bottom: 1px dashed #e2e8f0;
+  .filter-group .form-select {
+    background-color: #f8fafc; border: 2px solid #e2e8f0; color: #0f172a; border-radius: 8px;
+    padding: 10px 15px; font-size: 0.9rem; font-weight: 600; transition: all 0.3s ease; box-shadow: none; cursor: pointer;
   }
+  .filter-group .form-select:focus { background-color: #fff; border-color: #e11d48; box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.1); }
 
-  .filter-group:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-    margin-bottom: 0;
-  }
-
-  .filter-group h6 {
-    font-size: 0.85rem;
-    font-weight: 800;
-    color: #0f172a;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 12px;
-  }
-
-  /* Search Input */
-  .filter-group .form-control {
-    background-color: #f8fafc;
-    border: 1px solid #e2e8f0;
-    color: #0f172a;
-    border-radius: 8px;
-    padding: 10px 15px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    box-shadow: none;
-  }
-
-  .filter-group .form-control:focus {
-    background-color: #fff;
-    border-color: #e11d48;
-    box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.1);
-  }
-
-  /* Custom Checkboxes */
-  .custom-checkbox-label {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #475569;
-    cursor: pointer;
-    margin-bottom: 8px;
-    transition: color 0.2s ease;
-  }
-
-  .custom-checkbox-label:hover {
-    color: #0f172a;
-  }
-
-  .custom-checkbox-label input[type="checkbox"] {
-    accent-color: #e11d48;
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
-  }
+  /* Custom SaaS Checkboxes */
+  .custom-checkbox-container { display: block; position: relative; padding-left: 30px; margin-bottom: 12px; cursor: pointer; font-size: 0.9rem; font-weight: 600; color: #475569; user-select: none; transition: color 0.2s; }
+  .custom-checkbox-container:hover { color: #0f172a; }
+  .custom-checkbox-container input { position: absolute; opacity: 0; cursor: pointer; height: 0; width: 0; }
+  .checkmark { position: absolute; top: 0; left: 0; height: 20px; width: 20px; background-color: #f8fafc; border: 2px solid #cbd5e1; border-radius: 6px; transition: all 0.2s ease; }
+  .custom-checkbox-container:hover input ~ .checkmark { border-color: #e11d48; }
+  .custom-checkbox-container input:checked ~ .checkmark { background-color: #e11d48; border-color: #e11d48; box-shadow: 0 2px 8px rgba(225, 29, 72, 0.3); }
+  .checkmark:after { content: ""; position: absolute; display: none; left: 6px; top: 2px; width: 5px; height: 10px; border: solid white; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+  .custom-checkbox-container input:checked ~ .checkmark:after { display: block; }
 
   /* --- Modern Listing Cards --- */
   .modern-card {
-    background: #ffffff;
-    border-radius: 16px;
-    overflow: hidden;
-    border: 1px solid #e2e8f0;
-    transition: all 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    text-decoration: none;
-    height: 100%;
+    background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex; flex-direction: column; text-decoration: none; height: 100%; position: relative;
   }
+  .modern-card:hover { box-shadow: 0 25px 50px rgba(0,0,0,0.1); transform: translateY(-8px); border-color: #fca5a5; }
 
-  .modern-card:hover {
-    box-shadow: 0 20px 40px rgba(0,0,0,0.08);
-    transform: translateY(-5px);
-    border-color: rgba(225, 29, 72, 0.3);
-  }
+  .card-img-wrapper { position: relative; height: 220px; overflow: hidden; background: #0f172a; }
+  .card-img-wrapper img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s ease; }
+  .modern-card:hover .card-img-wrapper img { transform: scale(1.1); }
 
-  .card-img-wrapper {
-    position: relative;
-    height: 200px;
-    overflow: hidden;
-    background: #0f172a;
-  }
-  .ai-badge {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    padding: 6px 10px;
-    border-radius: 999px;
-    font-size: 0.7rem;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    color: #0f172a;
-  }
-  .ai-badge.good { background:#ecfdf5; color:#065f46; border-color:#bbf7d0; }
-  .ai-badge.fair { background:#eff6ff; color:#1e3a8a; border-color:#bfdbfe; }
-  .ai-badge.exp { background:#fef2f2; color:#991b1b; border-color:#fecaca; }
+  .ai-badge { position: absolute; top: 12px; left: 12px; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; z-index: 4; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+  .ai-badge.good { background:#ecfdf5; color:#065f46; border: 1px solid #bbf7d0; }
+  .ai-badge.fair { background:#eff6ff; color:#1e3a8a; border: 1px solid #bfdbfe; }
+  .ai-badge.exp { background:#fef2f2; color:#991b1b; border: 1px solid #fecaca; }
+
+  /* Dark Glassmorphism AI Overlay */
   .ai-overlay {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    padding: 10px 12px;
-    background: rgba(255,255,255,0.94);
-    backdrop-filter: blur(6px);
-    border-top: 1px solid #e2e8f0;
-    transform: translateY(8px);
-    opacity: 0;
-    transition: all .25s ease;
+    position: absolute; left: 0; right: 0; bottom: 0; padding: 20px 15px;
+    background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px);
+    border-top: 1px solid rgba(255,255,255,0.1); transform: translateY(100%);
+    opacity: 0; transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); z-index: 3;
   }
-  .modern-card:hover .ai-overlay {
-    transform: translateY(0);
-    opacity: 1;
-  }
-  .ai-title {
-    font-size: .8rem;
-    font-weight: 800;
-    color: #0f172a;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 6px;
-    text-transform: uppercase;
-    letter-spacing: .3px;
-  }
-  .ai-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 4px 0;
-    font-size: .75rem;
-  }
-  .ai-label {
-    width: 60px;
-    color: #475569;
-    font-weight: 700;
-  }
-  .ai-bar {
-    flex: 1;
-    height: 8px;
-    background: #e2e8f0;
-    border-radius: 8px;
-    overflow: hidden;
-    position: relative;
-  }
-  .ai-fill { height: 100%; background: #0f172a; border-radius: 8px; width: 0%; transition: width .4s ease; }
-  .ai-val { min-width: 80px; text-align: right; font-weight: 800; color: #0f172a; }
+  
+  .modern-card:hover .ai-overlay, .modern-card:focus .ai-overlay { transform: translateY(0); opacity: 1; }
 
-  .card-img-wrapper img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.6s ease;
+  /* Force partial visibility on touch devices */
+  @media (hover: none) and (pointer: coarse) {
+    .ai-overlay { transform: translateY(70%); opacity: 1; }
+    .ai-title::after { content: ' (Tap to expand)'; font-size: 0.65rem; font-weight: 500; color: #00d4ff; opacity: 0.8; }
   }
+  
+  .ai-title { font-size: 0.85rem; font-weight: 800; color: #00d4ff; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+  .ai-overview { font-size: 0.8rem; color: #cbd5e1; margin-bottom: 12px; line-height: 1.4; }
+  
+  .ai-row { display: flex; align-items: center; gap: 10px; margin: 6px 0; font-size: 0.75rem; }
+  .ai-label { width: 60px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .ai-bar { flex: 1; height: 6px; background: rgba(255,255,255,0.1); border-radius: 8px; overflow: hidden; position: relative; }
+  .ai-fill { height: 100%; border-radius: 8px; width: 0%; transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1); transition-delay: 0.1s; }
+  .modern-card:hover .ai-fill { width: var(--target-width); }
+  .ai-val { min-width: 80px; text-align: right; font-weight: 800; color: #ffffff; }
 
-  .modern-card:hover .card-img-wrapper img {
-    transform: scale(1.08);
-  }
+  .modern-card-body { padding: 20px; display: flex; flex-direction: column; flex-grow: 1; }
+  .car-title { font-size: 1.25rem; font-weight: 900; color: #0f172a; margin-bottom: 8px; line-height: 1.3; }
+  .car-meta-row { font-size: 0.85rem; color: #64748b; font-weight: 700; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .car-meta-row i { color: #94a3b8; }
+  
+  .car-price { font-size: 1.5rem; font-weight: 900; color: #e11d48; margin-top: auto; padding-top: 15px; border-top: 1px dashed #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+  .car-price span { font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
 
-  .modern-card-body {
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-  }
-
-  .car-title {
-    font-size: 1.15rem;
-    font-weight: 800;
-    color: #0f172a;
-    margin-bottom: 8px;
-    line-height: 1.3;
-  }
-
-  .car-meta-row {
-    font-size: 0.85rem;
-    color: #64748b;
-    font-weight: 600;
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-
-  .car-price {
-    font-size: 1.35rem;
-    font-weight: 900;
-    color: #e11d48;
-    margin-top: auto;
-    padding-top: 15px;
-    border-top: 1px dashed #e2e8f0;
-  }
-  .ai-stats {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    margin-top: 12px;
-  }
-  .ai-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 0.8rem;
-    color: #0f172a;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 8px 10px;
-    font-weight: 700;
-  }
-  .ai-item i {
-    color: #64748b;
-    margin-right: 6px;
-  }
-  .ai-item span {
-    color: #0f172a;
-    font-weight: 800;
-  }
-
-  /* --- Empty State --- */
-  .empty-state {
-    grid-column: 1 / -1;
-    background: #ffffff;
-    border: 2px dashed #cbd5e1;
-    border-radius: 16px;
-    padding: 80px 20px;
-    text-align: center;
-    color: #64748b;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.02);
-  }
-
-  .empty-state i {
-    color: #e2e8f0;
-  }
+  .empty-state { grid-column: 1 / -1; background: #ffffff; border: 2px dashed #cbd5e1; border-radius: 16px; padding: 80px 20px; text-align: center; color: #64748b; box-shadow: 0 10px 30px rgba(0,0,0,0.02); }
 </style>
 
 <section class="inventory-hero reveal">
@@ -359,19 +133,29 @@
 </section>
 
 <section class="container inventory-wrapper">
+  
+  <div class="d-lg-none mb-4 d-flex justify-content-end reveal">
+    <button class="btn btn-dark fw-bold rounded-pill shadow-sm px-4" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileFilters">
+      <i class="fa-solid fa-sliders me-2"></i> Filters
+    </button>
+  </div>
+
   <div class="row g-4">
     
-    <aside class="col-lg-3 d-none d-lg-block">
+    <aside class="col-lg-3 offcanvas-lg offcanvas-start" tabindex="-1" id="mobileFilters">
       <form id="filterForm" class="filter-sidebar reveal" style="transition-delay: 0.1s;" method="get">
         
-        <div class="filter-header">
+        <div class="filter-header mt-3 mt-lg-0">
           <h5><i class="fa-solid fa-sliders me-2"></i> Filters</h5>
-          <a href="{% url 'cars' %}" class="text-muted" style="font-size: 0.8rem; text-decoration: none; font-weight: 600;"><i class="fa-solid fa-rotate-right me-1"></i> Reset</a>
+          <div>
+            <a href="{% url 'cars' %}" class="btn-reset"><i class="fa-solid fa-rotate-right me-1"></i> Reset</a>
+            <button type="button" class="btn-close d-lg-none ms-2" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+          </div>
         </div>
 
         <div class="filter-group">
           <h6>Brand</h6>
-          <select name="brand" class="form-select mb-2" onchange="this.form.submit()">
+          <select name="brand" class="form-select mb-2">
             <option value="">All Brands</option>
             {% for m in all_makes %}
             <option value="{{ m }}" {% if brand == m %}selected{% endif %}>{{ m }}</option>
@@ -381,7 +165,7 @@
 
         <div class="filter-group">
           <h6>Model Name</h6>
-          <select name="model" class="form-select mb-2" onchange="this.form.submit()" {% if not brand %}disabled{% endif %}>
+          <select name="model" class="form-select mb-2" {% if not brand %}disabled{% endif %}>
             <option value="">All Models</option>
             {% for m in all_models %}
             <option value="{{ m }}" {% if model == m %}selected{% endif %}>{{ m }}</option>
@@ -391,7 +175,7 @@
 
         <div class="filter-group">
           <h6>Model Year</h6>
-          <select name="year" class="form-select mb-2" onchange="this.form.submit()">
+          <select name="year" class="form-select mb-2">
             <option value="">All Years</option>
             {% for y in all_years %}
             <option value="{{ y }}" {% if year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
@@ -402,8 +186,9 @@
         <div class="filter-group">
           <h6>Price Range</h6>
           {% for p in price_options %}
-          <label class="custom-checkbox-label">
+          <label class="custom-checkbox-container">
             <input type="checkbox" name="price" value="{{ p }}" {% if p in price_selected %}checked{% endif %}>
+            <span class="checkmark"></span>
             {% if p == '0-500000' %}Under ₹5 Lakh
             {% elif p == '500000-1500000' %}₹5 Lakh – ₹15 Lakh
             {% elif p == '1500000+' %}Above ₹15 Lakh
@@ -415,8 +200,9 @@
         <div class="filter-group">
           <h6>Fuel Type</h6>
           {% for f in fuel_options %}
-          <label class="custom-checkbox-label">
-            <input type="checkbox" name="fuel" value="{{ f }}" {% if f in fuels_selected %}checked{% endif %}> {{ f }}
+          <label class="custom-checkbox-container">
+            <input type="checkbox" name="fuel" value="{{ f }}" {% if f in fuels_selected %}checked{% endif %}>
+            <span class="checkmark"></span> {{ f }}
           </label>
           {% endfor %}
         </div>
@@ -424,26 +210,9 @@
         <div class="filter-group">
           <h6>Body Style</h6>
           {% for b in body_options %}
-          <label class="custom-checkbox-label">
-            <input type="checkbox" name="body" value="{{ b }}" {% if b in bodies_selected %}checked{% endif %}> {{ b }}
-          </label>
-          {% endfor %}
-        </div>
-
-        <div class="filter-group">
-          <h6>Transmission</h6>
-          {% for t in trans_options %}
-          <label class="custom-checkbox-label">
-            <input type="checkbox" name="trans" value="{{ t }}" {% if t in trans_selected %}checked{% endif %}> {{ t }}
-          </label>
-          {% endfor %}
-        </div>
-
-        <div class="filter-group">
-          <h6>Category</h6>
-          {% for c in category_options %}
-          <label class="custom-checkbox-label">
-            <input type="checkbox" name="category" value="{{ c }}" {% if c in cats_selected %}checked{% endif %}> {{ c }}
+          <label class="custom-checkbox-container">
+            <input type="checkbox" name="body" value="{{ b }}" {% if b in bodies_selected %}checked{% endif %}>
+            <span class="checkmark"></span> {{ b }}
           </label>
           {% endfor %}
         </div>
@@ -458,71 +227,51 @@
           <a href="{% url 'listing_detail' l.listing_id %}" class="modern-card reveal" style="transition-delay: 0.{{ forloop.counter0|add:2 }}s;">
             <div class="card-img-wrapper">
               <img loading="lazy" src="{% listing_main_image l '600x400' %}" alt="{{ l.car.make }} {{ l.car.model }}" onerror="this.onerror=null;this.src='{% static 'img/placeholder.svg' %}';">
+              
               {% if l.ai_deal_label %}
               <div class="ai-badge {% if l.ai_deal_label == 'Good Deal' %}good{% elif l.ai_deal_label == 'Fair Price' %}fair{% elif l.ai_deal_label == 'Expensive' %}exp{% endif %}">
                 {{ l.ai_deal_label }}
               </div>
               {% endif %}
+              
               <div class="ai-overlay">
-                <div class="ai-title"><i class="fa-solid fa-chart-line"></i> AI Insights</div>
+                <div class="ai-title"><i class="fa-solid fa-microchip"></i> AI Market Insights</div>
                 <div class="ai-overview">
                   {% if l.car.expert_overview %}
-                    {{ l.car.expert_overview|striptags|truncatechars:120 }}
+                    {{ l.car.expert_overview|striptags|truncatewords:15 }}
                   {% elif l.description %}
-                    {{ l.description|striptags|truncatechars:120 }}
+                    {{ l.description|striptags|truncatewords:15 }}
                   {% else %}
-                    Compact, city-friendly design with practical space and efficiency.
+                    Intelligent analysis indicates strong market demand and efficiency.
                   {% endif %}
                 </div>
-                <div class="ai-graph ai-bars"
-                     data-market="{{ l.ai_market|default:0 }}"
-                     data-tax="{{ l.ai_tax|default:0 }}"
-                     data-ins="{{ l.ai_ins|default:0 }}"
-                     data-duty="{{ l.ai_duty|default:0 }}">
-                  <div class="ai-row bar-market">
-                    <div class="ai-label">Market</div>
-                    <div class="ai-bar"><div class="ai-fill"></div></div>
-                    <div class="ai-val">{{ l.ai_market|inr }}</div>
-                  </div>
-                  <div class="ai-row bar-tax">
-                    <div class="ai-label">Tax</div>
-                    <div class="ai-bar"><div class="ai-fill" style="background:#e11d48;"></div></div>
-                    <div class="ai-val">{{ l.ai_tax|inr }}</div>
-                  </div>
-                  <div class="ai-row bar-ins">
-                    <div class="ai-label">Ins</div>
-                    <div class="ai-bar"><div class="ai-fill" style="background:#22c55e;"></div></div>
-                    <div class="ai-val">{{ l.ai_ins|inr }}</div>
-                  </div>
-                  <div class="ai-row bar-duty">
-                    <div class="ai-label">Duty</div>
-                    <div class="ai-bar"><div class="ai-fill" style="background:#3b82f6;"></div></div>
-                    <div class="ai-val">{{ l.ai_duty|inr }}</div>
-                  </div>
-                  <div class="ai-row">
-                    <div class="ai-label">Total</div>
-                    <div class="ai-bar"><div class="ai-fill" style="background:#64748b;width:100%"></div></div>
-                    <div class="ai-val">{{ l.ai_total|inr }}</div>
-                  </div>
+                
+                <div class="ai-graph ai-bars" data-market="{{ l.ai_market|default:0 }}" data-tax="{{ l.ai_tax|default:0 }}" data-ins="{{ l.ai_ins|default:0 }}" data-duty="{{ l.ai_duty|default:0 }}">
+                  <div class="ai-row bar-market"><div class="ai-label">Market</div><div class="ai-bar"><div class="ai-fill" style="background:#00d4ff;"></div></div><div class="ai-val">{{ l.ai_market|inr }}</div></div>
+                  <div class="ai-row bar-tax"><div class="ai-label">Tax</div><div class="ai-bar"><div class="ai-fill" style="background:#e11d48;"></div></div><div class="ai-val">{{ l.ai_tax|inr }}</div></div>
+                  <div class="ai-row bar-ins"><div class="ai-label">Ins.</div><div class="ai-bar"><div class="ai-fill" style="background:#22c55e;"></div></div><div class="ai-val">{{ l.ai_ins|inr }}</div></div>
+                  <div class="ai-row"><div class="ai-label text-white">Total</div><div class="ai-bar"><div class="ai-fill" style="--target-width: 100%; background:#fde047;"></div></div><div class="ai-val" style="color: #fde047;">{{ l.ai_total|inr }}</div></div>
                 </div>
               </div>
             </div>
+            
             <div class="modern-card-body">
               <div class="car-title">{{ l.car.make }} {{ l.car.model }}</div>
               <div class="car-meta-row">
-                <span><i class="fa-regular fa-calendar me-1"></i> {{ l.car.year }}</span> • 
-                <span><i class="fa-solid fa-gas-pump me-1"></i> {{ l.car.fuel_type|default:'—' }}</span> • 
-                <span><i class="fa-solid fa-gears me-1"></i> {{ l.car.transmission|default:'—' }}</span>
+                <span><i class="fa-regular fa-calendar"></i> {{ l.car.year }}</span> • 
+                <span><i class="fa-solid fa-gas-pump"></i> {{ l.car.fuel_type|default:'—' }}</span> • 
+                <span><i class="fa-solid fa-gears"></i> {{ l.car.transmission|default:'—' }}</span>
               </div>
-              <div class="car-price">{{ l.price|inr }}</div>
+              <div class="car-price"><span>Ask Price</span> {{ l.price|inr }}</div>
             </div>
           </a>
         </div>
         {% empty %}
         <div class="empty-state reveal" style="transition-delay: 0.2s;">
-          <i class="fa-solid fa-car-burst fs-1 mb-4 d-block" style="font-size: 4rem;"></i>
+          <i class="fa-solid fa-car-tunnel fs-1 mb-4 d-block" style="font-size: 4.5rem;"></i>
           <h3 class="text-dark fw-bold mb-3">No Vehicles Found</h3>
-          <p class="mb-0 fs-5">We couldn't find any cars matching your specific filter criteria. Try adjusting your search.</p>
+          <p class="mb-4 fs-5">We couldn't find any cars matching your specific filter criteria.</p>
+          <a href="{% url 'cars' %}" class="btn btn-dark fw-bold px-4 py-2 rounded-pill">Reset Filters</a>
         </div>
         {% endfor %}
       </div>
@@ -532,33 +281,38 @@
 </section>
 
 <script>
-  // Auto-submit form when a checkbox or input changes
   document.addEventListener('DOMContentLoaded', () => {
+    // --- Scroll Reveals ---
+    const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if(entry.isIntersecting) entry.target.classList.add('active'); }); }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(reveal => observer.observe(reveal));
+
+    // --- Filter Form Auto-Submit ---
     const filterForm = document.getElementById('filterForm');
     if(filterForm){
       filterForm.addEventListener('change', () => {
-        // Add a slight delay to allow the user to see the box checked before page reloads
-        setTimeout(() => {
-          filterForm.submit();
-        }, 150);
+        // Triggers the submit when ANY checkbox or select menu changes
+        filterForm.submit(); 
       });
     }
+
+    // --- Dynamic AI Bar Graph Animation Setup ---
     document.querySelectorAll('.ai-bars').forEach(el => {
       const m = Number(el.dataset.market || 0);
       const t = Number(el.dataset.tax || 0);
       const i = Number(el.dataset.ins || 0);
       const d = Number(el.dataset.duty || 0);
       const max = Math.max(m, t, i, d, 1);
-      const setW = (cls, val) => {
-        const row = el.querySelector(cls + ' .ai-fill');
-        if (row) row.style.width = Math.min(100, Math.round((val / max) * 100)) + '%';
+      
+      const setTarget = (cls, val) => {
+        const fill = el.querySelector(cls + ' .ai-fill');
+        if (fill) fill.style.setProperty('--target-width', Math.min(100, Math.round((val / max) * 100)) + '%');
       };
-      setW('.bar-market', m);
-      setW('.bar-tax', t);
-      setW('.bar-ins', i);
-      setW('.bar-duty', d);
+      
+      setTarget('.bar-market', m);
+      setTarget('.bar-tax', t);
+      setTarget('.bar-ins', i);
+      setTarget('.bar-duty', d);
     });
   });
 </script>
-
 {% endblock %}
