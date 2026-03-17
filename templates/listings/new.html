@@ -333,6 +333,11 @@
         <label class="form-label d-block text-dark fw-bold mb-1">3D Model (GLB/GLTF)</label>
         <small class="text-muted d-block mb-2">Optional: Upload a glTF/GLB model for interactive 3D view.</small>
         <input type="file" name="asset_3d" accept=".glb,.gltf,model/*" class="form-control">
+        <div class="mt-3">
+          <label class="form-label d-block text-dark fw-bold mb-1">Or paste a Sketchfab model URL <span class="badge bg-secondary ms-1" style="font-size:.65rem;">FREE</span></label>
+          <small class="text-muted d-block mb-2">e.g. <code>https://sketchfab.com/3d-models/volvo-xc40-affc79b0ef594f5ebaba3a8d1c4e9b1e</code></small>
+          <input type="url" name="sketchfab_url" class="form-control" placeholder="https://sketchfab.com/3d-models/...">
+        </div>
       </div>
       
       <div class="action-buttons">
