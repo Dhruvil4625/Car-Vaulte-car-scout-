@@ -234,19 +234,33 @@
       </div>
       
       <div class="col-sm-6 col-md-3">
-        <label>Brand / Make</label>
-        <div class="input-group">
-          <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-car-side text-muted"></i></span>
-          <input class="form-control border-start-0 ps-0" type="text" name="brand" value="{{ brand }}" placeholder="e.g., Honda">
-        </div>
+        <label>Brand</label>
+        <select class="form-select" name="brand" onchange="this.form.submit()">
+          <option value="">Any Brand</option>
+          {% for m in all_makes %}
+          <option value="{{ m }}" {% if brand == m %}selected{% endif %}>{{ m }}</option>
+          {% endfor %}
+        </select>
       </div>
       
       <div class="col-sm-6 col-md-3">
         <label>Model</label>
-        <div class="input-group">
-          <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-steering-wheel text-muted"></i></span>
-          <input class="form-control border-start-0 ps-0" type="text" name="model" value="{{ model }}" placeholder="e.g., Civic">
-        </div>
+        <select class="form-select" name="model" onchange="this.form.submit()" {% if not brand %}disabled{% endif %}>
+          <option value="">Any Model</option>
+          {% for m in all_models %}
+          <option value="{{ m }}" {% if model == m %}selected{% endif %}>{{ m }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-sm-6 col-md-3">
+        <label>Model Year</label>
+        <select class="form-select" name="year" onchange="this.form.submit()">
+          <option value="">Any Year</option>
+          {% for y in all_years %}
+          <option value="{{ y }}" {% if year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
       </div>
       
       <div class="col-sm-6 col-md-3">
