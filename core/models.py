@@ -198,10 +198,11 @@ class CarListingAsset(models.Model):
         THREE_D = '3D_MODEL', '3D Model'
         PANORAMA_EXTERIOR = 'PANORAMA_EXTERIOR', 'Exterior Panorama'
         PANORAMA_INTERIOR = 'PANORAMA_INTERIOR', 'Interior Panorama'
+        SKETCHFAB = 'SKETCHFAB', 'Sketchfab Embed'
         OTHER = 'OTHER', 'Other'
 
     listing = models.ForeignKey(CarListing, on_delete=models.CASCADE, related_name='assets')
-    asset = models.FileField(upload_to='listing_assets/')
+    asset = models.FileField(upload_to='listing_assets/', blank=True, null=True)
     kind = models.CharField(max_length=32, choices=Kind.choices, default=Kind.OTHER)
     label = models.CharField(max_length=120, blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
