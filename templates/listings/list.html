@@ -412,37 +412,57 @@
 
 <div class="search-widget-container">
   <div class="search-widget reveal" style="transition-delay: 0.1s;">
-    <form method="get" class="row g-3 align-items-end">
+    <form method="get" class="row g-2 align-items-end">
       
-      <div class="col-sm-6 col-md-3">
-        <label>Budget Range</label>
-        <select class="form-select" name="budget">
+      <div class="col-md-2">
+        <label>Budget</label>
+        <select class="form-select" name="budget" style="padding: 10px 12px; font-size: 0.85rem;">
           <option value="">Any Budget</option>
-          <option value="0-500000" {% if budget == '0-500000' %}selected{% endif %}>Under ₹ 5 Lakh</option>
-          <option value="500000-1000000" {% if budget == '500000-1000000' %}selected{% endif %}>₹ 5–10 Lakh</option>
-          <option value="1000000-1500000" {% if budget == '1000000-1500000' %}selected{% endif %}>₹ 10–15 Lakh</option>
-          <option value="1500000-2000000" {% if budget == '1500000-2000000' %}selected{% endif %}>₹ 15–20 Lakh</option>
-          <option value="2000000-3500000" {% if budget == '2000000-3500000' %}selected{% endif %}>₹ 20–35 Lakh</option>
-          <option value="3500000-5000000" {% if budget == '3500000-5000000' %}selected{% endif %}>₹ 35–50 Lakh</option>
-          <option value="5000000-10000000" {% if budget == '5000000-10000000' %}selected{% endif %}>₹ 50 Lakh–1 Cr</option>
+          <option value="0-500000" {% if budget == '0-500000' %}selected{% endif %}>Under ₹ 5L</option>
+          <option value="500000-1000000" {% if budget == '500000-1000000' %}selected{% endif %}>₹ 5–10L</option>
+          <option value="1000000-1500000" {% if budget == '1000000-1500000' %}selected{% endif %}>₹ 10–15L</option>
+          <option value="1500000-2000000" {% if budget == '1500000-2000000' %}selected{% endif %}>₹ 15–20L</option>
+          <option value="2000000-3500000" {% if budget == '2000000-3500000' %}selected{% endif %}>₹ 20–35L</option>
+          <option value="3500000-5000000" {% if budget == '3500000-5000000' %}selected{% endif %}>₹ 35–50L</option>
+          <option value="5000000-10000000" {% if budget == '5000000-10000000' %}selected{% endif %}>₹ 50L–1 Cr</option>
           <option value="10000000-999000000" {% if budget == '10000000-999000000' %}selected{% endif %}>Above ₹ 1 Cr</option>
         </select>
       </div>
       
-      <div class="col-sm-6 col-md-2">
+      <div class="col-md-2">
         <label>Brand</label>
-        <input class="form-control" type="text" name="brand" value="{{ brand }}" placeholder="e.g., BMW">
+        <select class="form-select" name="brand" onchange="this.form.submit()" style="padding: 10px 12px; font-size: 0.85rem;">
+          <option value="">Any Brand</option>
+          {% for m in all_makes %}
+          <option value="{{ m }}" {% if brand == m %}selected{% endif %}>{{ m }}</option>
+          {% endfor %}
+        </select>
       </div>
       
-      <div class="col-sm-6 col-md-2">
+      <div class="col-md-2">
         <label>Model</label>
-        <input class="form-control" type="text" name="model" value="{{ model }}" placeholder="e.g., X5">
+        <select class="form-select" name="model" onchange="this.form.submit()" {% if not brand %}disabled{% endif %} style="padding: 10px 12px; font-size: 0.85rem;">
+          <option value="">Any Model</option>
+          {% for m in all_models %}
+          <option value="{{ m }}" {% if model == m %}selected{% endif %}>{{ m }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <label>Year</label>
+        <select class="form-select" name="year" onchange="this.form.submit()" style="padding: 10px 12px; font-size: 0.85rem;">
+          <option value="">Any Year</option>
+          {% for y in all_years %}
+          <option value="{{ y }}" {% if year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
       </div>
       
-      <div class="col-sm-6 col-md-2">
-        <label>Fuel Type</label>
-        <select class="form-select" name="fuel">
-          <option value="">All Types</option>
+      <div class="col-md-2">
+        <label>Fuel</label>
+        <select class="form-select" name="fuel" onchange="this.form.submit()" style="padding: 10px 12px; font-size: 0.85rem;">
+          <option value="">All Fuel</option>
           <option value="Petrol" {% if fuel == 'Petrol' %}selected{% endif %}>Petrol</option>
           <option value="Diesel" {% if fuel == 'Diesel' %}selected{% endif %}>Diesel</option>
           <option value="Electric" {% if fuel == 'Electric' %}selected{% endif %}>Electric</option>
@@ -451,10 +471,10 @@
         </select>
       </div>
       
-      <div class="col-sm-12 col-md-3 d-grid gap-2">
-        <button class="btn-search-custom" type="submit"><i class="fa-solid fa-filter me-2"></i> Apply Filters</button>
+      <div class="col-md-2 d-grid gap-2">
+        <button class="btn-search-custom" type="submit" style="padding: 10px; font-size: 0.8rem; height: 42px;"><i class="fa-solid fa-filter"></i> Filter</button>
         {% if request.user.is_authenticated and request.user.role == 'Buyer' %}
-        <button type="button" id="saveSearchBtn" class="btn btn-outline-dark fw-bold" style="border-radius:10px;"><i class="fa-regular fa-bookmark me-1"></i> Save This Search</button>
+        <button type="button" id="saveSearchBtn" class="btn btn-outline-dark fw-bold" style="border-radius:10px; font-size: 0.7rem; padding: 5px;"><i class="fa-regular fa-bookmark"></i> Save</button>
         {% endif %}
       </div>
 
@@ -482,11 +502,7 @@
         <article class="modern-card reveal" style="transition-delay: 0.{{ forloop.counter0|add:2 }}s;">
           
           <div class="card-img-wrapper" id="img-wrapper-{{ lst.listing_id }}">
-            {% if lst.images.all %}
-              <img loading="lazy" class="main-card-img" id="main-img-{{ lst.listing_id }}" src="{{ lst.images.all.0.image.url }}" alt="{{ lst.images.all.0.alt|default:lst.car.make }}" onerror="this.src='{% static 'img/placeholder.svg' %}'">
-            {% else %}
-              <img loading="lazy" class="main-card-img" id="main-img-{{ lst.listing_id }}" src="{% car_image lst.car.make lst.car.model '600x400' %}" alt="{{ lst.car.make }} {{ lst.car.model }}" onerror="this.src='{% static 'img/placeholder.svg' %}'">
-            {% endif %}
+            <img loading="lazy" class="main-card-img" id="main-img-{{ lst.listing_id }}" src="{% listing_main_image lst '600x400' %}" alt="{{ lst.car.make }} {{ lst.car.model }}" onerror="this.onerror=null;this.src='{% static 'img/placeholder.svg' %}';">
             
             {% if lst.ai_deal_label %}
             <div class="ai-badge {% if lst.ai_deal_label == 'Good Deal' %}good{% elif lst.ai_deal_label == 'Fair Price' %}fair{% elif lst.ai_deal_label == 'Expensive' %}exp{% endif %}">
@@ -498,12 +514,12 @@
           <div class="card-thumbnails">
             {% if lst.images.all %}
               {% for img in lst.images.all|slice:":4" %}
-                <img loading="lazy" src="{{ img.image.url }}" alt="{{ img.alt }}" onmouseover="document.getElementById('main-img-{{ lst.listing_id }}').src=this.src;" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+                <img loading="lazy" src="{{ img.image.url }}" alt="{{ img.alt }}" onmouseover="document.getElementById('main-img-{{ lst.listing_id }}').src=this.src;" onerror="if(!this.dataset.fbk){this.dataset.fbk='1';this.src='{% car_image lst.car.make lst.car.model '300x200' %}';}else{this.onerror=null;this.src='{% static 'img/placeholder.svg' %}';}">
               {% endfor %}
             {% else %}
               {% car_gallery lst.car.make lst.car.model '300x200' 4 as thumbs %}
               {% for t in thumbs %}
-                <img loading="lazy" src="{{ t }}" alt="{{ lst.car.make }} {{ lst.car.model }} image {{ forloop.counter }}" onmouseover="document.getElementById('main-img-{{ lst.listing_id }}').src=this.src;" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+                <img loading="lazy" src="{{ t }}" alt="{{ lst.car.make }} {{ lst.car.model }} image {{ forloop.counter }}" onmouseover="document.getElementById('main-img-{{ lst.listing_id }}').src=this.src;" onerror="this.onerror=null;this.src='{% static 'img/placeholder.svg' %}';">
               {% endfor %}
             {% endif %}
           </div>
