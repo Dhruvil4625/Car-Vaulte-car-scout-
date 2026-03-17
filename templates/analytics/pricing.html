@@ -1,65 +1,323 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block title %}Pricing Analytics | Vehicle Vault{% endblock %}
+{% block head_extra %}
+<meta name="description" content="AI-powered vehicle pricing analytics with trends, distribution, and regional insights.">
+<meta name="robots" content="index,follow">
+<meta property="og:title" content="Pricing Analytics | Vehicle Vault">
+<meta property="og:description" content="Explore market price intelligence with interactive charts, filters, and exportable data.">
+<meta property="og:type" content="website">
+{% endblock %}
+
 {% block content %}
 <style>
-  .analytics-hero { padding: 70px 0 20px; }
-  .analytics-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,0.04); padding:20px; }
-  .control-row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
-  .chart-wrap { position:relative; height:420px; }
+  /* --- Ultra-Smooth Cinematic Pan --- */
+  @keyframes cinematicPan { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+  
+  .reveal { opacity: 0; transform: translateY(30px); transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+  .reveal.active { opacity: 1; transform: translateY(0); }
+
+  /* --- Analytics Hero Section --- */
+  .analytics-hero {
+    position: relative; padding: 90px 0 120px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); overflow: hidden; text-align: center;
+  }
+  .analytics-hero::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    z-index: 1; animation: cinematicPan 60s ease-in-out infinite; transform: scale(1.1);
+  }
+  .analytics-hero::after {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.7) 0%, rgba(15, 23, 42, 0.95) 100%); z-index: 2;
+  }
+  .analytics-hero .container { position: relative; z-index: 3; }
+  .analytics-hero h1 { font-size: 3.5rem; font-weight: 900; color: #ffffff; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 4px 20px rgba(0,0,0,0.6); }
+  .analytics-hero p { color: #00d4ff; font-size: 1.15rem; margin: 0; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
+
+  /* --- Layout & Spacing --- */
+  .analytics-wrapper { margin-top: -60px; position: relative; z-index: 10; padding-bottom: 80px; }
+
+  /* --- Premium Dashboard Cards --- */
+  .dashboard-card {
+    background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.04); padding: 30px; margin-bottom: 25px;
+    position: relative; overflow: hidden;
+  }
+
+  /* --- KPI Summary Widgets --- */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-bottom: 25px; }
+  .kpi-card {
+    background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03); padding: 25px;
+    display: flex; align-items: center; justify-content: space-between;
+    transition: all 0.3s ease; border-left: 4px solid #0f172a;
+  }
+  .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.06); }
+  .kpi-card.red-accent { border-left-color: #e11d48; }
+  .kpi-card.cyan-accent { border-left-color: #00d4ff; }
+  
+  .kpi-info h6 { font-size: 0.85rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+  .kpi-info h2 { font-size: 2.2rem; font-weight: 900; color: #0f172a; margin: 0; letter-spacing: -1px; }
+  .kpi-icon { width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; }
+  .kpi-icon.red-bg { background: #fff1f2; color: #e11d48; }
+  .kpi-icon.cyan-bg { background: #e0f2fe; color: #00d4ff; }
+
+  /* --- Filter Toolbar --- */
+  .filter-toolbar {
+    background: #f8fafc; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0;
+    display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; margin-bottom: 30px;
+  }
+  .filter-item { flex: 1; min-width: 200px; }
+  .filter-item label { font-size: 0.75rem; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block; }
+  .filter-toolbar .form-select {
+    background-color: #ffffff; border: 2px solid #cbd5e1; color: #0f172a; border-radius: 8px;
+    padding: 12px 15px; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.3s;
+  }
+  .filter-toolbar .form-select:focus { border-color: #e11d48; box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.1); }
+  
+  .btn-refresh {
+    background: #0f172a; color: #ffffff; font-weight: 800; border-radius: 8px; border: none;
+    padding: 12px 25px; transition: all 0.3s; height: 50px; display: flex; align-items: center; gap: 8px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .btn-refresh:hover { background: #e11d48; color: #ffffff; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(225, 29, 72, 0.3); }
+
+  /* --- Chart Container --- */
+  .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #f1f5f9; }
+  .chart-header h3 { font-size: 1.3rem; font-weight: 900; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 10px; text-transform: uppercase; }
+  .chart-header h3 i { color: #e11d48; font-size: 1.1rem; background: rgba(225, 29, 72, 0.1); padding: 10px; border-radius: 10px; }
+  
+  .chart-wrap { position: relative; height: 450px; width: 100%; }
+  
+  /* Loading Overlay */
+  .chart-loading {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(4px);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 10; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    border-radius: 12px;
+  }
+  .chart-loading.active { opacity: 1; pointer-events: all; }
+  .spinner { width: 40px; height: 40px; border: 4px solid #f1f5f9; border-top: 4px solid #e11d48; border-radius: 50%; animation: spin 1s linear infinite; }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
 </style>
-<section class="container analytics-hero">
-  <h1 class="fw-900">Market Price Intelligence</h1>
-  <p class="text-muted">Brand and model price trends for selected year. Available to buyers and sellers.</p>
-</section>
-<section class="container mb-5">
-  <div class="analytics-card">
-    <div class="control-row mb-3">
-      <div class="d-flex align-items-center gap-2">
-        <label class="fw-bold text-muted">Brand</label>
-        <select id="brandSelect" class="form-select" style="min-width:200px;">
-          <option value="">All</option>
-          {% for b in brands %}<option value="{{ b }}">{{ b }}</option>{% endfor %}
-        </select>
-      </div>
-      <div class="d-flex align-items-center gap-2">
-        <label class="fw-bold text-muted">Year</label>
-        <select id="yearSelect" class="form-select" style="min-width:140px;">
-          <option value="">All</option>
-          {% for y in years %}<option value="{{ y }}">{{ y }}</option>{% endfor %}
-        </select>
-      </div>
-      <div class="ms-auto d-flex align-items-center gap-2">
-        <span class="badge bg-dark">Market Avg: <span id="marketAvg">—</span></span>
-        <button class="btn btn-outline-dark btn-sm" id="refreshBtn"><i class="fa-solid fa-rotate me-1"></i> Refresh</button>
-      </div>
-    </div>
-    <div class="chart-wrap">
-      <canvas id="priceChart"></canvas>
-    </div>
+
+<section class="analytics-hero reveal">
+  <div class="container">
+    <h1>Market <span>Intelligence</span></h1>
+    <p><i class="fa-solid fa-microchip me-2"></i> AI-Powered Pricing Analytics</p>
   </div>
 </section>
+
+<section class="container analytics-wrapper">
+  
+  <div class="kpi-grid reveal" style="transition-delay: 0.1s;">
+    <div class="kpi-card red-accent">
+      <div class="kpi-info">
+        <h6>Average Market Price</h6>
+        <h2 id="marketAvg">₹ 0</h2>
+      </div>
+      <div class="kpi-icon red-bg"><i class="fa-solid fa-tags"></i></div>
+    </div>
+    <div class="kpi-card cyan-accent">
+      <div class="kpi-info">
+        <h6>Models Analyzed</h6>
+        <h2 id="modelCount">0</h2>
+      </div>
+      <div class="kpi-icon cyan-bg"><i class="fa-solid fa-car-side"></i></div>
+    </div>
+  </div>
+
+  <div class="dashboard-card reveal" style="transition-delay: 0.2s;">
+    
+    <div class="filter-toolbar">
+      <div class="filter-item">
+        <label>Filter by Brand</label>
+        <select id="brandSelect" class="form-select">
+          <option value="">All Brands</option>
+          {% for b in brands %}<option value="{{ b }}" {% if pre_brand == b %}selected{% endif %}>{{ b }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="filter-item">
+        <label>Filter by Year</label>
+        <select id="yearSelect" class="form-select">
+          <option value="">All Years</option>
+          {% for y in years %}<option value="{{ y }}" {% if pre_year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="filter-item">
+        <label>Filter by Model</label>
+        <select id="modelSelect" class="form-select">
+          <option value="">All Models</option>
+          {% for m in models %}<option value="{{ m }}" {% if pre_model == m %}selected{% endif %}>{{ m }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="filter-item">
+        <label>Trim Level</label>
+        <input id="trimInput" class="form-control" placeholder="Optional">
+      </div>
+      <div class="filter-item">
+        <label>Mileage Range (km)</label>
+        <div class="d-flex gap-2">
+          <input id="mileageMin" class="form-control" type="number" min="0" placeholder="Min">
+          <input id="mileageMax" class="form-control" type="number" min="0" placeholder="Max">
+        </div>
+      </div>
+      <div class="filter-item">
+        <label>Location</label>
+        <div class="d-flex gap-2">
+          <select id="stateSelect" class="form-select" aria-label="State"></select>
+          <select id="citySelect" class="form-select" aria-label="City"></select>
+        </div>
+      </div>
+      <div>
+        <button class="btn-refresh" id="refreshBtn">
+          <i class="fa-solid fa-rotate"></i> Analyze
+        </button>
+        <a class="btn btn-outline-dark ms-2" id="exportBtn"><i class="fa-solid fa-file-csv me-2"></i> Export CSV</a>
+      </div>
+    </div>
+
+    <div class="chart-header">
+      <h3><i class="fa-solid fa-chart-column"></i> Price Distribution by Model</h3>
+      <span class="badge bg-dark px-3 py-2" style="font-weight: 700; letter-spacing: 0.5px;">Live Data</span>
+    </div>
+
+    <div class="chart-wrap">
+      <div class="chart-loading" id="chartLoading">
+        <div class="spinner"></div>
+        <div class="mt-3 fw-bold text-dark">Processing Market Data...</div>
+      </div>
+      <canvas id="priceChart"></canvas>
+    </div>
+    
+    <div class="chart-header mt-4">
+      <h3><i class="fa-solid fa-chart-line"></i> Price Trend</h3>
+    </div>
+    <div class="chart-wrap" style="height: 380px;">
+      <div class="chart-loading" id="trendLoading">
+        <div class="spinner"></div>
+        <div class="mt-3 fw-bold text-dark">Loading Trend...</div>
+      </div>
+      <canvas id="trendChart" aria-label="Monthly average price trend" role="img"></canvas>
+    </div>
+    
+    <div class="chart-header mt-4">
+      <h3><i class="fa-solid fa-chart-area"></i> Depreciation Curve</h3>
+    </div>
+    <div class="chart-wrap" style="height: 380px;">
+      <div class="chart-loading" id="deprLoading">
+        <div class="spinner"></div>
+        <div class="mt-3 fw-bold text-dark">Computing Curve...</div>
+      </div>
+      <canvas id="deprChart" aria-label="Average price by year" role="img"></canvas>
+    </div>
+    
+  </div>
+</section>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
 <script>
+  // Initialize Scroll Reveal
+  document.addEventListener("DOMContentLoaded", () => {
+    const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if(entry.isIntersecting) entry.target.classList.add('active'); }); }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(reveal => observer.observe(reveal));
+  });
+
+  // Number Formatter for Indian Rupees (Lakhs/Crores)
+  function formatINR(value) {
+    if (value >= 10000000) return '₹' + (value / 10000000).toFixed(2) + ' Cr';
+    if (value >= 100000) return '₹' + (value / 100000).toFixed(2) + ' Lakh';
+    return new Intl.NumberFormat('en-IN', { style:'currency', currency:'INR', maximumFractionDigits:0 }).format(value);
+  }
+
+  // Set Global Chart Defaults for Premium Look
+  Chart.defaults.font.family = "'Montserrat', sans-serif";
+  Chart.defaults.color = '#64748b';
+
   async function fetchData() {
     const brand = document.getElementById('brandSelect').value;
     const year = document.getElementById('yearSelect').value;
+    const model = document.getElementById('modelSelect').value;
+    const mileage_min = document.getElementById('mileageMin').value;
+    const mileage_max = document.getElementById('mileageMax').value;
+    const city = document.getElementById('citySelect').value;
     const params = new URLSearchParams();
     if (brand) params.append('brand', brand);
     if (year) params.append('year', year);
+    if (model) params.append('model', model);
+    if (mileage_min) params.append('mileage_min', mileage_min);
+    if (mileage_max) params.append('mileage_max', mileage_max);
+    if (city) params.append('city', city);
     const res = await fetch('{% url "price_chart_data" %}?'+params.toString(), { headers: {'X-Requested-With':'XMLHttpRequest'} });
     return await res.json();
   }
+
   function renderChart(data) {
     const ctx = document.getElementById('priceChart');
     const labels = data.points.map(p => p.model);
     const values = data.points.map(p => p.avg_price);
-    document.getElementById('marketAvg').textContent = new Intl.NumberFormat('en-IN', { style:'currency', currency:'INR', maximumFractionDigits:0 }).format(data.market_avg || 0);
+    
+    // Update KPI Widgets
+    document.getElementById('marketAvg').textContent = formatINR(data.market_avg || 0);
+    document.getElementById('modelCount').textContent = data.points.length || 0;
+
     if (!window.__chart) {
       window.__chart = new Chart(ctx, {
         type: 'bar',
-        data: { labels, datasets: [{ label: 'Avg Price', data: values, backgroundColor:'#0f172a' }] },
-        options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ ticks:{ callback: v => new Intl.NumberFormat('en-IN').format(v) } } } }
+        data: { 
+          labels: labels, 
+          datasets: [{ 
+            label: 'Average Market Price', 
+            data: values, 
+            backgroundColor: '#0f172a', // Deep Navy
+            hoverBackgroundColor: '#e11d48', // Crimson Red on hover
+            borderRadius: 6, // Rounded top corners
+            borderSkipped: false,
+            barThickness: 'flex',
+            maxBarThickness: 50
+          }] 
+        },
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false, 
+          plugins: {
+            legend: { display: false }, // Hide ugly default legend
+            tooltip: {
+              backgroundColor: 'rgba(15, 23, 42, 0.95)',
+              titleFont: { size: 14, weight: 'bold' },
+              bodyFont: { size: 14, weight: 'bold' },
+              padding: 12,
+              cornerRadius: 8,
+              displayColors: false,
+              callbacks: {
+                label: function(context) {
+                  return formatINR(context.raw);
+                }
+              }
+            }
+          },
+          scales: { 
+            x: { 
+              grid: { display: false },
+              ticks: { font: { weight: '700' } }
+            },
+            y: { 
+              grid: { color: '#f1f5f9', drawBorder: false },
+              border: { dash: [5, 5] }, // Dashed premium grid lines
+              ticks: { 
+                font: { weight: '600' },
+                callback: function(value) { 
+                  if (value >= 10000000) return '₹' + (value / 10000000).toFixed(0) + 'Cr';
+                  if (value >= 100000) return '₹' + (value / 100000).toFixed(0) + 'L';
+                  return value;
+                } 
+              } 
+            } 
+          } 
+        }
       });
     } else {
       window.__chart.data.labels = labels;
@@ -67,10 +325,127 @@
       window.__chart.update();
     }
   }
-  async function refresh() { try { const d = await fetchData(); renderChart(d); } catch(e){} }
+
+  async function refresh() { 
+    const loader = document.getElementById('chartLoading');
+    try { 
+      loader.classList.add('active'); // Show spinner
+      const d = await fetchData(); 
+      renderChart(d); 
+    } catch(e) {
+      console.error("Error fetching chart data:", e);
+    } finally {
+      setTimeout(() => { loader.classList.remove('active'); }, 400); // Hide spinner
+    }
+  }
+
   document.getElementById('refreshBtn').addEventListener('click', refresh);
   document.getElementById('brandSelect').addEventListener('change', refresh);
   document.getElementById('yearSelect').addEventListener('change', refresh);
+  document.getElementById('modelSelect').addEventListener('change', refresh);
+  document.getElementById('mileageMin').addEventListener('input', refresh);
+  document.getElementById('mileageMax').addEventListener('input', refresh);
+  document.getElementById('citySelect').addEventListener('change', refresh);
+  
+  async function loadStates(){
+    const res = await fetch('{% url "geo_states" %}');
+    const j = await res.json();
+    const ss = document.getElementById('stateSelect');
+    ss.innerHTML = '<option value="">State</option>' + (j.states || []).map(s=>`<option>${s}</option>`).join('');
+    ss.addEventListener('change', async ()=>{
+      const state = ss.value;
+      const r = await fetch('{% url "geo_cities" %}?state='+encodeURIComponent(state));
+      const jj = await r.json();
+      const cs = document.getElementById('citySelect');
+      cs.innerHTML = '<option value="">City</option>' + (jj.cities || []).map(c=>`<option>${c}</option>`).join('');
+    });
+  }
+  loadStates();
+  
+  function updateExportLink(){
+    const brand = document.getElementById('brandSelect').value;
+    const year = document.getElementById('yearSelect').value;
+    const model = document.getElementById('modelSelect').value;
+    const params = new URLSearchParams();
+    if (brand) params.append('brand', brand);
+    if (year) params.append('year', year);
+    if (model) params.append('model', model);
+    document.getElementById('exportBtn').href = '{% url "pricing_export" %}?'+params.toString();
+  }
+  ['brandSelect','yearSelect','modelSelect'].forEach(id => document.getElementById(id).addEventListener('change', updateExportLink));
+  updateExportLink();
+  
+  async function refreshTrend(){
+    const brand = document.getElementById('brandSelect').value;
+    const year = document.getElementById('yearSelect').value;
+    const model = document.getElementById('modelSelect').value;
+    const params = new URLSearchParams();
+    if (brand) params.append('brand', brand);
+    if (model) params.append('model', model);
+    if (year) params.append('year', year);
+    const loader = document.getElementById('trendLoading');
+    try{
+      loader.classList.add('active');
+      const res = await fetch('{% url "price_trend_data" %}?'+params.toString());
+      const d = await res.json();
+      const labels = (d.trend || []).map(t=>t.month);
+      const values = (d.trend || []).map(t=>t.avg_price);
+      const ctx = document.getElementById('trendChart');
+      if (!window.__trend){
+        window.__trend = new Chart(ctx, { type:'line', data:{ labels, datasets:[{ label:'Avg Price', data:values, borderColor:'#0f172a', backgroundColor:'rgba(15,23,42,0.08)', tension:0.3 }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:(c)=> formatINR(c.raw) } } }, scales:{ y:{ ticks:{ callback:(v)=> new Intl.NumberFormat('en-IN').format(v) } } } } });
+      } else {
+        window.__trend.data.labels = labels;
+        window.__trend.data.datasets[0].data = values;
+        window.__trend.update();
+      }
+    } finally {
+      setTimeout(()=> loader.classList.remove('active'), 300);
+    }
+  }
+  
+  async function refreshDepreciation(){
+    const brand = document.getElementById('brandSelect').value;
+    const model = document.getElementById('modelSelect').value;
+    const params = new URLSearchParams();
+    if (brand) params.append('brand', brand);
+    if (model) params.append('model', model);
+    params.append('page_size', 100);
+    const loader = document.getElementById('deprLoading');
+    try{
+      loader.classList.add('active');
+      const res = await fetch('{% url "pricing_aggregate_api" %}?'+params.toString());
+      const d = await res.json();
+      const items = d.items || [];
+      const labels = items.map(i=>i.year);
+      const values = items.map(i=>i.avg_price);
+      const ctx = document.getElementById('deprChart');
+      if (!window.__depr){
+        window.__depr = new Chart(ctx, { type:'line', data:{ labels, datasets:[{ label:'Avg Price by Year', data:values, borderColor:'#e11d48', backgroundColor:'rgba(225,29,72,0.08)', tension:0.2 }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:(c)=> formatINR(c.raw) } } }, scales:{ y:{ ticks:{ callback:(v)=> new Intl.NumberFormat('en-IN').format(v) } } } } });
+      } else {
+        window.__depr.data.labels = labels;
+        window.__depr.data.datasets[0].data = values;
+        window.__depr.update();
+      }
+    } finally {
+      setTimeout(()=> loader.classList.remove('active'), 300);
+    }
+  }
+  
+  function syncFromURL(){
+    const params = new URLSearchParams(location.search);
+    ['brandSelect','yearSelect','modelSelect'].forEach(id=>{
+      const el = document.getElementById(id);
+      const key = id.replace('Select','').toLowerCase();
+      if (params.has(key)){
+        el.value = params.get(key);
+      }
+    });
+  }
+  syncFromURL();
+  
+  // Initial Load
   refresh();
+  refreshTrend();
+  refreshDepreciation();
 </script>
 {% endblock %}
