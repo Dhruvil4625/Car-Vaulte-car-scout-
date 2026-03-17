@@ -623,23 +623,12 @@ def ListingDetailView(request, listing_id):
     pano_exterior = None
     pano_interior = None
     model_3d_url = None
+    sketchfab_uid = None
     imgs = []
     hero_bg_url = None
     
     try:
         imgs = list(listing.images.all())
-        try:
-            filtered = []
-            for im in imgs:
-                try:
-                    f = getattr(im, "image", None)
-                    if f and f.name and f.storage.exists(f.name):
-                        filtered.append(im)
-                except Exception:
-                    continue
-            imgs = filtered
-        except Exception:
-            pass
             
         def pick(keys):
             for im in imgs:
@@ -698,14 +687,42 @@ def ListingDetailView(request, listing_id):
                 model_3d_url = a.asset.url
         except Exception:
             model_3d_url = None
+        try:
+            sf = listing.assets.filter(kind=CarListingAsset.Kind.SKETCHFAB).first()
+            sketchfab_uid = sf.label if sf else None
+        except Exception:
+            sketchfab_uid = None
     except Exception:
         pano_exterior = None
         pano_interior = None
         model_3d_url = None
+        sketchfab_uid = None
     
     try:
         if imgs:
-            hero_bg_url = imgs[0].image.url
+            # Prefer exterior 16x9 or main
+            chosen = None
+            for im in imgs:
+                alt = (getattr(im, "alt", "") or "").lower()
+                name = (getattr(im, "image", None).name or "").lower()
+                if ("exter" in alt) and ("16x9" in alt or "main" in alt):
+                    chosen = im.image.url
+                    break
+            if not chosen:
+                # any exterior
+                for im in imgs:
+                    alt = (getattr(im, "alt", "") or "").lower()
+                    if "exter" in alt:
+                        chosen = im.image.url
+                        break
+            if not chosen:
+                # first non-synthetic
+                for im in imgs:
+                    name = (getattr(im, "image", None).name or "").lower()
+                    if "listing_images/generated/" not in name:
+                        chosen = im.image.url
+                        break
+            hero_bg_url = chosen or imgs[0].image.url
         else:
             mk = (getattr(listing.car, "make", "") or "").strip()
             md = (getattr(listing.car, "model", "") or "").strip()
@@ -803,6 +820,7 @@ def ListingDetailView(request, listing_id):
         "pano_exterior": pano_exterior,
         "pano_interior": pano_interior,
         "model_3d_url": model_3d_url,
+        "sketchfab_uid": sketchfab_uid,
         "spin_ext": spin_ext,
         "spin_int": spin_int,
         "similar_cars": similar_cars,
@@ -816,6 +834,40 @@ def ListingDetailView(request, listing_id):
         "competitors": competitors,
         "hero_bg_url": hero_bg_url,
     })
+
+@login_required
+def ListingImagesDeleteView(request, listing_id):
+    if request.method != "POST":
+        return redirect("listing_edit", listing_id=listing_id)
+    listing = get_object_or_404(CarListing.objects.select_related("seller"), listing_id=listing_id)
+    if not (request.user.is_staff or request.user == listing.seller):
+        return JsonResponse({"ok": False, "error": "Not allowed"}, status=403)
+    ids = request.POST.getlist("image_id")
+    try:
+        imgs = list(listing.images.filter(pk__in=ids))
+        deleted = 0
+        for im in imgs:
+            try:
+                f = getattr(im, "image", None)
+                name = getattr(f, "name", None)
+                if f and name and f.storage.exists(name):
+                    f.storage.delete(name)
+            except Exception:
+                pass
+            try:
+                im.delete()
+                deleted += 1
+            except Exception:
+                pass
+        xrw = request.headers.get("X-Requested-With", "")
+        if xrw and xrw.lower() == "xmlhttprequest":
+            return JsonResponse({"ok": True, "deleted": deleted})
+        return redirect("listing_edit", listing_id=listing_id)
+    except Exception:
+        xrw = request.headers.get("X-Requested-With", "")
+        if xrw and xrw.lower() == "xmlhttprequest":
+            return JsonResponse({"ok": False}, status=500)
+        return redirect("listing_edit", listing_id=listing_id)
 
 @login_required
 def toggle_favorite(request):
@@ -1418,6 +1470,13 @@ def ListingCreateView(request):
                 model3d = request.FILES.get("asset_3d")
                 if model3d:
                     CarListingAsset.objects.create(listing=listing, asset=model3d, kind=CarListingAsset.Kind.THREE_D, label=model3d.name)
+                sketchfab_url = request.POST.get("sketchfab_url", "").strip()
+                if sketchfab_url:
+                    import re as _re
+                    uid_match = _re.search(r'([a-f0-9]{32})(?:[^a-f0-9]|$)', sketchfab_url)
+                    sketchfab_uid = uid_match.group(1) if uid_match else sketchfab_url
+                    listing.assets.filter(kind=CarListingAsset.Kind.SKETCHFAB).delete()
+                    CarListingAsset.objects.create(listing=listing, kind=CarListingAsset.Kind.SKETCHFAB, label=sketchfab_uid)
                 pano_ext = request.FILES.get("pano_exterior")
                 if pano_ext:
                     CarListingImage.objects.create(listing=listing, image=pano_ext, alt="Exterior 360")
@@ -1532,6 +1591,13 @@ def ListingUpdateView(request, listing_id):
                 model3d = request.FILES.get("asset_3d")
                 if model3d:
                     CarListingAsset.objects.create(listing=listing, asset=model3d, kind=CarListingAsset.Kind.THREE_D, label=model3d.name)
+                sketchfab_url = request.POST.get("sketchfab_url", "").strip()
+                if sketchfab_url:
+                    import re as _re
+                    uid_match = _re.search(r'([a-f0-9]{32})(?:[^a-f0-9]|$)', sketchfab_url)
+                    sketchfab_uid = uid_match.group(1) if uid_match else sketchfab_url
+                    listing.assets.filter(kind=CarListingAsset.Kind.SKETCHFAB).delete()
+                    CarListingAsset.objects.create(listing=listing, kind=CarListingAsset.Kind.SKETCHFAB, label=sketchfab_uid)
                 pano_ext = request.FILES.get("pano_exterior")
                 if pano_ext:
                     CarListingImage.objects.create(listing=listing, image=pano_ext, alt="Exterior 360")
