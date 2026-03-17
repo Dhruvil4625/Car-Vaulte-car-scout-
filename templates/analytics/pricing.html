@@ -41,7 +41,7 @@
   .dashboard-card {
     background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0;
     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.04); padding: 30px; margin-bottom: 25px;
-    position: relative; overflow: hidden;
+    position: relative; overflow: hidden; height: 100%;
   }
 
   /* --- KPI Summary Widgets --- */
@@ -62,37 +62,54 @@
   .kpi-icon.red-bg { background: #fff1f2; color: #e11d48; }
   .kpi-icon.cyan-bg { background: #e0f2fe; color: #00d4ff; }
 
-  /* --- Filter Toolbar --- */
+  /* --- Advanced Grid Filter Toolbar --- */
   .filter-toolbar {
-    background: #f8fafc; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0;
-    display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; margin-bottom: 30px;
+    background: #f8fafc; border-radius: 12px; padding: 25px; border: 1px solid #e2e8f0;
+    margin-bottom: 30px;
   }
-  .filter-item { flex: 1; min-width: 200px; }
-  .filter-item label { font-size: 0.75rem; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block; }
-  .filter-toolbar .form-select {
-    background-color: #ffffff; border: 2px solid #cbd5e1; color: #0f172a; border-radius: 8px;
-    padding: 12px 15px; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.3s;
-  }
-  .filter-toolbar .form-select:focus { border-color: #e11d48; box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.1); }
   
+  .filter-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px;
+  }
+
+  .filter-item label { font-size: 0.75rem; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block; }
+  
+  .filter-item .form-select, .filter-item .form-control {
+    background-color: #ffffff; border: 2px solid #cbd5e1; color: #0f172a; border-radius: 8px;
+    padding: 12px 15px; font-size: 0.95rem; font-weight: 700; transition: all 0.3s; width: 100%;
+  }
+  .filter-item .form-select { cursor: pointer; }
+  .filter-item .form-select:focus, .filter-item .form-control:focus { border-color: #e11d48; box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.1); outline: none; }
+  
+  .filter-actions {
+    display: flex; gap: 15px; justify-content: flex-end; padding-top: 20px; border-top: 1px dashed #cbd5e1;
+  }
+
   .btn-refresh {
     background: #0f172a; color: #ffffff; font-weight: 800; border-radius: 8px; border: none;
-    padding: 12px 25px; transition: all 0.3s; height: 50px; display: flex; align-items: center; gap: 8px;
+    padding: 12px 30px; transition: all 0.3s; display: flex; align-items: center; gap: 8px;
     text-transform: uppercase; letter-spacing: 0.5px;
   }
   .btn-refresh:hover { background: #e11d48; color: #ffffff; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(225, 29, 72, 0.3); }
 
+  .btn-export {
+    background: transparent; color: #0f172a; font-weight: 800; border-radius: 8px; border: 2px solid #cbd5e1;
+    padding: 10px 25px; transition: all 0.3s; display: flex; align-items: center; gap: 8px;
+    text-transform: uppercase; letter-spacing: 0.5px; text-decoration: none;
+  }
+  .btn-export:hover { background: #0f172a; color: #ffffff; border-color: #0f172a; }
+
   /* --- Chart Container --- */
   .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #f1f5f9; }
-  .chart-header h3 { font-size: 1.3rem; font-weight: 900; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 10px; text-transform: uppercase; }
+  .chart-header h3 { font-size: 1.2rem; font-weight: 900; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 10px; text-transform: uppercase; }
   .chart-header h3 i { color: #e11d48; font-size: 1.1rem; background: rgba(225, 29, 72, 0.1); padding: 10px; border-radius: 10px; }
   
-  .chart-wrap { position: relative; height: 450px; width: 100%; }
+  .chart-wrap { position: relative; height: 400px; width: 100%; }
   
   /* Loading Overlay */
   .chart-loading {
     position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(4px);
+    background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(4px);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     z-index: 10; opacity: 0; pointer-events: none; transition: opacity 0.3s;
     border-radius: 12px;
@@ -129,53 +146,54 @@
     </div>
   </div>
 
-  <div class="dashboard-card reveal" style="transition-delay: 0.2s;">
+  <div class="dashboard-card reveal" style="transition-delay: 0.2s; padding-bottom: 10px;">
     
     <div class="filter-toolbar">
-      <div class="filter-item">
-        <label>Filter by Brand</label>
-        <select id="brandSelect" class="form-select">
-          <option value="">All Brands</option>
-          {% for b in brands %}<option value="{{ b }}" {% if pre_brand == b %}selected{% endif %}>{{ b }}</option>{% endfor %}
-        </select>
-      </div>
-      <div class="filter-item">
-        <label>Filter by Year</label>
-        <select id="yearSelect" class="form-select">
-          <option value="">All Years</option>
-          {% for y in years %}<option value="{{ y }}" {% if pre_year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
-        </select>
-      </div>
-      <div class="filter-item">
-        <label>Filter by Model</label>
-        <select id="modelSelect" class="form-select">
-          <option value="">All Models</option>
-          {% for m in models %}<option value="{{ m }}" {% if pre_model == m %}selected{% endif %}>{{ m }}</option>{% endfor %}
-        </select>
-      </div>
-      <div class="filter-item">
-        <label>Trim Level</label>
-        <input id="trimInput" class="form-control" placeholder="Optional">
-      </div>
-      <div class="filter-item">
-        <label>Mileage Range (km)</label>
-        <div class="d-flex gap-2">
-          <input id="mileageMin" class="form-control" type="number" min="0" placeholder="Min">
-          <input id="mileageMax" class="form-control" type="number" min="0" placeholder="Max">
+      <div class="filter-grid">
+        <div class="filter-item">
+          <label>Brand</label>
+          <select id="brandSelect" class="form-select">
+            <option value="">All Brands</option>
+            {% for b in brands %}<option value="{{ b }}" {% if pre_brand == b %}selected{% endif %}>{{ b }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="filter-item">
+          <label>Model</label>
+          <select id="modelSelect" class="form-select">
+            <option value="">All Models</option>
+            {% for m in models %}<option value="{{ m }}" {% if pre_model == m %}selected{% endif %}>{{ m }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="filter-item">
+          <label>Year</label>
+          <select id="yearSelect" class="form-select">
+            <option value="">All Years</option>
+            {% for y in years %}<option value="{{ y }}" {% if pre_year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="filter-item">
+          <label>Trim / Variant</label>
+          <input id="trimInput" class="form-control" placeholder="e.g., GT, AMG">
+        </div>
+        <div class="filter-item">
+          <label>Location (State & City)</label>
+          <div class="d-flex gap-2">
+            <select id="stateSelect" class="form-select"><option value="">State</option></select>
+            <select id="citySelect" class="form-select"><option value="">City</option></select>
+          </div>
+        </div>
+        <div class="filter-item">
+          <label>Mileage (km)</label>
+          <div class="d-flex gap-2">
+            <input id="mileageMin" class="form-control" type="number" min="0" placeholder="Min">
+            <input id="mileageMax" class="form-control" type="number" min="0" placeholder="Max">
+          </div>
         </div>
       </div>
-      <div class="filter-item">
-        <label>Location</label>
-        <div class="d-flex gap-2">
-          <select id="stateSelect" class="form-select" aria-label="State"></select>
-          <select id="citySelect" class="form-select" aria-label="City"></select>
-        </div>
-      </div>
-      <div>
-        <button class="btn-refresh" id="refreshBtn">
-          <i class="fa-solid fa-rotate"></i> Analyze
-        </button>
-        <a class="btn btn-outline-dark ms-2" id="exportBtn"><i class="fa-solid fa-file-csv me-2"></i> Export CSV</a>
+      
+      <div class="filter-actions">
+        <a class="btn-export" id="exportBtn"><i class="fa-solid fa-file-csv"></i> Export CSV</a>
+        <button class="btn-refresh" id="refreshBtn"><i class="fa-solid fa-bolt"></i> Analyze Data</button>
       </div>
     </div>
 
@@ -183,38 +201,48 @@
       <h3><i class="fa-solid fa-chart-column"></i> Price Distribution by Model</h3>
       <span class="badge bg-dark px-3 py-2" style="font-weight: 700; letter-spacing: 0.5px;">Live Data</span>
     </div>
-
-    <div class="chart-wrap">
+    <div class="chart-wrap mb-4">
       <div class="chart-loading" id="chartLoading">
         <div class="spinner"></div>
-        <div class="mt-3 fw-bold text-dark">Processing Market Data...</div>
+        <div class="mt-3 fw-bold text-dark">Processing Distribution...</div>
       </div>
       <canvas id="priceChart"></canvas>
     </div>
     
-    <div class="chart-header mt-4">
-      <h3><i class="fa-solid fa-chart-line"></i> Price Trend</h3>
-    </div>
-    <div class="chart-wrap" style="height: 380px;">
-      <div class="chart-loading" id="trendLoading">
-        <div class="spinner"></div>
-        <div class="mt-3 fw-bold text-dark">Loading Trend...</div>
-      </div>
-      <canvas id="trendChart" aria-label="Monthly average price trend" role="img"></canvas>
-    </div>
-    
-    <div class="chart-header mt-4">
-      <h3><i class="fa-solid fa-chart-area"></i> Depreciation Curve</h3>
-    </div>
-    <div class="chart-wrap" style="height: 380px;">
-      <div class="chart-loading" id="deprLoading">
-        <div class="spinner"></div>
-        <div class="mt-3 fw-bold text-dark">Computing Curve...</div>
-      </div>
-      <canvas id="deprChart" aria-label="Average price by year" role="img"></canvas>
-    </div>
-    
   </div>
+
+  <div class="row g-4 mb-5 reveal" style="transition-delay: 0.3s;">
+    <div class="col-lg-6">
+      <div class="dashboard-card">
+        <div class="chart-header">
+          <h3><i class="fa-solid fa-chart-line"></i> Market Price Trend</h3>
+        </div>
+        <div class="chart-wrap">
+          <div class="chart-loading" id="trendLoading">
+            <div class="spinner"></div>
+            <div class="mt-3 fw-bold text-dark">Loading Timeline...</div>
+          </div>
+          <canvas id="trendChart" aria-label="Monthly average price trend" role="img"></canvas>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-6">
+      <div class="dashboard-card">
+        <div class="chart-header">
+          <h3><i class="fa-solid fa-chart-area"></i> Depreciation Curve</h3>
+        </div>
+        <div class="chart-wrap">
+          <div class="chart-loading" id="deprLoading">
+            <div class="spinner"></div>
+            <div class="mt-3 fw-bold text-dark">Computing Curve...</div>
+          </div>
+          <canvas id="deprChart" aria-label="Average price by year" role="img"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </section>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -226,226 +254,213 @@
     document.querySelectorAll('.reveal').forEach(reveal => observer.observe(reveal));
   });
 
-  // Number Formatter for Indian Rupees (Lakhs/Crores)
+  // Number Formatter
   function formatINR(value) {
     if (value >= 10000000) return '₹' + (value / 10000000).toFixed(2) + ' Cr';
     if (value >= 100000) return '₹' + (value / 100000).toFixed(2) + ' Lakh';
     return new Intl.NumberFormat('en-IN', { style:'currency', currency:'INR', maximumFractionDigits:0 }).format(value);
   }
 
-  // Set Global Chart Defaults for Premium Look
+  // Global Chart Configuration
   Chart.defaults.font.family = "'Montserrat', sans-serif";
   Chart.defaults.color = '#64748b';
+  
+  const commonOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: 'rgba(15, 23, 42, 0.95)', titleFont: { size: 14, weight: 'bold' }, bodyFont: { size: 14, weight: 'bold' },
+        padding: 12, cornerRadius: 8, displayColors: false,
+        callbacks: { label: function(context) { return formatINR(context.raw); } }
+      }
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { font: { weight: '700' } } },
+      y: { 
+        grid: { color: '#f1f5f9', drawBorder: false }, border: { dash: [5, 5] },
+        ticks: { 
+          font: { weight: '600' },
+          callback: function(value) { 
+            if (value >= 10000000) return '₹' + (value / 10000000).toFixed(0) + 'Cr';
+            if (value >= 100000) return '₹' + (value / 100000).toFixed(0) + 'L';
+            return value;
+          } 
+        } 
+      }
+    }
+  };
 
-  async function fetchData() {
+  // Helper to build query params
+  function buildParams() {
     const brand = document.getElementById('brandSelect').value;
     const year = document.getElementById('yearSelect').value;
     const model = document.getElementById('modelSelect').value;
+    const trim = document.getElementById('trimInput').value;
     const mileage_min = document.getElementById('mileageMin').value;
     const mileage_max = document.getElementById('mileageMax').value;
     const city = document.getElementById('citySelect').value;
+    
     const params = new URLSearchParams();
     if (brand) params.append('brand', brand);
     if (year) params.append('year', year);
     if (model) params.append('model', model);
+    if (trim) params.append('trim', trim);
     if (mileage_min) params.append('mileage_min', mileage_min);
     if (mileage_max) params.append('mileage_max', mileage_max);
     if (city) params.append('city', city);
-    const res = await fetch('{% url "price_chart_data" %}?'+params.toString(), { headers: {'X-Requested-With':'XMLHttpRequest'} });
-    return await res.json();
-  }
-
-  function renderChart(data) {
-    const ctx = document.getElementById('priceChart');
-    const labels = data.points.map(p => p.model);
-    const values = data.points.map(p => p.avg_price);
     
-    // Update KPI Widgets
-    document.getElementById('marketAvg').textContent = formatINR(data.market_avg || 0);
-    document.getElementById('modelCount').textContent = data.points.length || 0;
-
-    if (!window.__chart) {
-      window.__chart = new Chart(ctx, {
-        type: 'bar',
-        data: { 
-          labels: labels, 
-          datasets: [{ 
-            label: 'Average Market Price', 
-            data: values, 
-            backgroundColor: '#0f172a', // Deep Navy
-            hoverBackgroundColor: '#e11d48', // Crimson Red on hover
-            borderRadius: 6, // Rounded top corners
-            borderSkipped: false,
-            barThickness: 'flex',
-            maxBarThickness: 50
-          }] 
-        },
-        options: { 
-          responsive: true, 
-          maintainAspectRatio: false, 
-          plugins: {
-            legend: { display: false }, // Hide ugly default legend
-            tooltip: {
-              backgroundColor: 'rgba(15, 23, 42, 0.95)',
-              titleFont: { size: 14, weight: 'bold' },
-              bodyFont: { size: 14, weight: 'bold' },
-              padding: 12,
-              cornerRadius: 8,
-              displayColors: false,
-              callbacks: {
-                label: function(context) {
-                  return formatINR(context.raw);
-                }
-              }
-            }
-          },
-          scales: { 
-            x: { 
-              grid: { display: false },
-              ticks: { font: { weight: '700' } }
-            },
-            y: { 
-              grid: { color: '#f1f5f9', drawBorder: false },
-              border: { dash: [5, 5] }, // Dashed premium grid lines
-              ticks: { 
-                font: { weight: '600' },
-                callback: function(value) { 
-                  if (value >= 10000000) return '₹' + (value / 10000000).toFixed(0) + 'Cr';
-                  if (value >= 100000) return '₹' + (value / 100000).toFixed(0) + 'L';
-                  return value;
-                } 
-              } 
-            } 
-          } 
-        }
-      });
-    } else {
-      window.__chart.data.labels = labels;
-      window.__chart.data.datasets[0].data = values;
-      window.__chart.update();
-    }
+    return params.toString();
   }
 
-  async function refresh() { 
+  // --- 1. Main Distribution Chart ---
+  async function refreshDistribution() { 
     const loader = document.getElementById('chartLoading');
     try { 
-      loader.classList.add('active'); // Show spinner
-      const d = await fetchData(); 
-      renderChart(d); 
-    } catch(e) {
-      console.error("Error fetching chart data:", e);
-    } finally {
-      setTimeout(() => { loader.classList.remove('active'); }, 400); // Hide spinner
-    }
+      loader.classList.add('active');
+      const res = await fetch('{% url "price_chart_data" %}?' + buildParams(), { headers: {'X-Requested-With':'XMLHttpRequest'} });
+      const data = await res.json();
+      
+      document.getElementById('marketAvg').textContent = formatINR(data.market_avg || 0);
+      document.getElementById('modelCount').textContent = data.points.length || 0;
+
+      const ctx = document.getElementById('priceChart').getContext('2d');
+      if (!window.__chart) {
+        window.__chart = new Chart(ctx, {
+          type: 'bar',
+          data: { 
+            labels: data.points.map(p => p.model), 
+            datasets: [{ 
+              data: data.points.map(p => p.avg_price), 
+              backgroundColor: '#0f172a', hoverBackgroundColor: '#00d4ff',
+              borderRadius: 6, barThickness: 'flex', maxBarThickness: 50
+            }] 
+          },
+          options: commonOptions
+        });
+      } else {
+        window.__chart.data.labels = data.points.map(p => p.model);
+        window.__chart.data.datasets[0].data = data.points.map(p => p.avg_price);
+        window.__chart.update();
+      }
+    } catch(e) { console.error(e); } finally { setTimeout(() => loader.classList.remove('active'), 400); }
   }
 
-  document.getElementById('refreshBtn').addEventListener('click', refresh);
-  document.getElementById('brandSelect').addEventListener('change', refresh);
-  document.getElementById('yearSelect').addEventListener('change', refresh);
-  document.getElementById('modelSelect').addEventListener('change', refresh);
-  document.getElementById('mileageMin').addEventListener('input', refresh);
-  document.getElementById('mileageMax').addEventListener('input', refresh);
-  document.getElementById('citySelect').addEventListener('change', refresh);
+  // --- 2. Price Trend Chart (Line with Gradient) ---
+  async function refreshTrend(){
+    const loader = document.getElementById('trendLoading');
+    try {
+      loader.classList.add('active');
+      const res = await fetch('{% url "price_trend_data" %}?' + buildParams());
+      const d = await res.json();
+      
+      const ctx = document.getElementById('trendChart').getContext('2d');
+      let gradient = ctx.createLinearGradient(0, 0, 0, 400);
+      gradient.addColorStop(0, 'rgba(15, 23, 42, 0.4)'); // Deep Navy fade
+      gradient.addColorStop(1, 'rgba(15, 23, 42, 0.0)');
+
+      if (!window.__trend) {
+        window.__trend = new Chart(ctx, { 
+          type:'line', 
+          data: { 
+            labels: (d.trend || []).map(t=>t.month), 
+            datasets: [{ 
+              data: (d.trend || []).map(t=>t.avg_price), 
+              borderColor: '#0f172a', backgroundColor: gradient, 
+              borderWidth: 3, pointBackgroundColor: '#e11d48', pointRadius: 4,
+              fill: true, tension: 0.4 
+            }] 
+          }, 
+          options: commonOptions 
+        });
+      } else {
+        window.__trend.data.labels = (d.trend || []).map(t=>t.month);
+        window.__trend.data.datasets[0].data = (d.trend || []).map(t=>t.avg_price);
+        window.__trend.update();
+      }
+    } catch(e) { console.error(e); } finally { setTimeout(() => loader.classList.remove('active'), 400); }
+  }
   
+  // --- 3. Depreciation Curve Chart (Line with Gradient) ---
+  async function refreshDepreciation(){
+    const loader = document.getElementById('deprLoading');
+    try {
+      loader.classList.add('active');
+      // Overriding standard params slightly to ensure we pull by year for this specific chart
+      let params = buildParams() + "&page_size=100";
+      
+      const res = await fetch('{% url "pricing_aggregate_api" %}?' + params);
+      const d = await res.json();
+      
+      const ctx = document.getElementById('deprChart').getContext('2d');
+      let gradient = ctx.createLinearGradient(0, 0, 0, 400);
+      gradient.addColorStop(0, 'rgba(225, 29, 72, 0.4)'); // Crimson Red fade
+      gradient.addColorStop(1, 'rgba(225, 29, 72, 0.0)');
+
+      if (!window.__depr) {
+        window.__depr = new Chart(ctx, { 
+          type:'line', 
+          data: { 
+            labels: (d.items || []).map(i=>i.year), 
+            datasets: [{ 
+              data: (d.items || []).map(i=>i.avg_price), 
+              borderColor: '#e11d48', backgroundColor: gradient, 
+              borderWidth: 3, pointBackgroundColor: '#0f172a', pointRadius: 4,
+              fill: true, tension: 0.4 
+            }] 
+          }, 
+          options: commonOptions 
+        });
+      } else {
+        window.__depr.data.labels = (d.items || []).map(i=>i.year);
+        window.__depr.data.datasets[0].data = (d.items || []).map(i=>i.avg_price);
+        window.__depr.update();
+      }
+    } catch(e) { console.error(e); } finally { setTimeout(() => loader.classList.remove('active'), 400); }
+  }
+
+  // Master Refresh Function
+  function refreshAll() {
+    refreshDistribution();
+    refreshTrend();
+    refreshDepreciation();
+    
+    // Update Export CSV Link
+    document.getElementById('exportBtn').href = '{% url "pricing_export" %}?' + buildParams();
+  }
+
+  // --- Dynamic Location Selectors ---
   async function loadStates(){
     const res = await fetch('{% url "geo_states" %}');
     const j = await res.json();
     const ss = document.getElementById('stateSelect');
-    ss.innerHTML = '<option value="">State</option>' + (j.states || []).map(s=>`<option>${s}</option>`).join('');
-    ss.addEventListener('change', async ()=>{
+    ss.innerHTML = '<option value="">All States</option>' + (j.states || []).map(s=>`<option>${s}</option>`).join('');
+    ss.addEventListener('change', async () => {
       const state = ss.value;
       const r = await fetch('{% url "geo_cities" %}?state='+encodeURIComponent(state));
       const jj = await r.json();
       const cs = document.getElementById('citySelect');
-      cs.innerHTML = '<option value="">City</option>' + (jj.cities || []).map(c=>`<option>${c}</option>`).join('');
+      cs.innerHTML = '<option value="">All Cities</option>' + (jj.cities || []).map(c=>`<option>${c}</option>`).join('');
     });
   }
-  loadStates();
-  
-  function updateExportLink(){
-    const brand = document.getElementById('brandSelect').value;
-    const year = document.getElementById('yearSelect').value;
-    const model = document.getElementById('modelSelect').value;
-    const params = new URLSearchParams();
-    if (brand) params.append('brand', brand);
-    if (year) params.append('year', year);
-    if (model) params.append('model', model);
-    document.getElementById('exportBtn').href = '{% url "pricing_export" %}?'+params.toString();
-  }
-  ['brandSelect','yearSelect','modelSelect'].forEach(id => document.getElementById(id).addEventListener('change', updateExportLink));
-  updateExportLink();
-  
-  async function refreshTrend(){
-    const brand = document.getElementById('brandSelect').value;
-    const year = document.getElementById('yearSelect').value;
-    const model = document.getElementById('modelSelect').value;
-    const params = new URLSearchParams();
-    if (brand) params.append('brand', brand);
-    if (model) params.append('model', model);
-    if (year) params.append('year', year);
-    const loader = document.getElementById('trendLoading');
-    try{
-      loader.classList.add('active');
-      const res = await fetch('{% url "price_trend_data" %}?'+params.toString());
-      const d = await res.json();
-      const labels = (d.trend || []).map(t=>t.month);
-      const values = (d.trend || []).map(t=>t.avg_price);
-      const ctx = document.getElementById('trendChart');
-      if (!window.__trend){
-        window.__trend = new Chart(ctx, { type:'line', data:{ labels, datasets:[{ label:'Avg Price', data:values, borderColor:'#0f172a', backgroundColor:'rgba(15,23,42,0.08)', tension:0.3 }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:(c)=> formatINR(c.raw) } } }, scales:{ y:{ ticks:{ callback:(v)=> new Intl.NumberFormat('en-IN').format(v) } } } } });
-      } else {
-        window.__trend.data.labels = labels;
-        window.__trend.data.datasets[0].data = values;
-        window.__trend.update();
-      }
-    } finally {
-      setTimeout(()=> loader.classList.remove('active'), 300);
-    }
-  }
-  
-  async function refreshDepreciation(){
-    const brand = document.getElementById('brandSelect').value;
-    const model = document.getElementById('modelSelect').value;
-    const params = new URLSearchParams();
-    if (brand) params.append('brand', brand);
-    if (model) params.append('model', model);
-    params.append('page_size', 100);
-    const loader = document.getElementById('deprLoading');
-    try{
-      loader.classList.add('active');
-      const res = await fetch('{% url "pricing_aggregate_api" %}?'+params.toString());
-      const d = await res.json();
-      const items = d.items || [];
-      const labels = items.map(i=>i.year);
-      const values = items.map(i=>i.avg_price);
-      const ctx = document.getElementById('deprChart');
-      if (!window.__depr){
-        window.__depr = new Chart(ctx, { type:'line', data:{ labels, datasets:[{ label:'Avg Price by Year', data:values, borderColor:'#e11d48', backgroundColor:'rgba(225,29,72,0.08)', tension:0.2 }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:(c)=> formatINR(c.raw) } } }, scales:{ y:{ ticks:{ callback:(v)=> new Intl.NumberFormat('en-IN').format(v) } } } } });
-      } else {
-        window.__depr.data.labels = labels;
-        window.__depr.data.datasets[0].data = values;
-        window.__depr.update();
-      }
-    } finally {
-      setTimeout(()=> loader.classList.remove('active'), 300);
-    }
-  }
-  
+
+  // Sync URL Params on load
   function syncFromURL(){
     const params = new URLSearchParams(location.search);
-    ['brandSelect','yearSelect','modelSelect'].forEach(id=>{
-      const el = document.getElementById(id);
+    ['brandSelect','yearSelect','modelSelect'].forEach(id => {
       const key = id.replace('Select','').toLowerCase();
-      if (params.has(key)){
-        el.value = params.get(key);
-      }
+      if (params.has(key)) document.getElementById(id).value = params.get(key);
     });
   }
-  syncFromURL();
+
+  // Bind Events
+  document.getElementById('refreshBtn').addEventListener('click', refreshAll);
   
-  // Initial Load
-  refresh();
-  refreshTrend();
-  refreshDepreciation();
+  // Initialize
+  loadStates();
+  syncFromURL();
+  refreshAll();
+
 </script>
 {% endblock %}
