@@ -161,7 +161,7 @@
             <button type="button" class="btn" data-target="panoContent"><i class="fa-solid fa-vr-cardboard me-2"></i> 360° View</button>
           {% endif %}
           <button type="button" class="btn" data-target="turntableContent"><i class="fa-solid fa-arrows-spin me-2"></i> Spin 360°</button>
-          {% if model_3d_url %}
+          {% if model_3d_url or sketchfab_uid %}
             <button type="button" class="btn" data-target="model3dContent"><i class="fa-solid fa-cube me-2"></i> 3D Model</button>
           {% endif %}
         </div>
@@ -172,23 +172,30 @@
               <button class="nav-arrow prev-arrow" onclick="navigateGallery(-1)"><i class="fa-solid fa-chevron-left"></i></button>
             {% endif %}
             
-            {% if images %}
-              <img id="mainDisplayImage" src="{{ images.0.image.url }}" alt="{{ listing.car.make }} {{ listing.car.model }}" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+            {% if images and images.0.image %}
+              <img id="mainDisplayImage" src="{{ images.0.image.url }}" alt="{{ listing.car.make }} {{ listing.car.model }}" onerror="if(!this.dataset.fbk){this.dataset.fbk='1'; this.src='{% listing_main_image listing '900x600' %}';} else { this.onerror=null; this.src='{% static 'img/placeholder.svg' %}'; }">
             {% else %}
-              <img id="mainDisplayImage" src="{% car_image listing.car.make listing.car.model '900x600' %}" alt="{{ listing.car.make }} {{ listing.car.model }}" onerror="this.src='{% static 'img/placeholder.svg' %}'">
+              <img id="mainDisplayImage" src="{% listing_main_image listing '900x600' %}" alt="{{ listing.car.make }} {{ listing.car.model }}" onerror="if(!this.dataset.fbk){this.dataset.fbk='1'; this.src='{% car_image listing.car.make listing.car.model '900x600' %}';} else { this.onerror=null; this.src='{% static 'img/placeholder.svg' %}'; }">
             {% endif %}
 
             {% if images|length > 1 %}
               <button class="nav-arrow next-arrow" onclick="navigateGallery(1)"><i class="fa-solid fa-chevron-right"></i></button>
             {% endif %}
           </div>
-          {% if images %}
           <div class="thumbnail-gallery" id="thumbnailContainer">
-            {% for img in images|slice:":8" %}
-              <img src="{{ img.image.url }}" alt="{{ img.alt }}" class="thumb-img {% if forloop.first %}active{% endif %}" onclick="changeMainImage(this)" onerror="this.src='{% static 'img/placeholder.svg' %}'">
-            {% endfor %}
+            {% if images %}
+              {% for img in images|slice:":8" %}
+                {% if img.image %}
+                  <img src="{{ img.image.url }}" alt="{{ img.alt|default:listing.car.model }}" class="thumb-img {% if forloop.first %}active{% endif %}" onclick="changeMainImage(this)" onerror="if(!this.dataset.fbk){this.dataset.fbk='1'; this.src='{% car_image listing.car.make listing.car.model '300x200' %}';} else { this.onerror=null; this.src='{% static 'img/placeholder.svg' %}'; }">
+                {% endif %}
+              {% endfor %}
+            {% else %}
+              {% listing_thumbs listing 6 '300x200' as thumbs %}
+              {% for t in thumbs %}
+                <img src="{{ t }}" alt="{{ listing.car.make }} {{ listing.car.model }} image {{ forloop.counter }}" class="thumb-img {% if forloop.first %}active{% endif %}" onclick="changeMainImage(this)" onerror="this.onerror=null; this.src='{% static 'img/placeholder.svg' %}';">
+              {% endfor %}
+            {% endif %}
           </div>
-          {% endif %}
         </div>
         
         <div id="panoContent" class="media-view" style="display: none;">
@@ -238,10 +245,22 @@
           {% endif %}
         </div>
         
-        {% if model_3d_url %}
+        {% if model_3d_url or sketchfab_uid %}
         <div id="model3dContent" class="media-view" style="display: none;">
           <div class="media-stage border-0 p-0" style="background:#0b1220;">
-            <model-viewer id="carModelViewer" src="{{ model_3d_url }}" camera-controls autoplay shadow-intensity="1" exposure="1" environment-image="neutral" style="width:100%;height:100%;background:#0b1220;" ar ar-modes="webxr scene-viewer quick-look" alt="{{ listing.car.make }} {{ listing.car.model }} 3D model"></model-viewer>
+            {% if sketchfab_uid %}
+              <iframe
+                title="{{ listing.car.make }} {{ listing.car.model }} 3D model"
+                frameborder="0" allowfullscreen
+                mozallowfullscreen="true" webkitallowfullscreen="true"
+                allow="autoplay; fullscreen; xr-spatial-tracking"
+                xr-spatial-tracking execution-while-out-of-viewport execution-while-not-rendered web-share
+                style="width:100%;height:100%;"
+                src="https://sketchfab.com/models/{{ sketchfab_uid }}/embed?autostart=1&ui_theme=dark&camera=0">
+              </iframe>
+            {% elif model_3d_url %}
+              <model-viewer id="carModelViewer" src="{{ model_3d_url }}" camera-controls autoplay shadow-intensity="1" exposure="1" environment-image="neutral" style="width:100%;height:100%;background:#0b1220;" ar ar-modes="webxr scene-viewer quick-look" alt="{{ listing.car.make }} {{ listing.car.model }} 3D model"></model-viewer>
+            {% endif %}
           </div>
         </div>
         {% endif %}
