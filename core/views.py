@@ -286,6 +286,7 @@ def CarsListView(request):
     q = request.GET.get("q") or ""
     brand = request.GET.get("brand") or ""
     model = request.GET.get("model") or ""
+    year = request.GET.get("year") or ""
     body = request.GET.get("body") or request.GET.get("body_type") or ""
     
     synonyms = {
@@ -314,9 +315,11 @@ def CarsListView(request):
     if q:
         qs = qs.filter(Q(make__icontains=q) | Q(model__icontains=q) | Q(color__icontains=q))
     if brand:
-        qs = qs.filter(make__icontains=brand)
+        qs = qs.filter(make__iexact=brand)
     if model:
-        qs = qs.filter(model__icontains=model)
+        qs = qs.filter(model__iexact=model)
+    if year:
+        qs = qs.filter(year=year)
     if body:
         qs = qs.filter(body_type__icontains=body)
         
@@ -324,8 +327,24 @@ def CarsListView(request):
         _apply_ai_estimates_to_cars(qs)
     except Exception:
         pass
+    
+    # Dropdown options
+    all_makes = Car.objects.values_list('make', flat=True).distinct().order_by('make')
+    all_models = Car.objects.filter(make__iexact=brand).values_list('model', flat=True).distinct().order_by('model') if brand else []
+    all_years = Car.objects.values_list('year', flat=True).distinct().order_by('-year')
         
-    return render(request, "cars/list.html", {"cars": qs, "fuel": fuel, "brand": brand, "model": model, "q": q, "body": body})
+    return render(request, "cars/list.html", {
+        "cars": qs, 
+        "fuel": fuel, 
+        "brand": brand, 
+        "model": model, 
+        "year": year,
+        "q": q, 
+        "body": body,
+        "all_makes": all_makes,
+        "all_models": all_models,
+        "all_years": all_years,
+    })
 
 
 def BrandView(request, brand_slug):
@@ -375,9 +394,15 @@ def AllCarsListView(request):
     trans = request.GET.getlist("trans")
     cats = request.GET.getlist("category")
     brand = request.GET.get("brand") or ""
+    model = request.GET.get("model") or ""
+    year = request.GET.get("year") or ""
     
     if brand:
-        qs = qs.filter(car__make__icontains=brand)
+        qs = qs.filter(car__make__iexact=brand)
+    if model:
+        qs = qs.filter(car__model__iexact=model)
+    if year:
+        qs = qs.filter(car__year=year)
         
     for r in price_ranges:
         try:
@@ -424,10 +449,17 @@ def AllCarsListView(request):
     body_options = ["SUV", "Sedan", "Hatchback", "Luxury"]
     trans_options = ["Manual", "Automatic", "AMT", "CVT", "DCT"]
     category_options = ["Economy", "Moderate", "Premium"]
+
+    # Dropdown options
+    all_makes = Car.objects.values_list('make', flat=True).distinct().order_by('make')
+    all_models = Car.objects.filter(make__iexact=brand).values_list('model', flat=True).distinct().order_by('model') if brand else []
+    all_years = Car.objects.values_list('year', flat=True).distinct().order_by('-year')
     
     ctx = {
         "listings": listings,
         "brand": brand,
+        "model": model,
+        "year": year,
         "price_options": price_options,
         "fuel_options": fuel_options,
         "body_options": body_options,
@@ -438,6 +470,9 @@ def AllCarsListView(request):
         "bodies_selected": bodies,
         "trans_selected": trans,
         "cats_selected": cats,
+        "all_makes": all_makes,
+        "all_models": all_models,
+        "all_years": all_years,
     }
     return render(request, "cars/all.html", ctx)
 
@@ -449,14 +484,17 @@ def ListingsListView(request):
     fuel = request.GET.get("fuel") or ""
     brand = request.GET.get("brand") or ""
     model = request.GET.get("model") or ""
+    year = request.GET.get("year") or ""
     city = request.GET.get("city") or ""
     
     if q:
         qs = qs.filter(Q(car__make__icontains=q) | Q(car__model__icontains=q) | Q(description__icontains=q) | Q(seller__email__icontains=q))
     if brand:
-        qs = qs.filter(car__make__icontains=brand)
+        qs = qs.filter(car__make__iexact=brand)
     if model:
-        qs = qs.filter(car__model__icontains=model)
+        qs = qs.filter(car__model__iexact=model)
+    if year:
+        qs = qs.filter(car__year=year)
     if budget and "-" in budget:
         parts = budget.split("-")
         try:
@@ -482,7 +520,24 @@ def ListingsListView(request):
     except Exception:
         dealer_matches = []
         
-    return render(request, "listings/list.html", {"listings": listings, "q": q, "budget": budget, "fuel": fuel, "brand": brand, "model": model, "dealer_matches": dealer_matches})
+    # Dropdown options
+    all_makes = Car.objects.values_list('make', flat=True).distinct().order_by('make')
+    all_models = Car.objects.filter(make__iexact=brand).values_list('model', flat=True).distinct().order_by('model') if brand else []
+    all_years = Car.objects.values_list('year', flat=True).distinct().order_by('-year')
+
+    return render(request, "listings/list.html", {
+        "listings": listings, 
+        "q": q, 
+        "budget": budget, 
+        "fuel": fuel, 
+        "brand": brand, 
+        "model": model, 
+        "year": year,
+        "dealer_matches": dealer_matches,
+        "all_makes": all_makes,
+        "all_models": all_models,
+        "all_years": all_years,
+    })
 
 
 def ListingDetailView(request, listing_id):
@@ -527,7 +582,21 @@ def ListingDetailView(request, listing_id):
             except Exception:
                 base_total = None
         base_total = float(base_total or (listing.price or 0.0))
-        city_prices = [(c, base_total) for c in cities]
+        CITY_ADJ = {
+            "Bangalore": 1.08,
+            "Mumbai": 1.05,
+            "Pune": 1.03,
+            "Hyderabad": 1.02,
+            "Chennai": 1.04,
+            "Ahmedabad": 1.01,
+            "Lucknow": 1.00,
+            "Jaipur": 1.01,
+            "Patna": 1.00,
+            "Chandigarh": 1.02,
+        }
+        make = (getattr(listing.car, "make", "") or "").strip()
+        luxury_bonus = 1.02 if make in {"BMW","Mercedes-Benz","Audi","Volvo","Land Rover","Jaguar","Porsche"} else 1.00
+        city_prices = [(c, round(base_total * CITY_ADJ.get(c, 1.00) * luxury_bonus, 0)) for c in cities]
     except Exception:
         city_prices = []
         
@@ -555,6 +624,7 @@ def ListingDetailView(request, listing_id):
     pano_interior = None
     model_3d_url = None
     imgs = []
+    hero_bg_url = None
     
     try:
         imgs = list(listing.images.all())
@@ -632,6 +702,19 @@ def ListingDetailView(request, listing_id):
         pano_exterior = None
         pano_interior = None
         model_3d_url = None
+    
+    try:
+        if imgs:
+            hero_bg_url = imgs[0].image.url
+        else:
+            mk = (getattr(listing.car, "make", "") or "").strip()
+            md = (getattr(listing.car, "model", "") or "").strip()
+            if mk or md:
+                from urllib.parse import quote
+                q = quote(f"{mk} {md} car".strip())
+                hero_bg_url = f"https://source.unsplash.com/1920x1080/?{q}"
+    except Exception:
+        hero_bg_url = None
         
     sess_recs = []
     try:
@@ -657,12 +740,60 @@ def ListingDetailView(request, listing_id):
     except Exception:
         fairness = {"label": "Unknown", "median": None, "diff_pct": None}
         
+    main_rating_avg = None
+    main_rating_cnt = 0
+    try:
+        from django.db.models import Avg, Count
+        from .models import UserReview
+        stats = UserReview.objects.filter(car=listing.car).aggregate(avg=Avg("rating"), cnt=Count("id"))
+        main_rating_avg = round(float(stats.get("avg") or 0.0), 1) if stats.get("avg") is not None else None
+        main_rating_cnt = int(stats.get("cnt") or 0)
+    except Exception:
+        main_rating_avg = None
+        main_rating_cnt = 0
+
     try:
         city = getattr(getattr(listing, "showroom", None), "city", "") or ""
         showrooms_qs = Showroom.objects.filter(city__iexact=city)
         dealer_matches = dealer_matches_for_buyer(city, candidates, showrooms_qs, top_k=5)
     except Exception:
         dealer_matches = []
+
+    competitors = []
+    try:
+        low = float(listing.price or 0.0) * 0.9
+        high = float(listing.price or 0.0) * 1.1
+        comp_qs = CarListing.objects.select_related("car").filter(price__gte=low, price__lte=high).exclude(car__make__iexact=getattr(listing.car, "make", "")).order_by("price")[:2]
+        from django.db.models import Avg, Count
+        from .models import UserReview
+        for c in comp_qs:
+            try:
+                stats = UserReview.objects.filter(car=c.car).aggregate(avg=Avg("rating"), cnt=Count("id"))
+                competitors.append({
+                    "make": getattr(c.car, "make", ""),
+                    "model": getattr(c.car, "model", ""),
+                    "price": c.price,
+                    "rating_avg": round(float(stats.get("avg") or 0.0), 1) if stats.get("avg") is not None else None,
+                    "rating_cnt": int(stats.get("cnt") or 0),
+                    "transmission": getattr(c.car, "transmission", None),
+                    "fuel_type": getattr(c.car, "fuel_type", None),
+                    "mileage": getattr(c.car, "mileage", None),
+                    "gncap": getattr(c.car, "gncap_rating", None),
+                })
+            except Exception:
+                competitors.append({
+                    "make": getattr(c.car, "make", ""),
+                    "model": getattr(c.car, "model", ""),
+                    "price": c.price,
+                    "rating_avg": None,
+                    "rating_cnt": 0,
+                    "transmission": getattr(c.car, "transmission", None),
+                    "fuel_type": getattr(c.car, "fuel_type", None),
+                    "mileage": getattr(c.car, "mileage", None),
+                    "gncap": getattr(c.car, "gncap_rating", None),
+                })
+    except Exception:
+        competitors = []
         
     return render(request, "listings/detail.html", {
         "listing": listing,
@@ -680,6 +811,10 @@ def ListingDetailView(request, listing_id):
         "emi": emi,
         "variants": variants,
         "city_prices": city_prices,
+        "main_rating_avg": main_rating_avg,
+        "main_rating_cnt": main_rating_cnt,
+        "competitors": competitors,
+        "hero_bg_url": hero_bg_url,
     })
 
 @login_required
