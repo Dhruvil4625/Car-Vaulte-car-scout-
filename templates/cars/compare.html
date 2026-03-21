@@ -77,12 +77,21 @@
     border: 4px solid #ffffff; box-shadow: 0 10px 25px rgba(0,0,0,0.15); letter-spacing: 1px;
   }
 
+  .action-row { display: flex; justify-content: center; gap: 15px; margin-top: 10px; }
+
   .btn-compare {
-    background-color: #e11d48; color: #fff; font-weight: 900; padding: 18px 50px; border-radius: 12px; border: none;
-    transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(225, 29, 72, 0.3);
-    animation: pulseRed 2.5s infinite;
+    background-color: #e11d48; color: #fff; font-weight: 900; padding: 16px 40px; border-radius: 12px; border: none;
+    transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; font-size: 1.05rem; box-shadow: 0 4px 15px rgba(225, 29, 72, 0.3);
+    animation: pulseRed 2.5s infinite; display: inline-flex; align-items: center; justify-content: center;
   }
   .btn-compare:hover { background-color: #be123c; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(225, 29, 72, 0.4); color: #fff; }
+
+  .btn-export {
+    background-color: #ffffff; color: #0f172a; font-weight: 800; padding: 16px 30px; border-radius: 12px; border: 2px solid #cbd5e1;
+    transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; font-size: 0.95rem; text-decoration: none;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .btn-export:hover { background-color: #f1f5f9; border-color: #0f172a; color: #0f172a; transform: translateY(-2px); }
 
   /* --- Advanced Comparison Table --- */
   .table-responsive-custom { border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(0,0,0,0.03); }
@@ -91,13 +100,21 @@
   
   /* Header Row */
   .vs-table th {
-    background: #0f172a; color: #ffffff; padding: 30px 20px; text-align: center; width: 40%; vertical-align: top;
+    background: #0f172a; color: #ffffff; padding: 35px 20px; text-align: center; width: 40%; vertical-align: top;
   }
   .vs-table th:first-child { width: 20%; background: #f8fafc; border-right: 1px solid #e2e8f0; }
 
-  .car-title-main { font-size: 1.6rem; font-weight: 900; color: #ffffff; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; line-height: 1.2; }
+  .car-title-main { font-size: 1.6rem; font-weight: 900; color: #ffffff; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; line-height: 1.2; }
   .car-year-badge { display: inline-block; background: rgba(255,255,255,0.1); color: #cbd5e1; padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; letter-spacing: 1px; border: 1px solid rgba(255,255,255,0.2); }
   .car-year-badge.winner-year { background: #10b981; color: #ffffff; border-color: #10b981; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); }
+
+  /* Analytics Button in Header */
+  .btn-analytics-header {
+    background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); color: #e2e8f0;
+    font-size: 0.75rem; font-weight: 700; padding: 8px 16px; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px;
+    text-decoration: none; transition: all 0.3s; display: inline-flex; align-items: center; margin-top: 15px;
+  }
+  .btn-analytics-header:hover { background: rgba(255, 255, 255, 0.15); color: #ffffff; border-color: #ffffff; }
 
   /* Data Rows */
   .vs-table td { padding: 22px; border-bottom: 1px solid #f1f5f9; text-align: center; font-size: 1.05rem; font-weight: 700; color: #334155; vertical-align: middle; transition: background 0.3s; }
@@ -111,6 +128,7 @@
   }
   .vs-table tr:hover td:first-child { background-color: #f1f5f9; }
   .spec-icon { color: #e11d48; width: 30px; text-align: center; margin-right: 12px; font-size: 1.2rem; }
+  .spec-icon.green { color: #10b981; } /* Specific color for EPA Leaf */
 
   /* Winning Cell Highlight */
   .winner-cell { background: #ecfdf5 !important; color: #059669 !important; position: relative; }
@@ -130,6 +148,7 @@
     .car-title-main { font-size: 1.2rem; }
     .vs-table td:first-child { font-size: 0.75rem; padding: 15px 10px; flex-direction: column; align-items: flex-start; gap: 5px; }
     .spec-icon { margin-right: 0; }
+    .action-row { flex-direction: column; }
   }
 </style>
 
@@ -185,12 +204,14 @@
 
       </div>
       
-      <div class="text-center mt-2">
+      <div class="action-row">
         <button type="submit" class="btn-compare">
           <i class="fa-solid fa-bolt me-2"></i> Run Comparison
         </button>
         {% if car1 or car2 %}
-        <a href="{% url 'compare_export_pdf' %}?vin1={{ vin1|urlencode }}&vin2={{ vin2|urlencode }}" class="btn btn-outline-dark ms-2"><i class="fa-solid fa-file-pdf me-2 text-danger"></i> Export PDF</a>
+        <a href="{% url 'compare_export_pdf' %}?vin1={{ vin1|urlencode }}&vin2={{ vin2|urlencode }}" class="btn-export">
+          <i class="fa-solid fa-file-pdf text-danger me-2"></i> Export PDF
+        </a>
         {% endif %}
       </div>
 
@@ -207,7 +228,10 @@
             {% if car1 %}
               <div class="car-title-main">{{ car1.make }}<br>{{ car1.model }}</div>
               <div class="car-year-badge {% if dom.year == 1 %}winner-year{% endif %}">{{ car1.year }}</div>
-              <div class="mt-2"><a class="btn btn-outline-light btn-sm" href="{% url 'pricing_analytics' %}?brand={{ car1.make|urlencode }}&model={{ car1.model|urlencode }}&year={{ car1.year }}"><i class="fa-solid fa-chart-line me-1"></i> Push to Analytics</a></div>
+              <br>
+              <a class="btn-analytics-header" href="{% url 'pricing_analytics' %}?brand={{ car1.make|urlencode }}&model={{ car1.model|urlencode }}&year={{ car1.year }}">
+                <i class="fa-solid fa-chart-line me-2"></i> Pricing Analytics
+              </a>
             {% else %}
               <span class="text-muted fw-bold">Not Selected</span>
             {% endif %}
@@ -216,7 +240,10 @@
             {% if car2 %}
               <div class="car-title-main">{{ car2.make }}<br>{{ car2.model }}</div>
               <div class="car-year-badge {% if dom.year == 2 %}winner-year{% endif %}">{{ car2.year }}</div>
-              <div class="mt-2"><a class="btn btn-outline-light btn-sm" href="{% url 'pricing_analytics' %}?brand={{ car2.make|urlencode }}&model={{ car2.model|urlencode }}&year={{ car2.year }}"><i class="fa-solid fa-chart-line me-1"></i> Push to Analytics</a></div>
+              <br>
+              <a class="btn-analytics-header" href="{% url 'pricing_analytics' %}?brand={{ car2.make|urlencode }}&model={{ car2.model|urlencode }}&year={{ car2.year }}">
+                <i class="fa-solid fa-chart-line me-2"></i> Pricing Analytics
+              </a>
             {% else %}
               <span class="text-muted fw-bold">Not Selected</span>
             {% endif %}
@@ -251,13 +278,13 @@
         </tr>
         {% if epa1 or epa2 %}
         <tr>
-          <td><i class="fa-solid fa-leaf spec-icon"></i> Fuel Economy (EPA)</td>
+          <td><i class="fa-solid fa-leaf spec-icon green"></i> Fuel Economy (EPA)</td>
           <td>{% if epa1 and epa1.comb_kmpl %}{{ epa1.comb_kmpl }} kmpl{% else %}—{% endif %}</td>
           <td>{% if epa2 and epa2.comb_kmpl %}{{ epa2.comb_kmpl }} kmpl{% else %}—{% endif %}</td>
         </tr>
         {% endif %}
         <tr>
-          <td><i class="fa-solid fa-barcode spec-icon text-muted"></i> VIN Number</td>
+          <td><i class="fa-solid fa-barcode spec-icon text-muted" style="color: #94a3b8;"></i> VIN Number</td>
           <td style="font-family: monospace; font-size: 0.95rem; color: #94a3b8;">{% if car1 %}{{ car1.vin }}{% else %}—{% endif %}</td>
           <td style="font-family: monospace; font-size: 0.95rem; color: #94a3b8;">{% if car2 %}{{ car2.vin }}{% else %}—{% endif %}</td>
         </tr>
@@ -265,7 +292,7 @@
     </table>
   </div>
   {% else %}
-  <div class="premium-card reveal" style="transition-delay: 0.2s;">
+  <div class="premium-card reveal" style="transition-delay: 0.2s; padding: 0;">
     <div class="empty-state">
       <i class="fa-solid fa-scale-balanced"></i>
       <h3>Awaiting Combatants</h3>
