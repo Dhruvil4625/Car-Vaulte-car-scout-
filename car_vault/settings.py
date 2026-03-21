@@ -13,8 +13,6 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
-import dj_database_url
-
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -32,9 +30,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-change-me")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -87,7 +85,14 @@ WSGI_APPLICATION = "car_vault.wsgi.application"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    "default": dj_database_url.config(default=os.getenv("DATABASE_URL"))
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "car_vault",
+        "USER": "postgres",
+        "PASSWORD": "462520",  # Update with your DB password
+        "HOST": "localhost",
+        "PORT": "5432",
+    }
 }
 
 
@@ -147,10 +152,9 @@ LOCALE_PATHS = [BASE_DIR / "locale"]
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / "static"]
-STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Media (uploads)
 MEDIA_URL = "media/"
@@ -168,26 +172,17 @@ LOGIN_URL = "/login/"
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
-EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() in ("1", "true", "yes")
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "true").lower() == "true"
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
-
 
 _DEV_HOST_IP = os.getenv("DEV_HOST_IP", "").strip()
 _CSRF_ORIGINS = ["http://127.0.0.1:8000", "http://localhost:8000"]
 if _DEV_HOST_IP:
     _CSRF_ORIGINS.append(f"http://{_DEV_HOST_IP}:8000")
-
-_CSRF_ORIGINS_ENV = os.getenv("CSRF_TRUSTED_ORIGINS", "").strip()
-if _CSRF_ORIGINS_ENV:
-    _CSRF_ORIGINS.extend(
-        [origin.strip() for origin in _CSRF_ORIGINS_ENV.split(",") if origin.strip()]
-    )
-
 CSRF_TRUSTED_ORIGINS = _CSRF_ORIGINS
 CSRF_USE_SESSIONS = False
 
-# Secrets from environment
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "")
 RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
