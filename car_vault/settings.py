@@ -35,8 +35,12 @@ DEBUG = os.getenv("DEBUG", "False").strip().lower() in {"1", "true", "yes", "on"
 
 _ALLOWED_HOSTS_ENV = os.getenv("ALLOWED_HOSTS", "").strip()
 ALLOWED_HOSTS = [h.strip() for h in _ALLOWED_HOSTS_ENV.split(",") if h.strip()]
-if DEBUG and not ALLOWED_HOSTS:
-    ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+if not ALLOWED_HOSTS:
+    _render_host = os.getenv("RENDER_EXTERNAL_HOSTNAME", "").strip()
+    if _render_host:
+        ALLOWED_HOSTS = [_render_host, "127.0.0.1", "localhost"]
+    elif DEBUG:
+        ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 
 
 # Application definition
