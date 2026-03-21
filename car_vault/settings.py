@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+import dj_database_url
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -84,15 +85,21 @@ WSGI_APPLICATION = "car_vault.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": "car_vault",
+#         "USER": "postgres",
+#         "PASSWORD": "462520",  # Update with your DB password
+#         "HOST": "localhost",
+#         "PORT": "5432",
+#     }
+# }
+
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "car_vault",
-        "USER": "postgres",
-        "PASSWORD": "462520",  # Update with your DB password
-        "HOST": "localhost",
-        "PORT": "5432",
-    }
+    'default': dj_database_url.config(
+        default=os.environ.get('postgresql://car_vault_user:uF71Cw8IpqYGA0gxO5qUqlC4mml327Z4@dpg-d6vcapfgi27c73ettrug-a.oregon-postgres.render.com/car_vault')
+    )
 }
 
 
@@ -186,3 +193,9 @@ CSRF_USE_SESSIONS = False
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "")
 RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
+
+import dj_database_url
+
+DATABASES = {
+    'default': dj_database_url.config(default='postgresql://car_vault_user:uF71Cw8IpqYGA0gxO5qUqlC4mml327Z4@dpg-d6vcapfgi27c73ettrug-a.oregon-postgres.render.com/car_vault')
+}
