@@ -1,10 +1,21 @@
 from datetime import timedelta
+import os
+import types
+from unittest.mock import patch
 
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
 from core.models import Buyer, Car, CarListing, DealRating, Message, Seller, Transaction, User
+from core.ai_utils import (
+    recommend_similar_listings,
+    session_aware_recs,
+    sentiment_analyze,
+    toxicity_detect,
+    chatbot_query,
+    price_fairness_info,
+)
 
 
 class OtpAuthFlowTests(TestCase):
@@ -170,3 +181,91 @@ class DealInteractionTests(TestCase):
 
         self.assertRedirects(response, reverse("buyers_detail", args=[self.buyer.user_id]), fetch_redirect_response=False)
         self.assertTrue(DealRating.objects.filter(rater=self.seller, rated_user=self.buyer, score=3).exists())
+
+
+class AIFeatureTests(TestCase):
+    def setUp(self):
+        self.buyer = User.objects.create_user(
+            email="aibuyer@example.com",
+            password="BuyerPass123!",
+            role=User.Role.BUYER,
+            status=User.Status.ACTIVE,
+        )
+        self.seller = User.objects.create_user(
+            email="aiseller@example.com",
+            password="SellerPass123!",
+            role=User.Role.SELLER,
+            status=User.Status.ACTIVE,
+        )
+        self.seller2 = User.objects.create_user(
+            email="aiseller2@example.com",
+            password="SellerPass123!",
+            role=User.Role.SELLER,
+            status=User.Status.ACTIVE,
+        )
+        Seller.objects.update_or_create(
+            user=self.seller,
+            defaults={"dealership_name": "Alpha Motors", "rating": 4.8},
+        )
+        Seller.objects.update_or_create(
+            user=self.seller2,
+            defaults={"dealership_name": "Beta Cars", "rating": 3.6},
+        )
+        car1 = Car.objects.create(vin="WBSPM9C0XBE223451", make="Toyota", model="Fortuner", year=2021, fuel_type="Diesel", body_type="SUV")
+        car2 = Car.objects.create(vin="WBSPM9C0XBE223452", make="Toyota", model="Fortuner", year=2022, fuel_type="Diesel", body_type="SUV")
+        car3 = Car.objects.create(vin="WBSPM9C0XBE223453", make="Hyundai", model="Creta", year=2022, fuel_type="Petrol", body_type="SUV")
+        car4 = Car.objects.create(vin="WBSPM9C0XBE223454", make="Honda", model="City", year=2021, fuel_type="Petrol", body_type="Sedan")
+        self.lst1 = CarListing.objects.create(car=car1, seller=self.seller, price=3000000, mileage=30000, description="Primary SUV")
+        self.lst2 = CarListing.objects.create(car=car2, seller=self.seller, price=3200000, mileage=25000, description="Similar SUV")
+        self.lst3 = CarListing.objects.create(car=car3, seller=self.seller, price=1800000, mileage=15000, description="Compact SUV")
+        self.lst4 = CarListing.objects.create(car=car4, seller=self.seller2, price=1400000, mileage=22000, description="City sedan")
+
+    def test_recommendations_exclude_current_listing(self):
+        recs = recommend_similar_listings(self.lst1, [self.lst1, self.lst2, self.lst3], top_k=3)
+        self.assertNotIn(self.lst1, recs)
+        self.assertGreaterEqual(len(recs), 1)
+
+    def test_session_recommendations_exclude_current_listing(self):
+        recs = session_aware_recs(self.buyer, self.lst1, [self.lst1, self.lst2, self.lst3], top_k=3)
+        self.assertNotIn(self.lst1, recs)
+
+    def test_sentiment_basic_ordering(self):
+        s1 = sentiment_analyze("I love this car")
+        s2 = sentiment_analyze("I hate this car")
+        self.assertTrue((s1 or 0) > (s2 or 0))
+
+    def test_toxicity_non_toxic_label_maps_to_zero(self):
+        fake_transformers = types.SimpleNamespace(
+            pipeline=lambda *_a, **_k: (lambda _t: [{"label": "non-toxic", "score": 0.99}])
+        )
+        with patch.dict("sys.modules", {"transformers": fake_transformers}):
+            out = toxicity_detect("Have a nice day")
+        self.assertEqual(out, 0.0)
+
+    def test_price_fairness_uses_even_median(self):
+        fair = price_fairness_info(self.lst1, [self.lst2, self.lst3])
+        self.assertIn(fair["label"], {"Fair Price", "Expensive", "Good Deal", "Slightly Off", "Unknown"})
+        self.assertIsNotNone(fair["median"])
+
+    def test_chatbot_fallback_query_filters(self):
+        with patch.dict(os.environ, {"GROQ_API_KEY": ""}, clear=False):
+            ans = chatbot_query("suv under 35 lakh", [self.lst1, self.lst2, self.lst3])
+        self.assertIn("Top suggestions", ans)
+
+    def test_chatbot_best_seller_question(self):
+        with patch.dict(os.environ, {"GROQ_API_KEY": ""}, clear=False):
+            ans = chatbot_query("which seller is best?", [self.lst1, self.lst2, self.lst3, self.lst4])
+        self.assertIn("Best seller right now", ans)
+        self.assertIn("Alpha Motors", ans)
+
+    def test_message_signal_populates_sentiment_fields(self):
+        msg = Message.objects.create(
+            sender=self.buyer,
+            receiver=self.seller,
+            listing=self.lst1,
+            content="Great deal, I love this one",
+        )
+        msg.refresh_from_db()
+        self.assertIsNotNone(msg.sentiment_score)
+        self.assertIsNotNone(msg.sentiment_label)
+        self.assertIsNotNone(msg.toxicity_score)
