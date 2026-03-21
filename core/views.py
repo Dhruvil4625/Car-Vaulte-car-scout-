@@ -26,14 +26,14 @@ from urllib.error import URLError, HTTPError
 from core.email_utils import send_email_html, send_email_html_async
 from .forms import UserSignupForm, CarListingForm, CarForm, UpcomingArrivalForm, UserLoginForm, InspectionForm
 from .models import Car, CarListing, Message, TestDrive, Buyer, Seller, CarListingImage, Showroom, UpcomingArrival, CarListingAsset, DealRating
-from .ai_utils import recommend_similar_listings, dealer_matches_for_buyer, image_condition_score, chatbot_query, price_fairness_info
+from .ai_utils import recommend_similar_listings, session_aware_recs, collaborative_recs, dealer_matches_for_buyer, image_condition_score, chatbot_query, price_fairness_info
 
 User = get_user_model()
 
 # Razorpay Client Initialization
-RAZORPAY_KEY_ID = "rzp_test_SQeSwkEeAuFz4E"
-RAZORPAY_KEY_SECRET = "qxO9IL2TRTQutK6HWIdhXExR"
-razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
+RAZORPAY_KEY_ID = getattr(settings, "RAZORPAY_KEY_ID", "") or os.getenv("RAZORPAY_KEY_ID", "")
+RAZORPAY_KEY_SECRET = getattr(settings, "RAZORPAY_KEY_SECRET", "") or os.getenv("RAZORPAY_KEY_SECRET", "")
+razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET)) if (RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET) else None
 
 
 def _marketing_brochure_attachments(user=None):
@@ -228,6 +228,7 @@ def CompareCarsView(request):
         except Exception:
             return 0
 
+    from django.db.models import Avg, Count
     dom = {
         "fuel": 1 if _fuel_score(car1) > _fuel_score(car2) else (2 if _fuel_score(car2) > _fuel_score(car1) else 0),
         "trans": 1 if _trans_score(car1) > _trans_score(car2) else (2 if _trans_score(car2) > _trans_score(car1) else 0),
@@ -235,9 +236,55 @@ def CompareCarsView(request):
         "year": 1 if _year_score(car1) > _year_score(car2) else (2 if _year_score(car2) > _year_score(car1) else 0),
         "mileage": 1 if _mileage_score(car1) > _mileage_score(car2) else (2 if _mileage_score(car2) > _mileage_score(car1) else 0),
     }
+    def _num(val):
+        try:
+            return float(val or 0.0)
+        except Exception:
+            return 0.0
+    dom.update({
+        "engine": 1 if _num(getattr(car1, "engine_cc", None)) > _num(getattr(car2, "engine_cc", None)) else (2 if _num(getattr(car2, "engine_cc", None)) > _num(getattr(car1, "engine_cc", None)) else 0),
+        "power": 1 if _num(getattr(car1, "power_bhp", None)) > _num(getattr(car2, "power_bhp", None)) else (2 if _num(getattr(car2, "power_bhp", None)) > _num(getattr(car1, "power_bhp", None)) else 0),
+        "torque": 1 if _num(getattr(car1, "torque_nm", None)) > _num(getattr(car2, "torque_nm", None)) else (2 if _num(getattr(car2, "torque_nm", None)) > _num(getattr(car1, "torque_nm", None)) else 0),
+        "safety": 1 if _num(getattr(car1, "gncap_rating", None)) > _num(getattr(car2, "gncap_rating", None)) else (2 if _num(getattr(car2, "gncap_rating", None)) > _num(getattr(car1, "gncap_rating", None)) else 0),
+    })
+    # Market averages by brand/model/year
+    avg1 = avg2 = market_year_avg = None
+    try:
+        if car1:
+            a1 = CarListing.objects.filter(car__make__iexact=car1.make, car__model__iexact=car1.model, car__year=car1.year).aggregate(avg=Avg("price"), cnt=Count("listing_id"))
+            avg1 = float(a1.get("avg") or 0.0)
+        if car2:
+            a2 = CarListing.objects.filter(car__make__iexact=car2.make, car__model__iexact=car2.model, car__year=car2.year).aggregate(avg=Avg("price"), cnt=Count("listing_id"))
+            avg2 = float(a2.get("avg") or 0.0)
+        year_filter = car1.year if car1 else (car2.year if car2 else None)
+        if year_filter:
+            market_year_avg = float(CarListing.objects.filter(car__year=year_filter).aggregate(avg=Avg("price")).get("avg") or 0.0)
+    except Exception:
+        pass
+    # Optional EPA fuel economy mapping
+    epa_map = {
+        ("BMW","M4",2021): {"comb_kmpl": 9.5},
+        ("Audi","A4",2020): {"comb_kmpl": 14.2},
+        ("Toyota","Camry",2021): {"comb_kmpl": 18.0},
+    }
+    def _epa(car):
+        if not car:
+            return None
+        k = ((getattr(car, "make", "") or "").strip(), (getattr(car, "model", "") or "").strip(), int(getattr(car, "year", 0) or 0))
+        return epa_map.get(k)
+    epa1 = _epa(car1)
+    epa2 = _epa(car2)
+    chart = {
+        "labels": ["Engine (cc)", "Power (bhp)", "Torque (Nm)", "Safety (NCAP)"],
+        "car1": [ _num(getattr(car1, "engine_cc", None)), _num(getattr(car1, "power_bhp", None)), _num(getattr(car1, "torque_nm", None)), _num(getattr(car1, "gncap_rating", None)) ] if car1 else [],
+        "car2": [ _num(getattr(car2, "engine_cc", None)), _num(getattr(car2, "power_bhp", None)), _num(getattr(car2, "torque_nm", None)), _num(getattr(car2, "gncap_rating", None)) ] if car2 else [],
+        "avg1": avg1,
+        "avg2": avg2,
+        "market_year_avg": market_year_avg,
+    }
     
     cars = Car.objects.all().prefetch_related("listings").order_by("make", "model", "year")
-    return render(request, "cars/compare.html", {"cars": cars, "car1": car1, "car2": car2, "vin1": vin1, "vin2": vin2, "dom": dom})
+    return render(request, "cars/compare.html", {"cars": cars, "car1": car1, "car2": car2, "vin1": vin1, "vin2": vin2, "dom": dom, "chart": chart, "epa1": epa1, "epa2": epa2})
 
 
 def HomeView(request):
@@ -734,15 +781,24 @@ def ListingDetailView(request, listing_id):
         hero_bg_url = None
         
     sess_recs = []
+    collab = []
     try:
         candidates = CarListing.objects.select_related("car", "seller").prefetch_related("images").exclude(listing_id=listing.listing_id).order_by("-created_at")[:200]
         similar_cars = recommend_similar_listings(listing, candidates, top_k=6)
         if request.user.is_authenticated:
             try:
+                sess_recs = session_aware_recs(request.user, listing, candidates, top_k=6)
+            except Exception:
+                sess_recs = []
+            try:
+                collab = collaborative_recs(request.user, candidates, top_k=4)
+            except Exception:
+                collab = []
+            try:
                 # Merge and de-duplicate preferring session-aware first
                 seen = set()
                 merged = []
-                for c in sess_recs + similar_cars:
+                for c in sess_recs + collab + similar_cars:
                     if getattr(c, "listing_id", None) not in seen:
                         merged.append(c)
                         seen.add(getattr(c, "listing_id", None))
@@ -835,6 +891,184 @@ def ListingDetailView(request, listing_id):
         "hero_bg_url": hero_bg_url,
     })
 
+def listing_specs_pdf(request, listing_id):
+    try:
+        from reportlab.lib.pagesizes import A4
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+        from reportlab.lib import colors
+        from reportlab.lib.styles import getSampleStyleSheet
+    except Exception:
+        return HttpResponse("PDF export requires reportlab. Please install it.", status=500)
+    listing = get_object_or_404(CarListing.objects.select_related("car"), listing_id=listing_id)
+    response = HttpResponse(content_type="application/pdf")
+    fname = f"{listing.car.make}_{listing.car.model}_{listing.car.year}_specs.pdf".replace(" ", "_")
+    response["Content-Disposition"] = f'attachment; filename="{fname}"'
+    doc = SimpleDocTemplate(response, pagesize=A4, leftMargin=24, rightMargin=24, topMargin=24, bottomMargin=24)
+    styles = getSampleStyleSheet()
+    elems = []
+    title = f"{listing.car.make} {listing.car.model} — Specifications"
+    elems.append(Paragraph(title, styles["Title"]))
+    elems.append(Paragraph(f"Year: {listing.car.year} • Transmission: {listing.car.transmission or '—'} • Fuel: {listing.car.fuel_type or '—'}", styles["Normal"]))
+    elems.append(Spacer(1, 12))
+    perf = [
+        ["Performance"],
+        ["Engine Capacity", f"{listing.car.engine_cc or '—'}{' cc' if listing.car.engine_cc else ''}"],
+        ["Maximum Power", f"{listing.car.power_bhp or '—'}{' bhp' if listing.car.power_bhp else ''}"],
+        ["Peak Torque", f"{listing.car.torque_nm or '—'}{' Nm' if listing.car.torque_nm else ''}"],
+    ]
+    drive = [
+        ["Drivetrain"],
+        ["Fuel Delivery", listing.car.fuel_type or "—"],
+        ["Transmission", listing.car.transmission or "—"],
+    ]
+    dims = [
+        ["Dimensions"],
+        ["Body Configuration", listing.car.body_type or "—"],
+        ["Current Odometer", f"{listing.mileage or '—'}{' km' if listing.mileage else ''}"],
+    ]
+    safe = [
+        ["Safety"],
+        ["Global NCAP Safety", f"{listing.car.gncap_rating or '—'}"],
+    ]
+    def make_table(data):
+        t = Table(data, hAlign="LEFT", colWidths=[180, 260])
+        t.setStyle(TableStyle([
+            ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#f1f5f9")),
+            ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
+            ("TEXTCOLOR", (0,0), (-1,0), colors.HexColor("#0f172a")),
+            ("ALIGN", (1,1), (-1,-1), "RIGHT"),
+            ("INNERGRID", (0,0), (-1,-1), 0.25, colors.HexColor("#e2e8f0")),
+            ("BOX", (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
+        ]))
+        return t
+    for block in (perf, drive, dims, safe):
+        elems.append(make_table(block))
+        elems.append(Spacer(1, 8))
+    doc.build(elems)
+    return response
+def compare_export_pdf(request):
+    try:
+        from reportlab.lib.pagesizes import A4, landscape
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+        from reportlab.lib import colors
+        from reportlab.lib.styles import getSampleStyleSheet
+    except Exception:
+        return HttpResponse("PDF export requires reportlab. Please install it.", status=500)
+    vin1 = (request.GET.get("vin1") or "").strip()
+    vin2 = (request.GET.get("vin2") or "").strip()
+    car1 = car2 = None
+    try:
+        if vin1:
+            car1 = Car.objects.get(vin=vin1)
+    except Car.DoesNotExist:
+        car1 = None
+    try:
+        if vin2:
+            car2 = Car.objects.get(vin=vin2)
+    except Car.DoesNotExist:
+        car2 = None
+    styles = getSampleStyleSheet()
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = 'attachment; filename="comparison_matrix.pdf"'
+    doc = SimpleDocTemplate(response, pagesize=landscape(A4), leftMargin=24, rightMargin=24, topMargin=24, bottomMargin=24)
+    elems = []
+    title = "Vehicle Comparison Matrix"
+    elems.append(Paragraph(title, styles["Title"]))
+    elems.append(Spacer(1, 8))
+    def spec(v):
+        if not v: return ["—","—","—","—","—","—"]
+        return [
+            f"{v.make} {v.model}",
+            f"{v.year}",
+            v.transmission or "—",
+            v.fuel_type or "—",
+            f"{v.engine_cc or '—'}",
+            f"{v.power_bhp or '—'}",
+        ]
+    header = ["Specification","Car A","Car B"]
+    rows = []
+    rows.append(["Make & Model", spec(car1)[0], spec(car2)[0]])
+    rows.append(["Year", spec(car1)[1], spec(car2)[1]])
+    rows.append(["Transmission", spec(car1)[2], spec(car2)[2]])
+    rows.append(["Fuel Type", spec(car1)[3], spec(car2)[3]])
+    rows.append(["Engine (cc)", spec(car1)[4], spec(car2)[4]])
+    rows.append(["Power (bhp)", spec(car1)[5], spec(car2)[5]])
+    # Pricing stats
+    try:
+        from django.db.models import Avg, Count
+        def stats(v):
+            if not v: return ("—","—","—")
+            a = CarListing.objects.filter(car__make__iexact=v.make, car__model__iexact=v.model, car__year=v.year).aggregate(avg=Avg("price"), cnt=Count("listing_id"))
+            return (f"{float(a.get('avg') or 0.0):,.0f}", str(a.get("cnt") or 0), "")
+        av1, cnt1, _ = stats(car1)
+        av2, cnt2, _ = stats(car2)
+        rows.append(["Avg Market Price (INR)", av1, av2])
+        rows.append(["Sample Size", cnt1, cnt2])
+    except Exception:
+        pass
+    data = [header] + rows
+    tbl = Table(data, repeatRows=1, colWidths=[160, 260, 260])
+    tbl.setStyle(TableStyle([
+        ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#f1f5f9")),
+        ("TEXTCOLOR", (0,0), (-1,0), colors.HexColor("#0f172a")),
+        ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
+        ("ALIGN", (0,0), (-1,-1), "LEFT"),
+        ("GRID", (0,0), (-1,-1), 0.25, colors.HexColor("#cbd5e1")),
+        ("FONTSIZE", (0,0), (-1,0), 11),
+        ("BOTTOMPADDING", (0,0), (-1,0), 8),
+    ]))
+    elems.append(tbl)
+    doc.build(elems)
+    return response
+@login_required
+def PricingAnalyticsView(request):
+    from django.db.models import Avg, Count
+    brands = list(Car.objects.values_list("make", flat=True).distinct().order_by("make"))
+    years = list(Car.objects.values_list("year", flat=True).distinct().order_by("-year"))
+    pre_brand = (request.GET.get("brand") or "").strip()
+    pre_year = (request.GET.get("year") or "").strip()
+    pre_model = (request.GET.get("model") or "").strip()
+    models = []
+    if pre_brand:
+        models = list(Car.objects.filter(make__iexact=pre_brand).values_list("model", flat=True).distinct().order_by("model"))
+    return render(request, "analytics/pricing.html", {"brands": brands, "years": years, "models": models, "pre_brand": pre_brand, "pre_year": pre_year, "pre_model": pre_model})
+
+def price_chart_data(request):
+    from django.db.models import Avg, Count
+    brand = (request.GET.get("brand") or "").strip()
+    year = request.GET.get("year")
+    model = (request.GET.get("model") or "").strip()
+    qs = CarListing.objects.select_related("car")
+    if brand:
+        qs = qs.filter(car__make__iexact=brand)
+    if year:
+        try:
+            qs = qs.filter(car__year=int(year))
+        except Exception:
+            pass
+    if model:
+        qs = qs.filter(car__model__iexact=model)
+    # Caching key based on filters
+    cache_key = f"price_chart:{brand}:{year}:{model}"
+    cached = cache.get(cache_key)
+    if cached:
+        return JsonResponse(cached)
+    agg = (
+        qs.values("car__make", "car__model", "car__year")
+        .annotate(avg_price=Avg("price"), count=Count("listing_id"))
+        .order_by("car__model")
+    )
+    data = {
+        "brand": brand,
+        "year": year,
+        "points": [
+            {"model": a["car__model"], "avg_price": float(a["avg_price"] or 0.0), "count": a["count"]}
+            for a in agg
+        ],
+        "market_avg": float(qs.aggregate(Avg("price")).get("price__avg") or 0.0),
+    }
+    cache.set(cache_key, data, timeout=300)
+    return JsonResponse(data)
 @login_required
 def ListingImagesDeleteView(request, listing_id):
     if request.method != "POST":
@@ -868,6 +1102,225 @@ def ListingImagesDeleteView(request, listing_id):
         if xrw and xrw.lower() == "xmlhttprequest":
             return JsonResponse({"ok": False}, status=500)
         return redirect("listing_edit", listing_id=listing_id)
+
+def price_trend_data(request):
+    try:
+        from django.db.models import Avg, Count, Max
+        from django.db.models.functions import TruncMonth
+    except Exception:
+        return JsonResponse({"error": "Missing ORM functions"}, status=500)
+    brand = (request.GET.get("brand") or "").strip()
+    model = (request.GET.get("model") or "").strip()
+    year = request.GET.get("year")
+    city = (request.GET.get("city") or "").strip()
+    qs = CarListing.objects.select_related("car", "showroom")
+    if brand:
+        qs = qs.filter(car__make__iexact=brand)
+    if model:
+        qs = qs.filter(car__model__iexact=model)
+    if year:
+        try:
+            qs = qs.filter(car__year=int(year))
+        except Exception:
+            return JsonResponse({"error": "Invalid year"}, status=400)
+    if city:
+        qs = qs.filter(showroom__city__iexact=city)
+    # Time series trend by month
+    series = (
+        qs.annotate(month=TruncMonth("created_at"))
+        .values("month")
+        .annotate(avg_price=Avg("price"), count=Count("listing_id"))
+        .order_by("month")
+    )
+    # Regional variation
+    regions = (
+        qs.values("showroom__city")
+        .annotate(avg_price=Avg("price"), count=Count("listing_id"))
+        .order_by("-count")
+    )
+    # Freshness
+    try:
+        freshness = qs.aggregate(Max("updated_at")).get("updated_at__max")
+    except Exception:
+        freshness = None
+    data = {
+        "brand": brand, "model": model, "year": year,
+        "trend": [
+            {"month": (s["month"].strftime("%Y-%m") if s["month"] else None), "avg_price": float(s["avg_price"] or 0.0), "count": s["count"]}
+            for s in series
+        ],
+        "regions": [
+            {"city": (r["showroom__city"] or "Online"), "avg_price": float(r["avg_price"] or 0.0), "count": r["count"]}
+            for r in regions[:12]
+        ],
+        "freshness_ts": (freshness.isoformat() if freshness else None),
+        "sample_size": qs.count(),
+    }
+    return JsonResponse(data)
+
+def pricing_aggregate_api(request):
+    try:
+        from django.db.models import Avg, Count, Min, Max
+    except Exception:
+        return JsonResponse({"error": "Aggregation not available"}, status=500)
+    brand = (request.GET.get("brand") or "").strip()
+    model = (request.GET.get("model") or "").strip()
+    year_raw = request.GET.get("year")
+    city = (request.GET.get("city") or "").strip()
+    state = (request.GET.get("state") or "").strip()
+    try:
+        page = max(1, int(request.GET.get("page") or 1))
+    except Exception:
+        page = 1
+    try:
+        page_size = min(100, max(1, int(request.GET.get("page_size") or 25)))
+    except Exception:
+        page_size = 25
+    qs = CarListing.objects.select_related("car", "showroom")
+    try:
+        mileage_min = request.GET.get("mileage_min")
+        mileage_max = request.GET.get("mileage_max")
+        if mileage_min:
+            qs = qs.filter(mileage__gte=int(mileage_min))
+        if mileage_max:
+            qs = qs.filter(mileage__lte=int(mileage_max))
+    except Exception:
+        pass
+    if brand:
+        qs = qs.filter(car__make__iexact=brand)
+    if model:
+        qs = qs.filter(car__model__iexact=model)
+    if year_raw:
+        try:
+            year = int(year_raw)
+            qs = qs.filter(car__year=year)
+        except Exception:
+            return JsonResponse({"error": "Invalid year"}, status=400)
+    if city:
+        qs = qs.filter(showroom__city__iexact=city)
+    if state:
+        qs = qs.filter(showroom__state__iexact=state)
+    # Cache per filter set and page
+    cache_key = f"pricing_aggr:{brand}:{model}:{year_raw}:{city}:{state}:{page}:{page_size}"
+    cached = cache.get(cache_key)
+    if cached:
+        return JsonResponse(cached)
+    base = (
+        qs.values("car__make", "car__model", "car__year")
+        .annotate(
+            count=Count("listing_id"),
+            avg_price=Avg("price"),
+            min_price=Min("price"),
+            max_price=Max("price"),
+        )
+        .order_by("car__model")
+    )
+    # Build item list with optional median and region breakdown
+    items = []
+    total_items = 0
+    sample_size = 0
+    for row in base:
+        total_items += 1
+        sample_size += (row.get("count") or 0)
+        mk = row.get("car__make") or ""
+        md = row.get("car__model") or ""
+        yr = row.get("car__year")
+        # median calculation (best-effort)
+        try:
+            prices_qs = CarListing.objects.filter(
+                car__make__iexact=mk, car__model__iexact=md, car__year=yr
+            ).values_list("price", flat=True).order_by("price")
+            n = prices_qs.count()
+            if n:
+                if n % 2 == 1:
+                    median_price = float(prices_qs[n//2] or 0.0)
+                else:
+                    a = float(prices_qs[n//2 - 1] or 0.0)
+                    b = float(prices_qs[n//2] or 0.0)
+                    median_price = (a + b) / 2.0
+            else:
+                median_price = 0.0
+        except Exception:
+            median_price = 0.0
+        # region counts
+        try:
+            regions = (
+                CarListing.objects.filter(
+                    car__make__iexact=mk, car__model__iexact=md, car__year=yr
+                ).values("showroom__city")
+                 .annotate(cnt=Count("listing_id"))
+                 .order_by("-cnt")[:8]
+            )
+            region_counts = { (r["showroom__city"] or "Online"): r["cnt"] for r in regions }
+        except Exception:
+            region_counts = {}
+        items.append({
+            "brand": mk,
+            "model": md,
+            "year": yr,
+            "count": row.get("count") or 0,
+            "avg_price": float(row.get("avg_price") or 0.0),
+            "median_price": float(median_price or 0.0),
+            "min_price": float(row.get("min_price") or 0.0),
+            "max_price": float(row.get("max_price") or 0.0),
+            "regions": region_counts,
+        })
+    # Pagination
+    start = (page - 1) * page_size
+    end = start + page_size
+    page_items = items[start:end]
+    # Freshness
+    try:
+        from django.db.models import Max as _Max
+        freshness = qs.aggregate(_Max("updated_at")).get("updated_at__max")
+    except Exception:
+        freshness = None
+    out = {
+        "ok": True,
+        "meta": {
+            "brand": brand, "model": model, "year": year_raw,
+            "page": page, "page_size": page_size,
+            "total_items": total_items, "sample_size": sample_size,
+            "freshness_ts": (freshness.isoformat() if freshness else None),
+        },
+        "items": page_items,
+    }
+    cache.set(cache_key, out, timeout=300)
+    return JsonResponse(out)
+
+def pricing_export_csv(request):
+    from django.db.models import Avg, Count
+    brand = (request.GET.get("brand") or "").strip()
+    model = (request.GET.get("model") or "").strip()
+    year = request.GET.get("year")
+    qs = CarListing.objects.select_related("car")
+    if brand:
+        qs = qs.filter(car__make__iexact=brand)
+    if model:
+        qs = qs.filter(car__model__iexact=model)
+    if year:
+        try:
+            qs = qs.filter(car__year=int(year))
+        except Exception:
+            return HttpResponse("Invalid year", status=400)
+    agg = (
+        qs.values("car__make", "car__model", "car__year")
+        .annotate(avg_price=Avg("price"), count=Count("listing_id"))
+        .order_by("car__model")
+    )
+    response = HttpResponse(content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = 'attachment; filename="pricing_analytics.csv"'
+    writer = csv.writer(response)
+    writer.writerow(["Brand", "Model", "Year", "Average Price", "Sample Size"])
+    for a in agg:
+        writer.writerow([
+            a.get("car__make") or "",
+            a.get("car__model") or "",
+            a.get("car__year") or "",
+            str(float(a.get("avg_price") or 0.0)),
+            a.get("count") or 0
+        ])
+    return response
 
 @login_required
 def toggle_favorite(request):
@@ -2095,6 +2548,8 @@ def booke(request):
 @login_required
 @csrf_exempt
 def create_razorpay_order(request):
+    if not razorpay_client:
+        return JsonResponse({"error": "Payment gateway is not configured"}, status=503)
     if request.method == "POST":
         listing_id = request.POST.get("listing_id")
         currency = "INR"
@@ -2207,6 +2662,8 @@ def create_razorpay_order(request):
 @login_required
 @csrf_exempt
 def verify_payment(request):
+    if not razorpay_client:
+        return JsonResponse({"error": "Payment gateway is not configured"}, status=503)
     if request.method == "POST":
         data = request.POST
         params_dict = {
