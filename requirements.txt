@@ -9,3 +9,7 @@ langchain>=0.1
 langchain-community>=0.1
 ollama>=0.1; platform_system != "Windows" or platform_system == "Windows"
 reportlab>=3.6
+gunicorn>=22.0
+whitenoise>=6.7
+dj-database-url>=2.2
+python-dotenv>=1.0
