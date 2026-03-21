@@ -31,9 +31,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-change-me")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "False").strip().lower() in {"1", "true", "yes", "on"}
 
-ALLOWED_HOSTS = ['*']
+_ALLOWED_HOSTS_ENV = os.getenv("ALLOWED_HOSTS", "").strip()
+ALLOWED_HOSTS = [h.strip() for h in _ALLOWED_HOSTS_ENV.split(",") if h.strip()]
+if DEBUG and not ALLOWED_HOSTS:
+    ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 
 
 # Application definition
@@ -85,22 +88,27 @@ WSGI_APPLICATION = "car_vault.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": "car_vault",
-#         "USER": "postgres",
-#         "PASSWORD": "462520",  # Update with your DB password
-#         "HOST": "localhost",
-#         "PORT": "5432",
-#     }
-# }
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('postgresql://car_vault_user:uF71Cw8IpqYGA0gxO5qUqlC4mml327Z4@dpg-d6vcapfgi27c73ettrug-a.oregon-postgres.render.com/car_vault')
-    )
-}
+if DATABASE_URL:
+    DATABASES = {
+        "default": dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=not DEBUG,
+        )
+    }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("DB_NAME", "car_vault"),
+            "USER": os.getenv("DB_USER", "postgres"),
+            "PASSWORD": os.getenv("DB_PASSWORD", ""),
+            "HOST": os.getenv("DB_HOST", "localhost"),
+            "PORT": os.getenv("DB_PORT", "5432"),
+        }
+    }
 
 
 # Password validation
@@ -184,18 +192,21 @@ EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 
 _DEV_HOST_IP = os.getenv("DEV_HOST_IP", "").strip()
-_CSRF_ORIGINS = ["http://127.0.0.1:8000", "http://localhost:8000"]
+_CSRF_ORIGINS_ENV = os.getenv("CSRF_TRUSTED_ORIGINS", "").strip()
+_CSRF_ORIGINS = [origin.strip() for origin in _CSRF_ORIGINS_ENV.split(",") if origin.strip()]
+if DEBUG:
+    _CSRF_ORIGINS.extend(["http://127.0.0.1:8000", "http://localhost:8000"])
 if _DEV_HOST_IP:
     _CSRF_ORIGINS.append(f"http://{_DEV_HOST_IP}:8000")
 CSRF_TRUSTED_ORIGINS = _CSRF_ORIGINS
 CSRF_USE_SESSIONS = False
 
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "True").strip().lower() in {"1", "true", "yes", "on"}
+    SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "True").strip().lower() in {"1", "true", "yes", "on"}
+    CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", "True").strip().lower() in {"1", "true", "yes", "on"}
+
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "")
 RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
-
-import dj_database_url
-
-DATABASES = {
-    'default': dj_database_url.config(default='postgresql://car_vault_user:uF71Cw8IpqYGA0gxO5qUqlC4mml327Z4@dpg-d6vcapfgi27c73ettrug-a.oregon-postgres.render.com/car_vault')
-}
