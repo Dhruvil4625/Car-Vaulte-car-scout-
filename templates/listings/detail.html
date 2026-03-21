@@ -90,7 +90,7 @@
   .pros .pc-list li::before { content: '✓'; position: absolute; left: 0; color: #16a34a; font-weight: 900; }
   .cons .pc-list li::before { content: '✕'; position: absolute; left: 0; color: #dc2626; font-weight: 900; }
 
-  /* --- Reviews & Clean Read More CSS --- */
+  /* --- Reviews --- */
   .review-fade { position: relative; max-height: 200px; overflow: hidden; color: #475569; line-height: 1.7; font-weight: 500; font-size: 1.05rem; transition: max-height 0.5s ease; }
   .review-fade::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 80px; background: linear-gradient(180deg, rgba(255,255,255,0), #fff); transition: opacity 0.3s ease; }
   .review-fade.expanded { max-height: 2000px; overflow: visible; }
@@ -117,12 +117,15 @@
   .spec-tabs .btn-outline-dark { border-color: #cbd5e1; color: #475569; }
   .spec-tabs .btn-outline-dark:hover { background: #f1f5f9; border-color: #94a3b8; color: #0f172a; }
 
-  /* Mobile Adjustments */
-  @media (max-width: 991px) { .pros-cons { grid-template-columns: 1fr; } .media-stage { height: 350px; } .main-price { font-size: 2.5rem; } }
-  .chart-loading { position:absolute; inset:0; background:rgba(255,255,255,0.85); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; flex-direction:column; z-index:5; opacity:0; pointer-events:none; transition:opacity .3s; border-radius:12px; }
+  /* --- Advanced AI Chart Styles --- */
+  .analytics-badge { background: #f8fafc; border: 1px solid #e2e8f0; color: #475569; padding: 8px 16px; border-radius: 10px; font-weight: 800; font-size: 0.85rem; letter-spacing: 0.5px; text-transform: uppercase; }
+  .chart-loading { position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(255,255,255,0.85); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; flex-direction:column; z-index:5; opacity:0; pointer-events:none; transition:opacity .3s; border-radius:12px; }
   .chart-loading.active { opacity:1; pointer-events:auto; }
   .spinner { width: 36px; height: 36px; border: 4px solid #f1f5f9; border-top: 4px solid #e11d48; border-radius: 50%; animation: spin 1s linear infinite; }
   @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+  /* Mobile Adjustments */
+  @media (max-width: 991px) { .pros-cons { grid-template-columns: 1fr; } .media-stage { height: 350px; } .main-price { font-size: 2.5rem; } }
 </style>
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css">
@@ -330,7 +333,7 @@
       <div class="cd-card reveal" style="transition-delay: 0.15s;">
         <div class="d-flex align-items-center justify-content-between mb-4">
           <div class="cd-title mb-0"><i class="fa-solid fa-microchip"></i> Quick Specifications</div>
-          <a href="#" class="btn btn-dark btn-sm fw-bold rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#specsModal">View All Specs</a>
+          <a href="#" class="btn btn-dark btn-sm fw-bold rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#specsModal">View All Specs</a>
         </div>
         
         <div class="cd-spec-grid">
@@ -392,31 +395,36 @@
       </div>
 
       <div class="cd-card reveal" style="transition-delay: 0.19s;">
-        <div class="cd-title"><i class="fa-solid fa-chart-line"></i> Market Price Intelligence</div>
-        <div class="d-flex align-items-center gap-2 mb-2">
-          <span class="text-muted fw-bold">Brand</span>
-          <input type="text" id="chartBrand" class="form-control" style="max-width:180px;" value="{{ listing.car.make }}" readonly>
-          <span class="text-muted fw-bold">Year</span>
-          <input type="text" id="chartYear" class="form-control" style="max-width:120px;" value="{{ listing.car.year }}" readonly>
-          <span class="text-muted fw-bold">Model</span>
-          <input type="text" id="chartModel" class="form-control" style="max-width:180px;" value="{{ listing.car.model }}" readonly>
-          <a href="{% url 'pricing_analytics' %}" class="btn btn-outline-dark btn-sm ms-auto"><i class="fa-solid fa-chart-column me-1"></i> Full Analytics</a>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div class="cd-title mb-0"><i class="fa-solid fa-chart-line"></i> Market Intelligence</div>
+          <a href="{% url 'pricing_analytics' %}" class="btn btn-outline-dark btn-sm fw-bold rounded-pill px-4"><i class="fa-solid fa-chart-pie me-2"></i> Full Analytics</a>
         </div>
-        <div class="d-flex flex-wrap gap-2 mb-2">
-          <button class="btn btn-dark btn-sm fw-bold rounded-pill px-3" data-dchart="trend">Trend</button>
-          <button class="btn btn-outline-dark btn-sm fw-bold rounded-pill px-3" data-dchart="dist">Distribution</button>
-          <button class="btn btn-outline-dark btn-sm fw-bold rounded-pill px-3" data-dchart="regions">Regions</button>
+        
+        <div class="d-flex flex-wrap gap-2 mb-4">
+          <span class="analytics-badge"><i class="fa-solid fa-tag text-danger me-1"></i> {{ listing.car.make }}</span>
+          <span class="analytics-badge"><i class="fa-solid fa-car text-danger me-1"></i> {{ listing.car.model }}</span>
+          <span class="analytics-badge"><i class="fa-regular fa-calendar text-danger me-1"></i> {{ listing.car.year }}</span>
+          <input type="hidden" id="chartBrand" value="{{ listing.car.make }}">
+          <input type="hidden" id="chartYear" value="{{ listing.car.year }}">
+          <input type="hidden" id="chartModel" value="{{ listing.car.model }}">
         </div>
-        <div id="chartWrapTrend" style="position:relative; height:300px; display:block;">
-          <div class="chart-loading active" id="detailLoaderTrend"><div class="spinner"></div><div class="mt-2 fw-bold text-dark">Loading</div></div>
+
+        <div class="d-flex flex-wrap gap-2 mb-4 border-bottom pb-3">
+          <button class="btn btn-dark btn-sm fw-bold rounded-pill px-4" data-dchart="trend">Price Trend</button>
+          <button class="btn btn-outline-dark btn-sm fw-bold rounded-pill px-4" data-dchart="dist">Distribution</button>
+          <button class="btn btn-outline-dark btn-sm fw-bold rounded-pill px-4" data-dchart="regions">Regional</button>
+        </div>
+
+        <div id="chartWrapTrend" style="position:relative; height:320px; display:block;">
+          <div class="chart-loading active" id="detailLoaderTrend"><div class="spinner"></div><div class="mt-3 fw-bold text-dark">Analyzing Trends...</div></div>
           <canvas id="detailTrendChart" role="img" aria-label="Average price trend by month"></canvas>
         </div>
-        <div id="chartWrapDist" style="position:relative; height:300px; display:none;">
-          <div class="chart-loading active" id="detailLoaderDist"><div class="spinner"></div><div class="mt-2 fw-bold text-dark">Loading</div></div>
+        <div id="chartWrapDist" style="position:relative; height:320px; display:none;">
+          <div class="chart-loading active" id="detailLoaderDist"><div class="spinner"></div><div class="mt-3 fw-bold text-dark">Processing Distribution...</div></div>
           <canvas id="detailPriceChart" role="img" aria-label="Average price by model"></canvas>
         </div>
-        <div id="chartWrapRegions" style="position:relative; height:300px; display:none;">
-          <div class="chart-loading active" id="detailLoaderRegions"><div class="spinner"></div><div class="mt-2 fw-bold text-dark">Loading</div></div>
+        <div id="chartWrapRegions" style="position:relative; height:320px; display:none;">
+          <div class="chart-loading active" id="detailLoaderRegions"><div class="spinner"></div><div class="mt-3 fw-bold text-dark">Loading Regional Data...</div></div>
           <canvas id="detailRegionsChart" role="img" aria-label="Regional price variation"></canvas>
         </div>
       </div>
@@ -561,6 +569,8 @@
   </div>
 </section>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
 <script>
   // Expert Review Read More Expand
   document.addEventListener("DOMContentLoaded", () => {
@@ -680,53 +690,114 @@
     }
   })();
 
+  // --- Inline AI Charts Logic ---
   (function(){
     const brand = document.getElementById('chartBrand').value;
     const year = document.getElementById('chartYear').value;
     const model = document.getElementById('chartModel').value;
-    function formatINR(v){ return new Intl.NumberFormat('en-IN', { style:'currency', currency:'INR', maximumFractionDigits:0 }).format(v||0); }
+
+    function formatINR(v) { 
+      if (v >= 10000000) return '₹' + (v / 10000000).toFixed(2) + ' Cr';
+      if (v >= 100000) return '₹' + (v / 100000).toFixed(2) + ' L';
+      return new Intl.NumberFormat('en-IN', { style:'currency', currency:'INR', maximumFractionDigits:0 }).format(v||0); 
+    }
+
+    // Global Chart Configuration
+    Chart.defaults.font.family = "'Montserrat', sans-serif";
+    Chart.defaults.color = '#64748b';
+
+    const commonChartOptions = {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(15, 23, 42, 0.95)', titleFont: { size: 14, weight: 'bold' }, bodyFont: { size: 14, weight: 'bold' },
+          padding: 12, cornerRadius: 8, displayColors: false,
+          callbacks: { label: function(context) { return formatINR(context.raw); } }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { weight: '700' } } },
+        y: { 
+          grid: { color: '#f1f5f9', drawBorder: false }, border: { dash: [5, 5] },
+          ticks: { font: { weight: '600' }, callback: function(value) { return formatINR(value); } } 
+        }
+      }
+    };
+
     function ensureChart(cb){
       if (window.Chart) return cb();
       const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js'; s.onload = cb; document.head.appendChild(s);
     }
+
     function showTab(name){
-      document.querySelectorAll('[data-dchart]').forEach(b=>{
-        const is = b.getAttribute('data-dchart')===name;
+      document.querySelectorAll('[data-dchart]').forEach(b => {
+        const is = b.getAttribute('data-dchart') === name;
         b.classList.toggle('btn-dark', is);
         b.classList.toggle('btn-outline-dark', !is);
       });
-      document.getElementById('chartWrapTrend').style.display = name==='trend' ? 'block' : 'none';
-      document.getElementById('chartWrapDist').style.display = name==='dist' ? 'block' : 'none';
-      document.getElementById('chartWrapRegions').style.display = name==='regions' ? 'block' : 'none';
+      document.getElementById('chartWrapTrend').style.display = name === 'trend' ? 'block' : 'none';
+      document.getElementById('chartWrapDist').style.display = name === 'dist' ? 'block' : 'none';
+      document.getElementById('chartWrapRegions').style.display = name === 'regions' ? 'block' : 'none';
     }
-    document.querySelectorAll('[data-dchart]').forEach(b=> b.addEventListener('click', ()=> showTab(b.getAttribute('data-dchart')) ));
-    ensureChart(async ()=>{
-      try{
+
+    document.querySelectorAll('[data-dchart]').forEach(b => b.addEventListener('click', () => showTab(b.getAttribute('data-dchart')) ));
+
+    ensureChart(async () => {
+      try {
         const tparams = new URLSearchParams({ brand, model, year });
         const dparams = new URLSearchParams({ brand, year });
+        
         const [trendRes, distRes] = await Promise.all([
-          fetch('{% url "price_trend_data" %}?'+tparams.toString(), { headers: {'X-Requested-With':'XMLHttpRequest'} }),
-          fetch('{% url "price_chart_data" %}?'+dparams.toString(), { headers: {'X-Requested-With':'XMLHttpRequest'} }),
+          fetch('{% url "price_trend_data" %}?' + tparams.toString(), { headers: {'X-Requested-With':'XMLHttpRequest'} }),
+          fetch('{% url "price_chart_data" %}?' + dparams.toString(), { headers: {'X-Requested-With':'XMLHttpRequest'} }),
         ]);
+        
         const trend = await trendRes.json();
         const dist = await distRes.json();
-        const tl = trend.trend.map(p=>p.month);
-        const tv = trend.trend.map(p=>p.avg_price);
-        const ctxT = document.getElementById('detailTrendChart');
-        window.__detailTrend = new Chart(ctxT, { type:'line', data:{ labels:tl, datasets:[{ label:'Avg Price', data:tv, borderColor:'#0f172a', backgroundColor:'rgba(15,23,42,0.1)', tension:0.3 }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:(c)=> formatINR(c.raw) } } }, scales:{ y:{ ticks:{ callback:(v)=> new Intl.NumberFormat('en-IN').format(v) } } } } });
+        
+        // 1. Trend Chart (Line with Gradient)
+        const tl = trend.trend.map(p => p.month);
+        const tv = trend.trend.map(p => p.avg_price);
+        const ctxT = document.getElementById('detailTrendChart').getContext('2d');
+        let gradT = ctxT.createLinearGradient(0, 0, 0, 300);
+        gradT.addColorStop(0, 'rgba(15, 23, 42, 0.3)');
+        gradT.addColorStop(1, 'rgba(15, 23, 42, 0.0)');
+        
+        window.__detailTrend = new Chart(ctxT, { 
+          type: 'line', 
+          data: { labels: tl, datasets: [{ label: 'Avg Price', data: tv, borderColor: '#0f172a', backgroundColor: gradT, fill: true, tension: 0.4, borderWidth: 3, pointBackgroundColor: '#e11d48' }] }, 
+          options: commonChartOptions 
+        });
         document.getElementById('detailLoaderTrend').classList.remove('active');
-        const dl = dist.points.map(p=>p.model);
-        const dv = dist.points.map(p=>p.avg_price);
-        const ctxD = document.getElementById('detailPriceChart');
-        window.__detailDist = new Chart(ctxD, { type:'bar', data:{ labels:dl, datasets:[{ label:'Avg Price', data:dv, backgroundColor:'#0f172a', hoverBackgroundColor:'#e11d48', borderRadius:6, borderSkipped:false }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:(c)=> formatINR(c.raw) } } }, scales:{ y:{ ticks:{ callback:(v)=> new Intl.NumberFormat('en-IN').format(v) } } } } });
+        
+        // 2. Distribution Chart (Bar)
+        const dl = dist.points.map(p => p.model);
+        const dv = dist.points.map(p => p.avg_price);
+        const ctxD = document.getElementById('detailPriceChart').getContext('2d');
+        
+        window.__detailDist = new Chart(ctxD, { 
+          type: 'bar', 
+          data: { labels: dl, datasets: [{ label: 'Avg Price', data: dv, backgroundColor: '#0f172a', hoverBackgroundColor: '#e11d48', borderRadius: 6 }] }, 
+          options: commonChartOptions 
+        });
         document.getElementById('detailLoaderDist').classList.remove('active');
-        const rl = trend.regions.map(r=>r.city);
-        const rv = trend.regions.map(r=>r.avg_price);
-        const ctxR = document.getElementById('detailRegionsChart');
-        window.__detailRegions = new Chart(ctxR, { type:'bar', data:{ labels:rl, datasets:[{ label:'Avg Price', data:rv, backgroundColor:'#e11d48' }] }, options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:(c)=> formatINR(c.raw) } } }, scales:{ x:{ ticks:{ callback:(v)=> new Intl.NumberFormat('en-IN').format(v) } } } } });
+        
+        // 3. Regions Chart (Horizontal Bar)
+        const rl = trend.regions.map(r => r.city);
+        const rv = trend.regions.map(r => r.avg_price);
+        const ctxR = document.getElementById('detailRegionsChart').getContext('2d');
+        
+        window.__detailRegions = new Chart(ctxR, { 
+          type: 'bar', 
+          data: { labels: rl, datasets: [{ label: 'Avg Price', data: rv, backgroundColor: '#e11d48', borderRadius: 4 }] }, 
+          options: { ...commonChartOptions, indexAxis: 'y' } 
+        });
         document.getElementById('detailLoaderRegions').classList.remove('active');
+        
         showTab('trend');
-      } catch(e){
+      } catch(e) {
+        console.error(e);
         document.getElementById('detailLoaderTrend').classList.remove('active');
         document.getElementById('detailLoaderDist').classList.remove('active');
         document.getElementById('detailLoaderRegions').classList.remove('active');
@@ -814,4 +885,3 @@
   // (Keep the rest of your original JS functions for Pano and Spin here)
 </script>
 {% endblock %}
-can you add ai chart to understand overall market price by car brand and perticullar year and car model like that based upon my this given python
