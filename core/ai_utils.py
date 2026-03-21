@@ -35,7 +35,7 @@ def _cosine(a: List[float], b: List[float]) -> float:
     return (dot / (na*nb)) if na and nb else 0.0
 
 def recommend_similar_listings(current, candidates, top_k=6) -> List[Any]:
-    key = f"recs:{getattr(current, 'listing_id', None)}"
+    key = f"recs:{getattr(current, 'listing_id', None)}:{int(top_k or 6)}"
     cached = cache.get(key)
     if cached:
         return cached
@@ -80,8 +80,10 @@ def session_aware_recs(user, current_listing, candidates, top_k=8) -> List[Any]:
                 boost[getattr(c, "listing_id", None)] = 0.0
         scored = []
         v0 = listing_feature_vector(current_listing)
-        for c in candidates:
+        for c in (base or candidates):
             try:
+                if getattr(c, "listing_id", None) == getattr(current_listing, "listing_id", None):
+                    continue
                 v = listing_feature_vector(c)
                 s = _cosine(v0, v) + 0.05*boost.get(getattr(c, "listing_id", None), 0.0)
                 scored.append((s, c))
@@ -210,7 +212,11 @@ def price_fairness_info(current, candidates) -> Dict[str, Any]:
         if not prices:
             return {"label": "Unknown", "median": None, "diff_pct": None}
         prices.sort()
-        mid = prices[len(prices)//2] if prices else None
+        n = len(prices)
+        if n % 2 == 0:
+            mid = (prices[(n // 2) - 1] + prices[n // 2]) / 2
+        else:
+            mid = prices[n // 2]
         cp = float(getattr(current, "price", 0) or 0)
         diff = ((cp - mid) / mid) if mid else 0.0
         if abs(diff) <= 0.05:
@@ -256,9 +262,13 @@ def toxicity_detect(text: str) -> Optional[float]:
         model_name = os.environ.get("HF_TOXICITY_MODEL", "unitary/unbiased-toxic-roberta")
         pipe = pipeline("text-classification", model=model_name)
         res = pipe(text[:512])[0]
-        label = res.get("label","Non-toxic")
+        label = (res.get("label", "non-toxic") or "").strip().lower().replace("_", " ")
         score = float(res.get("score",0.0))
-        return score if "toxic" in label.lower() else 0.0
+        if any(s in label for s in ["non-toxic", "non toxic", "not toxic", "clean"]):
+            return 0.0
+        if "toxic" in label or "insult" in label or "threat" in label or "obscene" in label or "abuse" in label:
+            return score
+        return 0.0
     except Exception:
         t = (text or "").lower()
         return 0.7 if any(w in t for w in ["idiot","stupid","hate","abuse"]) else 0.0
@@ -326,6 +336,82 @@ def detect_damage_details(image_paths: List[str]) -> Dict[str, Any]:
 
 def chatbot_query(question: str, listings_qs) -> str:
     q = (question or "").strip().lower()
+    if not q:
+        return "Please ask your car query, for example: 'SUV under 20 lakh in Ahmedabad'."
+
+    def _rank_sellers(rows):
+        by_seller = {}
+        for lst in rows:
+            try:
+                seller = getattr(lst, "seller", None)
+                if not seller:
+                    continue
+                sid = str(getattr(seller, "user_id", None) or getattr(seller, "id", ""))
+                if sid not in by_seller:
+                    by_seller[sid] = {
+                        "seller": seller,
+                        "count": 0,
+                        "sum_price": 0.0,
+                        "rating": 0.0,
+                        "dealership_name": "",
+                    }
+                by_seller[sid]["count"] += 1
+                by_seller[sid]["sum_price"] += float(getattr(lst, "price", 0) or 0)
+            except Exception:
+                continue
+
+        profiles = {}
+        try:
+            from .models import Seller
+            q = Seller.objects.filter(user_id__in=list(by_seller.keys()))
+            profiles = {str(p.user_id): p for p in q}
+        except Exception:
+            profiles = {}
+
+        ranked = []
+        for sid, d in by_seller.items():
+            count = int(d["count"])
+            prof = profiles.get(sid)
+            rating = float(getattr(prof, "rating", 0) or 0) if prof else float(d["rating"])
+            dealership_name = (getattr(prof, "dealership_name", "") or "") if prof else ""
+            avg_price = (d["sum_price"] / count) if count else 0.0
+            ranked.append({
+                "seller": d["seller"],
+                "count": count,
+                "rating": rating,
+                "avg_price": avg_price,
+                "dealership_name": dealership_name,
+            })
+        ranked.sort(key=lambda x: (x["rating"], x["count"], -x["avg_price"]), reverse=True)
+        return ranked
+
+    if any(k in q for k in ["best seller", "top seller", "which seller", "seller is best", "good seller"]):
+        ranked = _rank_sellers(listings_qs)
+        if not ranked:
+            return "I couldn't find enough seller data yet."
+        top = ranked[0]
+        s = top["seller"]
+        best_name = (
+            top.get("dealership_name")
+            or getattr(s, "name", None)
+            or getattr(s, "email", "Top seller")
+        )
+        lines = [
+            f"Best seller right now: {best_name}",
+            f"Rating: {top['rating']:.2f}/5, Active listings: {top['count']}",
+        ]
+        if len(ranked) > 1:
+            lines.append("Other strong sellers:")
+            for row in ranked[1:4]:
+                s2 = row["seller"]
+                name2 = (
+                    row.get("dealership_name")
+                    or getattr(s2, "name", None)
+                    or getattr(s2, "email", "Seller")
+                )
+                lines.append(f"- {name2}: {row['rating']:.2f}/5 ({row['count']} listings)")
+        return "\n".join(lines)
+
     try:
         groq_key = os.environ.get("GROQ_API_KEY","")
         if groq_key:
@@ -343,6 +429,7 @@ def chatbot_query(question: str, listings_qs) -> str:
             }
             headers = {"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"}
             r = requests.post(url, json=payload, headers=headers, timeout=20)
+            r.raise_for_status()
             data = r.json()
             txt = (((data or {}).get("choices") or [{}])[0].get("message") or {}).get("content") or ""
             if txt:
@@ -352,7 +439,8 @@ def chatbot_query(question: str, listings_qs) -> str:
         llm = Ollama(model=os.environ.get("OLLAMA_MODEL","llama3.1"))
         prompt = ChatPromptTemplate.from_messages([("system","You are a helpful assistant for car buyers in India."),("human","{query}")])
         chain = prompt | llm
-        return chain.invoke({"query": question})
+        out = chain.invoke({"query": question})
+        return str(out).strip() if out else ""
     except Exception:
         import re
         ql = (question or "").lower()
